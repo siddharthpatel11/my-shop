@@ -257,6 +257,50 @@
                         @endforeach
                     </ul>
                 </div>
+                <div class="col-md-5">
+                    <h5 class="mb-3">Contact Information</h5>
+                    @if (isset($layoutSettings))
+                        <div class="contact-info">
+                            @if ($layoutSettings->contact_email)
+                                @foreach ($layoutSettings->contact_email as $email)
+                                    @if ($email)
+                                        <p class="mb-2 text-muted">
+                                            <i class="fas fa-envelope me-2 text-primary"></i>
+                                            <a href="mailto:{{ $email }}"
+                                                class="text-decoration-none text-muted">{{ $email }}</a>
+                                        </p>
+                                    @endif
+                                @endforeach
+                            @endif
+
+                            @if ($layoutSettings->contact_phone)
+                                @foreach ($layoutSettings->contact_phone as $phone)
+                                    @if ($phone)
+                                        <p class="mb-2 text-muted">
+                                            <i class="fas fa-phone me-2 text-primary"></i>
+                                            <a href="tel:{{ $phone }}"
+                                                class="text-decoration-none text-muted">{{ $phone }}</a>
+                                        </p>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    @endif
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Social Media</h5>
+                    @if (isset($layoutSettings) && !empty($layoutSettings->social_links))
+                        @foreach ($layoutSettings->social_links as $social)
+                            @if (isset($social['url']) && $social['url'])
+                                <a href="{{ $social['url'] }}" target="_blank"
+                                    class="text-muted text-decoration-none ms-3">
+                                    <i class="{{ $social['icon'] ?? 'fab fa-link' }} fa-lg me-1"></i>
+                                    <small>{{ $social['title'] ?? '' }}</small>
+                                </a>
+                            @endif
+                        @endforeach
+                    @endif
+                </div>
             </div>
             <div class="row">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
@@ -265,44 +309,6 @@
                     @else
                         <p class="text-muted mb-0">© {{ date('Y') }} {{ $appName }}. All rights reserved.
                         </p>
-                    @endif
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    @if (isset($layoutSettings) && $layoutSettings->social_links)
-                        @if (isset($layoutSettings->social_links['facebook']))
-                            <a href="{{ $layoutSettings->social_links['facebook'] }}" target="_blank"
-                                class="text-muted text-decoration-none me-3">
-                                <i class="fab fa-facebook fa-lg"></i>
-                            </a>
-                        @endif
-                        @if (isset($layoutSettings->social_links['twitter']))
-                            <a href="{{ $layoutSettings->social_links['twitter'] }}" target="_blank"
-                                class="text-muted text-decoration-none me-3">
-                                <i class="fab fa-twitter fa-lg"></i>
-                            </a>
-                        @endif
-                        @if (isset($layoutSettings->social_links['instagram']))
-                            <a href="{{ $layoutSettings->social_links['instagram'] }}" target="_blank"
-                                class="text-muted text-decoration-none">
-                                <i class="fab fa-instagram fa-lg"></i>
-                            </a>
-                        @endif
-                        @if (isset($layoutSettings->social_links['linkedin']))
-                            <a href="{{ $layoutSettings->social_links['linkedin'] }}" target="_blank"
-                                class="text-muted text-decoration-none ms-3">
-                                <i class="fab fa-linkedin fa-lg"></i>
-                            </a>
-                        @endif
-                    @else
-                        <a href="#" class="text-muted text-decoration-none me-3">
-                            <i class="fab fa-facebook fa-lg"></i>
-                        </a>
-                        <a href="#" class="text-muted text-decoration-none me-3">
-                            <i class="fab fa-twitter fa-lg"></i>
-                        </a>
-                        <a href="#" class="text-muted text-decoration-none">
-                            <i class="fab fa-instagram fa-lg"></i>
-                        </a>
                     @endif
                 </div>
             </div>

@@ -29,8 +29,8 @@
             <div class="row g-4">
 
                 <!-- ========================================
-                             ADMIN PANEL SETTINGS
-                        ========================================= -->
+                                                                                                         ADMIN PANEL SETTINGS
+                                                                                                    ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-primary text-white">
@@ -162,8 +162,8 @@
                 </div>
 
                 <!-- ========================================
-                             FRONTEND SETTINGS
-                        ========================================= -->
+                                                                                                         FRONTEND SETTINGS
+                                                                                                    ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-success text-white">
@@ -285,8 +285,8 @@
                 </div>
 
                 <!-- ========================================
-                             HEADER & TITLE SETTINGS
-                        ========================================= -->
+                                                                                                         HEADER & TITLE SETTINGS
+                                                                                                    ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-info text-white">
@@ -351,8 +351,8 @@
                 </div>
 
                 <!-- ========================================
-                             FOOTER SETTINGS
-                        ========================================= -->
+                                                                                                         FOOTER SETTINGS
+                                                                                                    ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-dark text-white">
@@ -441,8 +441,8 @@
                 </div>
 
                 <!-- ========================================
-                             CONTACT INFORMATION
-                        ========================================= -->
+                                                                                                         CONTACT INFORMATION
+                                                                                                    ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-warning text-dark">
@@ -520,8 +520,8 @@
                 </div>
 
                 <!-- ========================================
-                             SOCIAL MEDIA LINKS
-                        ========================================= -->
+                                                                                                         SOCIAL MEDIA LINKS
+                                                                                                    ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-secondary text-white">
@@ -531,41 +531,80 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fab fa-facebook me-2"></i>Facebook
-                                </label>
-                                <input type="url" class="form-control" name="social_facebook"
-                                    value="{{ old('social_facebook', $settings->social_links['facebook'] ?? '') }}"
-                                    placeholder="https://facebook.com/yourpage">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="small text-muted mb-0">Add your social media profiles</p>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="addSocialLink()">
+                                    <i class="fas fa-plus me-1"></i>Add Social Link
+                                </button>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fab fa-twitter me-2"></i>Twitter
-                                </label>
-                                <input type="url" class="form-control" name="social_twitter"
-                                    value="{{ old('social_twitter', $settings->social_links['twitter'] ?? '') }}"
-                                    placeholder="https://twitter.com/yourhandle">
-                            </div>
+                            <div id="social_links_container">
+                                @php
+                                    $socialLinks = old('social_url', $settings->social_links ?? []);
+                                    if (empty($socialLinks) && !old('social_url')) {
+                                        // Mock some defaults if none exist and it's not a validation error return
+    $socialLinks = [
+        ['icon' => 'fab fa-facebook', 'title' => 'Facebook', 'url' => ''],
+    ];
+} elseif (old('social_url')) {
+    // Reconstruct from old input
+    $tempLinks = [];
+    foreach (old('social_url') as $index => $url) {
+        $tempLinks[] = [
+            'icon' => old('social_icon')[$index] ?? '',
+            'title' => old('social_title')[$index] ?? '',
+            'url' => $url,
+                                            ];
+                                        }
+                                        $socialLinks = $tempLinks;
+                                    }
+                                @endphp
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fab fa-instagram me-2"></i>Instagram
-                                </label>
-                                <input type="url" class="form-control" name="social_instagram"
-                                    value="{{ old('social_instagram', $settings->social_links['instagram'] ?? '') }}"
-                                    placeholder="https://instagram.com/yourhandle">
+                                @foreach ($socialLinks as $index => $link)
+                                    <div class="social-link-item border rounded p-3 mb-3 bg-light position-relative">
+                                        <button type="button"
+                                            class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2"
+                                            onclick="removeSocialLink(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label small fw-bold">Icon (FontAwesome)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i
+                                                            class="{{ $link['icon'] ?? 'fab fa-link' }}"></i></span>
+                                                    <input type="text"
+                                                        class="form-control form-control-sm social-icon-input"
+                                                        name="social_icon[]" value="{{ $link['icon'] ?? 'fab fa-link' }}"
+                                                        placeholder="fab fa-facebook"
+                                                        onkeyup="updateSocialIconPreview(this)">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small fw-bold">Platform Title</label>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    name="social_title[]" value="{{ $link['title'] ?? '' }}"
+                                                    placeholder="Facebook">
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label small fw-bold">Profile URL</label>
+                                                <input type="url" class="form-control form-control-sm"
+                                                    name="social_url[]" value="{{ $link['url'] ?? '' }}"
+                                                    placeholder="https://facebook.com/yourpage">
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fab fa-linkedin me-2"></i>LinkedIn
-                                </label>
-                                <input type="url" class="form-control" name="social_linkedin"
-                                    value="{{ old('social_linkedin', $settings->social_links['linkedin'] ?? '') }}"
-                                    placeholder="https://linkedin.com/company/yourcompany">
-                            </div>
+                        </div>
+                        <div class="card-footer bg-light border-0 py-2 text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1 text-warning"></i>
+                                Need icons? Visit <a href="https://fontawesome.com/icons" target="_blank"
+                                    class="text-primary text-decoration-none fw-bold">FontAwesome</a> to find and copy
+                                class names.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -673,6 +712,45 @@
                 // Just clear the input instead of removing if it's the last one
                 button.closest('.input-group').querySelector('input').value = '';
             }
+        }
+
+        // Social Links Multi-Entry
+        function addSocialLink() {
+            const container = document.getElementById('social_links_container');
+            const div = document.createElement('div');
+            div.className = 'social-link-item border rounded p-3 mb-3 bg-light position-relative';
+            div.innerHTML = `
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" onclick="removeSocialLink(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Icon (FontAwesome)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fab fa-link"></i></span>
+                            <input type="text" class="form-control form-control-sm social-icon-input" name="social_icon[]" value="fab fa-link" onkeyup="updateSocialIconPreview(this)">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Platform Title</label>
+                        <input type="text" class="form-control form-control-sm" name="social_title[]" placeholder="Platform Name">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold">Profile URL</label>
+                        <input type="url" class="form-control form-control-sm" name="social_url[]" placeholder="https://example.com/profile">
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeSocialLink(button) {
+            button.closest('.social-link-item').remove();
+        }
+
+        function updateSocialIconPreview(input) {
+            const iconPreview = input.previousElementSibling.querySelector('i');
+            iconPreview.className = input.value || 'fas fa-link';
         }
     </script>
 @endpush

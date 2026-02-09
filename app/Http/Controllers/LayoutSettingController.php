@@ -75,10 +75,12 @@ class LayoutSettingController extends Controller
             'footer_text_color' => 'nullable|string|max:7',
 
             // Social Links
-            'social_facebook' => 'nullable|url|max:255',
-            'social_twitter' => 'nullable|url|max:255',
-            'social_instagram' => 'nullable|url|max:255',
-            'social_linkedin' => 'nullable|url|max:255',
+            'social_icon' => 'nullable|array',
+            'social_icon.*' => 'nullable|string|max:100',
+            'social_title' => 'nullable|array',
+            'social_title.*' => 'nullable|string|max:100',
+            'social_url' => 'nullable|array',
+            'social_url.*' => 'nullable|url|max:255',
         ]);
 
         // Handle Admin Logo Upload
@@ -118,17 +120,16 @@ class LayoutSettingController extends Controller
 
         // Prepare social links array
         $socialLinks = [];
-        if ($request->filled('social_facebook')) {
-            $socialLinks['facebook'] = $request->social_facebook;
-        }
-        if ($request->filled('social_twitter')) {
-            $socialLinks['twitter'] = $request->social_twitter;
-        }
-        if ($request->filled('social_instagram')) {
-            $socialLinks['instagram'] = $request->social_instagram;
-        }
-        if ($request->filled('social_linkedin')) {
-            $socialLinks['linkedin'] = $request->social_linkedin;
+        if ($request->has('social_url')) {
+            foreach ($request->social_url as $key => $url) {
+                if ($url) {
+                    $socialLinks[] = [
+                        'icon' => $request->social_icon[$key] ?? 'fab fa-link',
+                        'title' => $request->social_title[$key] ?? '',
+                        'url' => $url,
+                    ];
+                }
+            }
         }
 
         $validated['social_links'] = $socialLinks;
