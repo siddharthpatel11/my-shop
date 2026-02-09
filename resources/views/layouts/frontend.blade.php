@@ -133,6 +133,38 @@
                             <i class="fas fa-box-open me-1"></i> Products
                         </a>
                     </li>
+                    {{--  <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('gallery') ? 'active' : '' }}"
+                            href="{{ route('gallery') }}">
+                            <i class="fas fa-images me-1"></i> Gallery
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}"
+                            href="{{ route('contact') }}">
+                            <i class="fas fa-envelope me-1"></i> Contact
+                        </a>
+                    </li>  --}}
+                    @php
+                        $dynamicPages = \App\Models\Page::all();
+                    @endphp
+                    @if ($dynamicPages->count() > 0)
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPages" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-alt me-1"></i> Pages
+                            </a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarDropdownPages">
+                                @foreach ($dynamicPages as $page)
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('page.show', $page->slug) }}">
+                                            {{ $page->title }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endif
                     @auth('customer')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('frontend.orders*') || request()->routeIs('frontend.order.*') ? 'active' : '' }}"
@@ -215,11 +247,7 @@
                 <div class="col-md-3">
                     <h5 class="mb-3">Quick Links</h5>
                     <ul class="list-unstyled">
-                        @php
-                            $footerPages = \App\Models\Page::all();
-                        @endphp
-
-                        @foreach ($footerPages as $page)
+                        @foreach ($dynamicPages as $page)
                             <li class="mb-2">
                                 <a href="{{ route('page.show', $page->slug) }}"
                                     class="text-decoration-none text-muted">
