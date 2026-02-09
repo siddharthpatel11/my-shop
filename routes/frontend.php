@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\CustomerAuthController;
 use App\Http\Controllers\Frontend\OrderController;
+use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\TaxController as ControllersTaxController;
 
 /* =====================================================
@@ -85,31 +87,36 @@ Route::middleware('customer.auth')->group(function () {
     Route::get('/customer/profile', [CustomerAuthController::class, 'profile'])
         ->name('customer.profile');
 
-    // Logout
+    // Customer logout
     Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])
         ->name('customer.logout');
 
-    //customer checkout address
+    // Customer profile
+    Route::get('/customer/profile', [CustomerAuthController::class, 'profile'])
+        ->name('customer.profile');
+
+    // Checkout and Orders
     Route::post('/checkout/address/store', [CheckoutController::class, 'storeAddress'])
         ->name('checkout.address.store');
-
     Route::get('/checkout/addresses', [CheckoutController::class, 'getAddresses'])
         ->name('checkout.addresses');
-
-    Route::get('/checkout/addresses', [CheckoutController::class, 'addresses'])
-        ->name('checkout.addresses');
-
-    Route::post('/checkout/address/store', [CheckoutController::class, 'storeAddress'])
-        ->name('checkout.address.store');
-
     Route::get('/checkout/review/{address}', [CheckoutController::class, 'review'])
         ->name('checkout.review');
-
     Route::post('/checkout/process', [CheckoutController::class, 'processCheckout'])
         ->name('checkout.process');
 
+    Route::get('/orders', [OrderController::class, 'index'])
+        ->name('frontend.orders');
+    Route::get('/order/{id}', [OrderController::class, 'show'])
+        ->name('frontend.order.show');
+    Route::post('/order/{id}/cancel', [OrderController::class, 'cancel'])
+        ->name('frontend.order.cancel');
 
-    Route::get('/orders', [OrderController::class, 'index'])->name('frontend.orders');
-    Route::get('/order/{id}', [OrderController::class, 'show'])->name('frontend.order.show');
-    Route::post('/order/{id}/cancel', [OrderController::class, 'cancel'])->name('frontend.order.cancel');
+    // Contact Form Submission
+    Route::post('/contact/submit', [ContactController::class, 'submit'])
+        ->name('contact.submit');
 });
+
+// Customer-facing page route (NO auth required)
+Route::get('/page/{page}', [PageController::class, 'show'])
+    ->name('page.show');

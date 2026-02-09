@@ -3,10 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'MyShop')</title>
+
+    @php
+        $appName = $layoutSettings->frontend_app_name ?? 'MyShop';
+        $frontendIcon = $layoutSettings->frontend_icon ?? 'fas fa-store';
+    @endphp
+
+    <title>@yield('title', $appName)</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Favicon -->
+    @if (isset($layoutSettings) && $layoutSettings->frontend_favicon)
+        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $layoutSettings->frontend_favicon) }}">
+    @endif
 
     {{-- Bootstrap --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -42,6 +53,29 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-brand-logo {
+            max-height: 45px;
+            width: auto;
+        }
+
+        .navbar-brand-with-logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .navbar-brand-text {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .navbar-brand-icon {
+            font-size: 1.8rem;
         }
 
         .nav-link {
@@ -69,8 +103,16 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ route('frontend.home') }}">
-                <i class="fas fa-store me-2"></i>MyShop
+            <a class="navbar-brand-with-logo" href="{{ route('frontend.home') }}">
+                @if (isset($layoutSettings) && $layoutSettings->frontend_logo)
+                    <img src="{{ asset('storage/' . $layoutSettings->frontend_logo) }}" alt="{{ $appName }}"
+                        class="navbar-brand-logo">
+                @else
+                    <span class="navbar-brand">
+                        <i class="{{ $frontendIcon }} navbar-brand-icon"></i>
+                        <span class="navbar-brand-text">{{ $appName }}</span>
+                    </span>
+                @endif
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -170,19 +212,70 @@
     <footer class="bg-light border-top mt-5">
         <div class="container py-4">
             <div class="row">
+                <div class="col-md-3">
+                    <h5 class="mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        @php
+                            $footerPages = \App\Models\Page::all();
+                        @endphp
+
+                        @foreach ($footerPages as $page)
+                            <li class="mb-2">
+                                <a href="{{ route('page.show', $page->slug) }}"
+                                    class="text-decoration-none text-muted">
+                                    {{ $page->title }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+            <div class="row">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <p class="text-muted mb-0">© {{ date('Y') }} MyShop. All rights reserved.</p>
+                    @if (isset($layoutSettings) && $layoutSettings->footer_text)
+                        <p class="text-muted mb-0">{{ $layoutSettings->footer_text }}</p>
+                    @else
+                        <p class="text-muted mb-0">© {{ date('Y') }} {{ $appName }}. All rights reserved.
+                        </p>
+                    @endif
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <a href="#" class="text-muted text-decoration-none me-3">
-                        <i class="fab fa-facebook fa-lg"></i>
-                    </a>
-                    <a href="#" class="text-muted text-decoration-none me-3">
-                        <i class="fab fa-twitter fa-lg"></i>
-                    </a>
-                    <a href="#" class="text-muted text-decoration-none">
-                        <i class="fab fa-instagram fa-lg"></i>
-                    </a>
+                    @if (isset($layoutSettings) && $layoutSettings->social_links)
+                        @if (isset($layoutSettings->social_links['facebook']))
+                            <a href="{{ $layoutSettings->social_links['facebook'] }}" target="_blank"
+                                class="text-muted text-decoration-none me-3">
+                                <i class="fab fa-facebook fa-lg"></i>
+                            </a>
+                        @endif
+                        @if (isset($layoutSettings->social_links['twitter']))
+                            <a href="{{ $layoutSettings->social_links['twitter'] }}" target="_blank"
+                                class="text-muted text-decoration-none me-3">
+                                <i class="fab fa-twitter fa-lg"></i>
+                            </a>
+                        @endif
+                        @if (isset($layoutSettings->social_links['instagram']))
+                            <a href="{{ $layoutSettings->social_links['instagram'] }}" target="_blank"
+                                class="text-muted text-decoration-none">
+                                <i class="fab fa-instagram fa-lg"></i>
+                            </a>
+                        @endif
+                        @if (isset($layoutSettings->social_links['linkedin']))
+                            <a href="{{ $layoutSettings->social_links['linkedin'] }}" target="_blank"
+                                class="text-muted text-decoration-none ms-3">
+                                <i class="fab fa-linkedin fa-lg"></i>
+                            </a>
+                        @endif
+                    @else
+                        <a href="#" class="text-muted text-decoration-none me-3">
+                            <i class="fab fa-facebook fa-lg"></i>
+                        </a>
+                        <a href="#" class="text-muted text-decoration-none me-3">
+                            <i class="fab fa-twitter fa-lg"></i>
+                        </a>
+                        <a href="#" class="text-muted text-decoration-none">
+                            <i class="fab fa-instagram fa-lg"></i>
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     use HasFactory;
-
     protected $table = 'customer_orders';
 
     protected $fillable = [
@@ -22,10 +21,12 @@ class Order extends Model
         'tax_amount',
         'shipping',
         'total',
-        'status',
+        'order_status',
         'payment_status',
         'payment_method',
         'notes',
+        'status',
+        'partial_delivery_notified',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class Order extends Model
         'tax_amount' => 'decimal:2',
         'shipping' => 'decimal:2',
         'total' => 'decimal:2',
+        'partial_delivery_notified' => 'boolean',
     ];
 
     /**
@@ -81,6 +83,44 @@ class Order extends Model
     }
 
     /**
+     * Get only active order items
+     */
+    public function activeItems()
+    {
+        return $this->hasMany(OrderItem::class)->where('status', 'active');
+    }
+
+    /**
+     * Get available items (items that can be delivered)
+     */
+    public function availableItems()
+    {
+        return $this->hasMany(OrderItem::class)
+            ->where('status', 'active')
+            ->where('item_status', 'available');
+    }
+
+    /**
+     * Get out of stock items
+     */
+    public function outOfStockItems()
+    {
+        return $this->hasMany(OrderItem::class)
+            ->where('status', 'active')
+            ->where('item_status', 'out_of_stock');
+    }
+
+    /**
+     * Get delivered items
+     */
+    public function deliveredItems()
+    {
+        return $this->hasMany(OrderItem::class)
+            ->where('status', 'active')
+            ->where('item_status', 'delivered');
+    }
+
+    /**
      * Get the discount applied
      */
     public function appliedDiscount()
@@ -100,11 +140,54 @@ class Order extends Model
     }
 
     /**
-     * Scope for filtering by status
+     * Check if order has any out of stock or cancelled items.
+     * Triggers on single-item orders too — any out_of_stock item = notify.
      */
-    public function scopeStatus($query, $status)
+    public function hasOutOfStockItems()
     {
-        return $query->where('status', $status);
+        return $this->activeItems()
+            ->whereIn('item_status', ['out_of_stock', 'cancelled'])
+            ->exists();
+    }
+
+    /**
+     * Alias kept so the Blade template ($order->hasPartialDelivery())
+     * and the alert banner continue to work without changes.
+     */
+    public function hasPartialDelivery()
+    {
+        return $this->hasOutOfStockItems();
+    }
+
+    /**
+     * Get delivery status message
+     */
+    public function getDeliveryStatusMessage()
+    {
+        $totalItems = $this->activeItems()->count();
+        $deliveredItems = $this->deliveredItems()->count();
+        $availableItems = $this->availableItems()->count();
+        $outOfStockItems = $this->outOfStockItems()->count();
+
+        if ($deliveredItems == $totalItems) {
+            return 'All items delivered';
+        } elseif (($deliveredItems + $availableItems) > 0 && $outOfStockItems > 0) {
+            return ($deliveredItems + $availableItems) . " of {$totalItems} items available for delivery. {$outOfStockItems} item(s) out of stock.";
+        } elseif ($outOfStockItems == $totalItems) {
+            return "All {$totalItems} item(s) are currently out of stock.";
+        } elseif ($outOfStockItems > 0) {
+            return "{$outOfStockItems} of {$totalItems} items out of stock";
+        } else {
+            return 'Order pending';
+        }
+    }
+
+    /**
+     * Scope for filtering by order_status
+     */
+    public function scopeOrderStatus($query, $orderStatus)
+    {
+        return $query->where('order_status', $orderStatus);
     }
 
     /**
@@ -113,6 +196,14 @@ class Order extends Model
     public function scopePaymentStatus($query, $status)
     {
         return $query->where('payment_status', $status);
+    }
+
+    /**
+     * Scope for active records only
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
     }
 
     /**
@@ -152,15 +243,15 @@ class Order extends Model
      */
     public function canBeCancelled()
     {
-        return in_array($this->status, ['pending', 'processing']);
+        return in_array($this->order_status, ['pending', 'processing']);
     }
 
     /**
-     * Get status badge color
+     * Get order status badge color
      */
-    public function getStatusBadgeColorAttribute()
+    public function getOrderStatusBadgeColorAttribute()
     {
-        return match ($this->status) {
+        return match ($this->order_status) {
             'pending' => 'warning',
             'processing' => 'info',
             'shipped' => 'primary',
@@ -180,6 +271,26 @@ class Order extends Model
             'paid' => 'success',
             'failed' => 'danger',
             default => 'secondary',
+        };
+    }
+
+    /**
+     * Get payment method name
+     */
+    public function getPaymentMethodNameAttribute()
+    {
+        return match ($this->payment_method) {
+            'cod' => 'Cash on Delivery',
+            'cash' => 'Cash',
+            'upi' => 'UPI',
+            'razorpay' => 'Razorpay',
+            'razorpay_upi' => 'Razorpay UPI',
+            'credit_card' => 'Credit Card',
+            'debit_card' => 'Debit Card',
+            'paypal' => 'PayPal',
+            'stripe' => 'Stripe',
+            'bank_transfer' => 'Bank Transfer',
+            default => 'N/A',
         };
     }
 }

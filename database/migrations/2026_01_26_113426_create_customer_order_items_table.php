@@ -20,6 +20,10 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
             $table->decimal('subtotal', 10, 2);
+            $table->enum('item_status', ['pending', 'available', 'out_of_stock', 'delivered', 'cancelled'])->default('pending');
+            $table->enum('order_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled'])->default('pending');
+            $table->enum('status', ['active', 'inactive', 'deleted'])->default('active');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

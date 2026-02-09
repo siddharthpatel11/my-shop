@@ -11,6 +11,9 @@ use App\Models\Tax;
 use App\Models\Discount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\CustomerOrderPlaced;
+use App\Mail\AdminNewOrder;
 
 class CheckoutController extends Controller
 {
@@ -232,9 +235,10 @@ class CheckoutController extends Controller
                 'tax_amount' => $taxAmount,
                 'shipping' => $shipping,
                 'total' => $total,
-                'status' => 'pending',
+                'order_status' => 'pending',
                 'payment_status' => 'pending',
                 'payment_method' => $request->payment_method ?? 'cod',
+                'status' => 'active',
             ]);
 
             // Create order items from cart
@@ -247,6 +251,8 @@ class CheckoutController extends Controller
                     'quantity' => $cartItem->quantity,
                     'price' => $cartItem->price,
                     'subtotal' => $cartItem->price * $cartItem->quantity,
+                    'item_status' => 'pending',
+                    'status' => 'active',
                 ]);
             }
 
@@ -256,10 +262,37 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+            //Load order with all relationships for emails
+            $order->load([
+                'customer',
+                'address',
+                'items.product',
+                'items.color',
+                'items.size',
+                'tax'
+            ]);
+
+            //Send email to customer
+            try {
+                Mail::to($order->customer->email)->send(new CustomerOrderPlaced($order));
+            } catch (\Exception $e) {
+                //Log email error but don't fail the order
+                \Log::error('Failed to send customer order email: ' . $e->getMessage());
+            }
+
+            //Send email to admin
+            try {
+                $adminEmail = config('mail.admin_email', 'siddharthchhayani11@gmail.com');
+                Mail::to($adminEmail)->send(new AdminNewOrder($order));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin order email: ' . $e->getMessage());
+            }
+
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order placed successfully',
-                'order' => $order->load('address', 'items.product', 'items.color', 'items.size')
+                'order' => $order //->load('address', 'items.product', 'items.color', 'items.size')
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

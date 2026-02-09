@@ -19,6 +19,9 @@ class OrderItem extends Model
         'quantity',
         'price',
         'subtotal',
+        'item_status',
+        'status',
+        'notes',
     ];
 
     protected $casts = [
@@ -60,6 +63,39 @@ class OrderItem extends Model
     }
 
     /**
+     * Scope for active items only
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope for available items
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('item_status', 'available');
+    }
+
+    /**
+     * Scope for out of stock items
+     */
+    public function scopeOutOfStock($query)
+    {
+        return $query->where('item_status', 'out_of_stock');
+    }
+
+    /**
+     * Scope for delivered items
+     */
+    public function scopeDelivered($query)
+    {
+        return $query->where('item_status', 'delivered');
+    }
+
+
+    /**
      * Get formatted price
      */
     public function getFormattedPriceAttribute()
@@ -73,5 +109,31 @@ class OrderItem extends Model
     public function getFormattedSubtotalAttribute()
     {
         return '₹' . number_format($this->subtotal, 2);
+    }
+    public function getItemStatusBadgeColorAttribute()
+    {
+        return match ($this->item_status) {
+            'pending' => 'secondary',
+            'available' => 'success',
+            'out_of_stock' => 'danger',
+            'delivered' => 'primary',
+            'cancelled' => 'dark',
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Get item status label
+     */
+    public function getItemStatusLabelAttribute()
+    {
+        return match ($this->item_status) {
+            'pending' => 'Pending',
+            'available' => 'Available',
+            'out_of_stock' => 'Out of Stock',
+            'delivered' => 'Delivered',
+            'cancelled' => 'Cancelled',
+            default => 'Unknown',
+        };
     }
 }
