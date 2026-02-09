@@ -5,18 +5,18 @@
     <meta charset="UTF-8">
 
     @php
+        $layoutSettings = $layoutSettings ?? \App\Models\LayoutSetting::getActive();
         $appName = $layoutSettings->frontend_app_name ?? 'MyShop';
-        $frontendIcon = $layoutSettings->frontend_icon ?? 'fas fa-store';
     @endphp
 
-    <title>@yield('title', $appName)</title>
+    <title>@yield('title', $layoutSettings->site_title ?? $appName)</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Favicon -->
-    @if (isset($layoutSettings) && $layoutSettings->frontend_favicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $layoutSettings->frontend_favicon) }}">
+    @if (isset($layoutSettings) && $layoutSettings->frontend_favicon_url)
+        <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->frontend_favicon_url }}">
     @endif
 
     {{-- Bootstrap --}}
@@ -53,13 +53,10 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .navbar-brand-logo {
-            max-height: 45px;
+            max-height: {{ $layoutSettings->logo_size ?? 45 }}px;
             width: auto;
         }
 
@@ -74,10 +71,6 @@
             font-size: 1.5rem;
         }
 
-        .navbar-brand-icon {
-            font-size: 1.8rem;
-        }
-
         .nav-link {
             font-weight: 500;
             transition: color 0.3s;
@@ -89,10 +82,27 @@
 
         .navbar {
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: {{ $layoutSettings->title_bg_color ?? '#ffffff' }} !important;
+        }
+
+        .navbar .nav-link,
+        .navbar-brand-text {
+            color: {{ $layoutSettings->title_text_color ?? '#212529' }} !important;
+        }
+
+        footer {
+            background-color: {{ $layoutSettings->footer_bg_color ?? '#f8f9fa' }} !important;
+            color: {{ $layoutSettings->footer_text_color ?? '#6c757d' }} !important;
+        }
+
+        footer .text-muted,
+        footer a.text-muted {
+            color: {{ $layoutSettings->footer_text_color ?? '#6c757d' }} !important;
         }
 
         .nav-link.active {
             color: #667eea !important;
+            border-bottom: 2px solid #667eea;
         }
     </style>
 
@@ -101,16 +111,16 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand-with-logo" href="{{ route('frontend.home') }}">
-                @if (isset($layoutSettings) && $layoutSettings->frontend_logo)
-                    <img src="{{ asset('storage/' . $layoutSettings->frontend_logo) }}" alt="{{ $appName }}"
+                @if (isset($layoutSettings) && $layoutSettings->frontend_logo_url)
+                    <img src="{{ $layoutSettings->frontend_logo_url }}" alt="{{ $appName }}"
                         class="navbar-brand-logo">
                 @else
                     <span class="navbar-brand">
-                        <i class="{{ $frontendIcon }} navbar-brand-icon"></i>
-                        <span class="navbar-brand-text">{{ $appName }}</span>
+                        <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>
+                        <span class="navbar-brand-text">{{ $layoutSettings->site_title ?? $appName }}</span>
                     </span>
                 @endif
             </a>
@@ -133,18 +143,16 @@
                             <i class="fas fa-box-open me-1"></i> Products
                         </a>
                     </li>
-                    {{--  <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('gallery') ? 'active' : '' }}"
-                            href="{{ route('gallery') }}">
-                            <i class="fas fa-images me-1"></i> Gallery
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}"
-                            href="{{ route('contact') }}">
-                            <i class="fas fa-envelope me-1"></i> Contact
-                        </a>
-                    </li>  --}}
+                    {{-- Dynamic Menu Items --}}
+                    @if (isset($layoutSettings) && $layoutSettings->menu_items)
+                        @foreach ($layoutSettings->menu_items as $item)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ $item['url'] ?? '#' }}">
+                                    {{ $item['label'] ?? '' }}
+                                </a>
+                            </li>
+                        @endforeach
+                    @endif
                     @php
                         $dynamicPages = \App\Models\Page::all();
                     @endphp
@@ -241,23 +249,44 @@
         @yield('content')
     </main>
 
-    <footer class="bg-light border-top mt-5">
+    <footer class="bg-light border-top mt-3">
         <div class="container py-4">
-            <div class="row">
-                <div class="col-md-3">
+            <div class="row md-5">
+                <a class="navbar-brand-with-logo" href="{{ route('frontend.home') }}">
+                    @if (isset($layoutSettings) && $layoutSettings->frontend_logo_url)
+                        <img src="{{ $layoutSettings->frontend_logo_url }}" alt="{{ $appName }}"
+                            class="navbar-brand-logo">
+                    @else
+                        <span class="navbar-brand">
+                            <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>
+                            <span class="navbar-brand-text">{{ $layoutSettings->site_title ?? $appName }}</span>
+                        </span>
+                    @endif
+                </a>
+                <div class="col-md-3 mt-2">
                     <h5 class="mb-3">Quick Links</h5>
                     <ul class="list-unstyled">
-                        @foreach ($dynamicPages as $page)
-                            <li class="mb-2">
-                                <a href="{{ route('page.show', $page->slug) }}"
-                                    class="text-decoration-none text-muted">
-                                    {{ $page->title }}
-                                </a>
-                            </li>
-                        @endforeach
+                        @if (isset($layoutSettings) && $layoutSettings->footer_menu)
+                            @foreach ($layoutSettings->footer_menu as $item)
+                                <li class="mb-2">
+                                    <a href="{{ $item['url'] ?? '#' }}" class="text-decoration-none text-muted">
+                                        {{ $item['label'] ?? '' }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        @else
+                            @foreach ($dynamicPages as $page)
+                                <li class="mb-2">
+                                    <a href="{{ route('page.show', $page->slug) }}"
+                                        class="text-decoration-none text-muted">
+                                        {{ $page->title }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        @endif
                     </ul>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-3">
                     <h5 class="mb-3">Contact Information</h5>
                     @if (isset($layoutSettings))
                         <div class="contact-info">

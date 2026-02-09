@@ -29,8 +29,8 @@
             <div class="row g-4">
 
                 <!-- ========================================
-                                                                                                         ADMIN PANEL SETTINGS
-                                                                                                    ========================================= -->
+                                                                                                                                 ADMIN PANEL SETTINGS
+                                                                                                                            ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-primary text-white">
@@ -162,8 +162,8 @@
                 </div>
 
                 <!-- ========================================
-                                                                                                         FRONTEND SETTINGS
-                                                                                                    ========================================= -->
+                                                                                                                                 FRONTEND SETTINGS
+                                                                                                                            ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-success text-white">
@@ -285,8 +285,8 @@
                 </div>
 
                 <!-- ========================================
-                                                                                                         HEADER & TITLE SETTINGS
-                                                                                                    ========================================= -->
+                                                                                                                                 HEADER & TITLE SETTINGS
+                                                                                                                            ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-info text-white">
@@ -336,6 +336,34 @@
                                 </div>
                             </div>
 
+                            <!-- Header Menu Items -->
+                            <div class="mb-3 border-top pt-3">
+                                <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-list me-2"></i>Header Menu Items</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="addMenuItem('header')">
+                                        <i class="fas fa-plus me-1"></i>Add Link
+                                    </button>
+                                </label>
+                                <div id="header_menu_container">
+                                    @php
+                                        $headerMenu = old('menu_label', $settings->menu_items ?? []);
+                                    @endphp
+                                    @foreach ($headerMenu as $item)
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" name="menu_label[]"
+                                                value="{{ $item['label'] ?? '' }}" placeholder="Label">
+                                            <input type="text" class="form-control" name="menu_url[]"
+                                                value="{{ $item['url'] ?? '' }}" placeholder="URL (e.g. /shop)">
+                                            <button type="button" class="btn btn-outline-danger"
+                                                onclick="this.parentElement.remove()">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <!-- Logo Size -->
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
@@ -351,8 +379,8 @@
                 </div>
 
                 <!-- ========================================
-                                                                                                         FOOTER SETTINGS
-                                                                                                    ========================================= -->
+                                                                                                                                 FOOTER SETTINGS
+                                                                                                                            ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-dark text-white">
@@ -402,47 +430,40 @@
                                 </div>
                             </div>
 
-                            <!-- Footer Logo Size -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-expand-arrows-alt me-2"></i>Footer Logo Size (Height in pixels)
+                            <!-- Footer Menu Items -->
+                            <div class="mb-3 border-top pt-3">
+                                <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-list me-2"></i>Footer Menu Items</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="addMenuItem('footer')">
+                                        <i class="fas fa-plus me-1"></i>Add Link
+                                    </button>
                                 </label>
-                                <input type="number" class="form-control" name="footer_logo_size"
-                                    value="{{ old('footer_logo_size', $settings->footer_logo_size ?? 40) }}"
-                                    min="20" max="100" placeholder="40">
-                                <div class="form-text">Recommended: 30-40px</div>
-                            </div>
-
-                            <!-- Footer Logo Upload -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-image me-2"></i>Footer Logo (Optional)
-                                </label>
-                                <p class="small text-muted">Separate logo for footer (if different from header)</p>
-
-                                @if (isset($settings) && $settings->footer_logo_path)
-                                    <div class="mb-3 p-3 bg-light rounded text-center">
-                                        <img src="{{ asset('storage/' . $settings->footer_logo_path) }}"
-                                            alt="Footer Logo" style="max-height: 60px;">
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-danger"
-                                                onclick="deleteLogo('footer_logo_path')">
-                                                <i class="fas fa-trash me-1"></i>Remove
+                                <div id="footer_menu_container">
+                                    @php
+                                        $footerMenu = old('footer_menu_label', $settings->footer_menu ?? []);
+                                    @endphp
+                                    @foreach ($footerMenu as $item)
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" name="footer_menu_label[]"
+                                                value="{{ $item['label'] ?? '' }}" placeholder="Label">
+                                            <input type="text" class="form-control" name="footer_menu_url[]"
+                                                value="{{ $item['url'] ?? '' }}" placeholder="URL">
+                                            <button type="button" class="btn btn-outline-danger"
+                                                onclick="this.parentElement.remove()">
+                                                <i class="fas fa-times"></i>
                                             </button>
                                         </div>
-                                    </div>
-                                @endif
-
-                                <input type="file" class="form-control" name="footer_logo"
-                                    accept="image/jpeg,image/png,image/jpg,image/svg+xml">
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ========================================
-                                                                                                         CONTACT INFORMATION
-                                                                                                    ========================================= -->
+                                                                                                                                 CONTACT INFORMATION
+                                                                                                                            ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-warning text-dark">
@@ -520,8 +541,8 @@
                 </div>
 
                 <!-- ========================================
-                                                                                                         SOCIAL MEDIA LINKS
-                                                                                                    ========================================= -->
+                                                                                                                                 SOCIAL MEDIA LINKS
+                                                                                                                            ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-secondary text-white">
@@ -751,6 +772,25 @@
         function updateSocialIconPreview(input) {
             const iconPreview = input.previousElementSibling.querySelector('i');
             iconPreview.className = input.value || 'fas fa-link';
+        }
+
+        // Menu Helper
+        function addMenuItem(type) {
+            const container = document.getElementById(`${type}_menu_container`);
+            const labelName = type === 'header' ? 'menu_label[]' : 'footer_menu_label[]';
+            const urlName = type === 'header' ? 'menu_url[]' : 'footer_menu_url[]';
+            const placeholder = type === 'header' ? 'URL (e.g. /shop)' : 'URL';
+
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+                <input type="text" class="form-control" name="${labelName}" placeholder="Label">
+                <input type="text" class="form-control" name="${urlName}" placeholder="${placeholder}">
+                <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(div);
         }
     </script>
 @endpush

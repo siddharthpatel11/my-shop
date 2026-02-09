@@ -48,6 +48,7 @@ class LayoutSetting extends Model
 
         // Menu & Navigation
         'menu_items',
+        'footer_menu',
 
         // Social Media
         'social_links',
@@ -56,11 +57,20 @@ class LayoutSetting extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'menu_items' => 'array',
+        'footer_menu' => 'array',
         'social_links' => 'array',
         'contact_email' => 'array',
         'contact_phone' => 'array',
         'logo_size' => 'integer',
         'footer_logo_size' => 'integer',
+    ];
+
+    protected $appends = [
+        'admin_logo_url',
+        'admin_favicon_url',
+        'frontend_logo_url',
+        'frontend_favicon_url',
+        'footer_logo_url',
     ];
 
     /**
@@ -116,9 +126,27 @@ class LayoutSetting extends Model
      */
     public function getFooterLogoUrlAttribute()
     {
-        return $this->footer_logo_path
-            ? asset('storage/' . $this->footer_logo_path)
-            : null;
+        // Fallback to frontend logo if footer logo is not set
+        $path = $this->footer_logo_path ?: $this->frontend_logo;
+        return $path ? asset('storage/' . $path) : null;
+    }
+
+    /**
+     * Get footer logo size with fallback
+     */
+    public function getFooterLogoSizeAttribute()
+    {
+        // Use footer_logo_size if it's explicitly set to something non-zero/non-null
+        // And it's DIFFERENT from the default 40 if we want to follow logo_size fallback.
+        // Actually, if we're falling back on the logo, we should probably follow the logo_size too.
+
+        $footerSize = $this->getRawOriginal('footer_logo_size');
+
+        if ($this->footer_logo_path) {
+            return $footerSize ?: 50;
+        }
+
+        return $this->logo_size ?? 50;
     }
 
     /**
@@ -129,21 +157,5 @@ class LayoutSetting extends Model
         if ($this->$field && Storage::disk('public')->exists($this->$field)) {
             Storage::disk('public')->delete($this->$field);
         }
-    }
-
-    /**
-     * Get parsed menu items
-     */
-    public function getMenuItemsAttribute($value)
-    {
-        return $value ? json_decode($value, true) : [];
-    }
-
-    /**
-     * Get parsed social links
-     */
-    public function getSocialLinksAttribute($value)
-    {
-        return $value ? json_decode($value, true) : [];
     }
 }

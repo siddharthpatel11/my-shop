@@ -74,6 +74,18 @@ class LayoutSettingController extends Controller
             'footer_bg_color' => 'nullable|string|max:7',
             'footer_text_color' => 'nullable|string|max:7',
 
+            // Menu Items (Header)
+            'menu_label' => 'nullable|array',
+            'menu_label.*' => 'nullable|string|max:100',
+            'menu_url' => 'nullable|array',
+            'menu_url.*' => 'nullable|string|max:255',
+
+            // Footer Menu
+            'footer_menu_label' => 'nullable|array',
+            'footer_menu_label.*' => 'nullable|string|max:100',
+            'footer_menu_url' => 'nullable|array',
+            'footer_menu_url.*' => 'nullable|string|max:255',
+
             // Social Links
             'social_icon' => 'nullable|array',
             'social_icon.*' => 'nullable|string|max:100',
@@ -111,13 +123,6 @@ class LayoutSettingController extends Controller
                 ->store('favicons/frontend', 'public');
         }
 
-        // Handle Footer Logo Upload
-        if ($request->hasFile('footer_logo')) {
-            $settings->deleteOldFile('footer_logo_path');
-            $validated['footer_logo_path'] = $request->file('footer_logo')
-                ->store('logos/footer', 'public');
-        }
-
         // Prepare social links array
         $socialLinks = [];
         if ($request->has('social_url')) {
@@ -133,6 +138,34 @@ class LayoutSettingController extends Controller
         }
 
         $validated['social_links'] = $socialLinks;
+
+        // Prepare Header Menu items
+        $menuItems = [];
+        if ($request->has('menu_label')) {
+            foreach ($request->menu_label as $key => $label) {
+                if ($label) {
+                    $menuItems[] = [
+                        'label' => $label,
+                        'url' => $request->menu_url[$key] ?? '#',
+                    ];
+                }
+            }
+        }
+        $validated['menu_items'] = $menuItems;
+
+        // Prepare Footer Menu items
+        $footerMenu = [];
+        if ($request->has('footer_menu_label')) {
+            foreach ($request->footer_menu_label as $key => $label) {
+                if ($label) {
+                    $footerMenu[] = [
+                        'label' => $label,
+                        'url' => $request->footer_menu_url[$key] ?? '#',
+                    ];
+                }
+            }
+        }
+        $validated['footer_menu'] = $footerMenu;
 
         // Update settings
         $settings->update($validated);

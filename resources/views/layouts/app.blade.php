@@ -261,13 +261,13 @@
                             <span>Orders</span>
                         </a>
                     </li>
-                    <li class="nav-item">
+                    {{--  <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('layout-settings.*') ? 'active' : '' }}"
                             href="{{ route('layout-settings.index') }}">
                             <i class="fas fa-cog"></i>
                             <span>Settings</span>
                         </a>
-                    </li>
+                    </li>  --}}
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('pages.*') ? 'active' : '' }}"
                             href="{{ route('pages.index') }}">
@@ -289,6 +289,13 @@
                                 <a class="dropdown-item" href="{{ route('dashboard') }}">
                                     <i class="fas fa-tachometer-alt"></i>
                                     Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('layout-settings.*') ? 'active' : '' }}"
+                                    href="{{ route('layout-settings.index') }}">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Settings</span>
                                 </a>
                             </li>
                             <li>
