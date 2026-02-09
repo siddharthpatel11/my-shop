@@ -101,7 +101,7 @@
                         class="navbar-brand-logo">
                 @else
                     <span class="navbar-brand">
-                        <i class="fas fa-store me-2"></i>{{ $appName }}
+                        <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>{{ $appName }}
                     </span>
                 @endif
             </a>
@@ -246,6 +246,36 @@
                             </li>
                         @endforeach
                     </ul>
+                </div>
+                <div class="col-md-5">
+                    <h5 class="mb-3">Contact Information</h5>
+                    @if (isset($layoutSettings))
+                        <div class="contact-info">
+                            @if ($layoutSettings->contact_email)
+                                @foreach ($layoutSettings->contact_email as $email)
+                                    @if ($email)
+                                        <p class="mb-2 text-muted">
+                                            <i class="fas fa-envelope me-2 text-primary"></i>
+                                            <a href="mailto:{{ $email }}"
+                                                class="text-decoration-none text-muted">{{ $email }}</a>
+                                        </p>
+                                    @endif
+                                @endforeach
+                            @endif
+
+                            @if ($layoutSettings->contact_phone)
+                                @foreach ($layoutSettings->contact_phone as $phone)
+                                    @if ($phone)
+                                        <p class="mb-2 text-muted">
+                                            <i class="fas fa-phone me-2 text-primary"></i>
+                                            <a href="tel:{{ $phone }}"
+                                                class="text-decoration-none text-muted">{{ $phone }}</a>
+                                        </p>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="row">

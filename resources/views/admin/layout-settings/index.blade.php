@@ -29,8 +29,8 @@
             <div class="row g-4">
 
                 <!-- ========================================
-                     ADMIN PANEL SETTINGS
-                ========================================= -->
+                             ADMIN PANEL SETTINGS
+                        ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-primary text-white">
@@ -46,12 +46,10 @@
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-heading me-2"></i>Admin App Name
                                 </label>
-                                <input type="text"
-                                       class="form-control @error('admin_app_name') is-invalid @enderror"
-                                       name="admin_app_name"
-                                       value="{{ old('admin_app_name', $settings->admin_app_name ?? 'Admin Panel') }}"
-                                       placeholder="Admin Panel"
-                                       required>
+                                <input type="text" class="form-control @error('admin_app_name') is-invalid @enderror"
+                                    name="admin_app_name"
+                                    value="{{ old('admin_app_name', $settings->admin_app_name ?? 'Admin Panel') }}"
+                                    placeholder="Admin Panel" required>
                                 @error('admin_app_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -77,19 +75,20 @@
                                                 'fas fa-bolt' => 'Bolt',
                                                 'fas fa-star' => 'Star',
                                             ];
-                                            $selectedAdminIcon = old('admin_icon', $settings->admin_icon ?? 'fas fa-shield-halved');
+                                            $selectedAdminIcon = old(
+                                                'admin_icon',
+                                                $settings->admin_icon ?? 'fas fa-shield-halved',
+                                            );
                                         @endphp
 
-                                        @foreach($adminIcons as $iconClass => $iconName)
+                                        @foreach ($adminIcons as $iconClass => $iconName)
                                             <div class="col-3">
-                                                <input type="radio"
-                                                       class="btn-check"
-                                                       name="admin_icon"
-                                                       id="admin_icon_{{ $loop->index }}"
-                                                       value="{{ $iconClass }}"
-                                                       {{ $selectedAdminIcon == $iconClass ? 'checked' : '' }}>
-                                                <label class="btn btn-outline-primary w-100 d-flex flex-column align-items-center py-3"
-                                                       for="admin_icon_{{ $loop->index }}">
+                                                <input type="radio" class="btn-check" name="admin_icon"
+                                                    id="admin_icon_{{ $loop->index }}" value="{{ $iconClass }}"
+                                                    {{ $selectedAdminIcon == $iconClass ? 'checked' : '' }}>
+                                                <label
+                                                    class="btn btn-outline-primary w-100 d-flex flex-column align-items-center py-3"
+                                                    for="admin_icon_{{ $loop->index }}">
                                                     <i class="{{ $iconClass }} fa-2x mb-2"></i>
                                                     <small>{{ $iconName }}</small>
                                                 </label>
@@ -108,14 +107,11 @@
 
                                 @if (isset($settings) && $settings->admin_logo)
                                     <div class="mb-3 p-3 bg-light rounded text-center">
-                                        <img src="{{ asset('storage/' . $settings->admin_logo) }}"
-                                             alt="Admin Logo"
-                                             class="img-fluid"
-                                             style="max-height: 100px; max-width: 200px;">
+                                        <img src="{{ asset('storage/' . $settings->admin_logo) }}" alt="Admin Logo"
+                                            class="img-fluid" style="max-height: 100px; max-width: 200px;">
                                         <div class="mt-2">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-danger"
-                                                    onclick="deleteLogo('admin_logo')">
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="deleteLogo('admin_logo')">
                                                 <i class="fas fa-trash me-1"></i>Remove Logo
                                             </button>
                                         </div>
@@ -127,10 +123,8 @@
                                     </div>
                                 @endif
 
-                                <input type="file"
-                                       class="form-control"
-                                       name="admin_logo"
-                                       accept="image/jpeg,image/png,image/jpg,image/svg+xml">
+                                <input type="file" class="form-control" name="admin_logo"
+                                    accept="image/jpeg,image/png,image/jpg,image/svg+xml">
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
                                     PNG or SVG recommended, max 2MB
@@ -145,23 +139,19 @@
 
                                 @if (isset($settings) && $settings->admin_favicon)
                                     <div class="mb-3 p-3 bg-light rounded text-center">
-                                        <img src="{{ asset('storage/' . $settings->admin_favicon) }}"
-                                             alt="Admin Favicon"
-                                             style="max-height: 48px; max-width: 48px;">
+                                        <img src="{{ asset('storage/' . $settings->admin_favicon) }}" alt="Admin Favicon"
+                                            style="max-height: 48px; max-width: 48px;">
                                         <div class="mt-2">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-danger"
-                                                    onclick="deleteLogo('admin_favicon')">
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="deleteLogo('admin_favicon')">
                                                 <i class="fas fa-trash me-1"></i>Remove
                                             </button>
                                         </div>
                                     </div>
                                 @endif
 
-                                <input type="file"
-                                       class="form-control"
-                                       name="admin_favicon"
-                                       accept="image/x-icon,image/png,image/jpg">
+                                <input type="file" class="form-control" name="admin_favicon"
+                                    accept="image/x-icon,image/png,image/jpg">
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
                                     ICO or PNG, max 512KB, 32x32px or 64x64px
@@ -172,8 +162,8 @@
                 </div>
 
                 <!-- ========================================
-                     FRONTEND SETTINGS
-                ========================================= -->
+                             FRONTEND SETTINGS
+                        ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-success text-white">
@@ -189,12 +179,9 @@
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-heading me-2"></i>Frontend App Name
                                 </label>
-                                <input type="text"
-                                       class="form-control"
-                                       name="frontend_app_name"
-                                       value="{{ old('frontend_app_name', $settings->frontend_app_name ?? 'MyShop') }}"
-                                       placeholder="MyShop"
-                                       required>
+                                <input type="text" class="form-control" name="frontend_app_name"
+                                    value="{{ old('frontend_app_name', $settings->frontend_app_name ?? 'MyShop') }}"
+                                    placeholder="MyShop" required>
                             </div>
 
                             <!-- Frontend Icon Selector -->
@@ -217,19 +204,20 @@
                                                 'fas fa-gift' => 'Gift',
                                                 'fas fa-basket-shopping' => 'Basket',
                                             ];
-                                            $selectedFrontendIcon = old('frontend_icon', $settings->frontend_icon ?? 'fas fa-store');
+                                            $selectedFrontendIcon = old(
+                                                'frontend_icon',
+                                                $settings->frontend_icon ?? 'fas fa-store',
+                                            );
                                         @endphp
 
-                                        @foreach($frontendIcons as $iconClass => $iconName)
+                                        @foreach ($frontendIcons as $iconClass => $iconName)
                                             <div class="col-3">
-                                                <input type="radio"
-                                                       class="btn-check"
-                                                       name="frontend_icon"
-                                                       id="frontend_icon_{{ $loop->index }}"
-                                                       value="{{ $iconClass }}"
-                                                       {{ $selectedFrontendIcon == $iconClass ? 'checked' : '' }}>
-                                                <label class="btn btn-outline-success w-100 d-flex flex-column align-items-center py-3"
-                                                       for="frontend_icon_{{ $loop->index }}">
+                                                <input type="radio" class="btn-check" name="frontend_icon"
+                                                    id="frontend_icon_{{ $loop->index }}" value="{{ $iconClass }}"
+                                                    {{ $selectedFrontendIcon == $iconClass ? 'checked' : '' }}>
+                                                <label
+                                                    class="btn btn-outline-success w-100 d-flex flex-column align-items-center py-3"
+                                                    for="frontend_icon_{{ $loop->index }}">
                                                     <i class="{{ $iconClass }} fa-2x mb-2"></i>
                                                     <small>{{ $iconName }}</small>
                                                 </label>
@@ -247,24 +235,19 @@
 
                                 @if (isset($settings) && $settings->frontend_logo)
                                     <div class="mb-3 p-3 bg-light rounded text-center">
-                                        <img src="{{ asset('storage/' . $settings->frontend_logo) }}"
-                                             alt="Frontend Logo"
-                                             class="img-fluid"
-                                             style="max-height: 100px; max-width: 200px;">
+                                        <img src="{{ asset('storage/' . $settings->frontend_logo) }}" alt="Frontend Logo"
+                                            class="img-fluid" style="max-height: 100px; max-width: 200px;">
                                         <div class="mt-2">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-danger"
-                                                    onclick="deleteLogo('frontend_logo')">
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="deleteLogo('frontend_logo')">
                                                 <i class="fas fa-trash me-1"></i>Remove Logo
                                             </button>
                                         </div>
                                     </div>
                                 @endif
 
-                                <input type="file"
-                                       class="form-control"
-                                       name="frontend_logo"
-                                       accept="image/jpeg,image/png,image/jpg,image/svg+xml">
+                                <input type="file" class="form-control" name="frontend_logo"
+                                    accept="image/jpeg,image/png,image/jpg,image/svg+xml">
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
                                     PNG or SVG recommended, max 2MB
@@ -280,22 +263,18 @@
                                 @if (isset($settings) && $settings->frontend_favicon)
                                     <div class="mb-3 p-3 bg-light rounded text-center">
                                         <img src="{{ asset('storage/' . $settings->frontend_favicon) }}"
-                                             alt="Frontend Favicon"
-                                             style="max-height: 48px; max-width: 48px;">
+                                            alt="Frontend Favicon" style="max-height: 48px; max-width: 48px;">
                                         <div class="mt-2">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-danger"
-                                                    onclick="deleteLogo('frontend_favicon')">
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="deleteLogo('frontend_favicon')">
                                                 <i class="fas fa-trash me-1"></i>Remove
                                             </button>
                                         </div>
                                     </div>
                                 @endif
 
-                                <input type="file"
-                                       class="form-control"
-                                       name="frontend_favicon"
-                                       accept="image/x-icon,image/png,image/jpg">
+                                <input type="file" class="form-control" name="frontend_favicon"
+                                    accept="image/x-icon,image/png,image/jpg">
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
                                     ICO or PNG, max 512KB
@@ -306,8 +285,8 @@
                 </div>
 
                 <!-- ========================================
-                     HEADER & TITLE SETTINGS
-                ========================================= -->
+                             HEADER & TITLE SETTINGS
+                        ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-info text-white">
@@ -322,11 +301,9 @@
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-heading me-2"></i>Site Title
                                 </label>
-                                <input type="text"
-                                       class="form-control"
-                                       name="site_title"
-                                       value="{{ old('site_title', $settings->site_title ?? 'MyShop') }}"
-                                       placeholder="MyShop">
+                                <input type="text" class="form-control" name="site_title"
+                                    value="{{ old('site_title', $settings->site_title ?? 'MyShop') }}"
+                                    placeholder="MyShop">
                             </div>
 
                             <!-- Title Background Color -->
@@ -335,15 +312,12 @@
                                     <i class="fas fa-fill-drip me-2"></i>Title Background Color
                                 </label>
                                 <div class="input-group">
-                                    <input type="color"
-                                           class="form-control form-control-color"
-                                           name="title_bg_color"
-                                           value="{{ old('title_bg_color', $settings->title_bg_color ?? '#ffffff') }}"
-                                           style="width: 60px;">
-                                    <input type="text"
-                                           class="form-control"
-                                           value="{{ old('title_bg_color', $settings->title_bg_color ?? '#ffffff') }}"
-                                           readonly>
+                                    <input type="color" class="form-control form-control-color" name="title_bg_color"
+                                        value="{{ old('title_bg_color', $settings->title_bg_color ?? '#ffffff') }}"
+                                        style="width: 60px;">
+                                    <input type="text" class="form-control"
+                                        value="{{ old('title_bg_color', $settings->title_bg_color ?? '#ffffff') }}"
+                                        readonly>
                                 </div>
                             </div>
 
@@ -353,15 +327,12 @@
                                     <i class="fas fa-paint-brush me-2"></i>Title Text Color
                                 </label>
                                 <div class="input-group">
-                                    <input type="color"
-                                           class="form-control form-control-color"
-                                           name="title_text_color"
-                                           value="{{ old('title_text_color', $settings->title_text_color ?? '#212529') }}"
-                                           style="width: 60px;">
-                                    <input type="text"
-                                           class="form-control"
-                                           value="{{ old('title_text_color', $settings->title_text_color ?? '#212529') }}"
-                                           readonly>
+                                    <input type="color" class="form-control form-control-color" name="title_text_color"
+                                        value="{{ old('title_text_color', $settings->title_text_color ?? '#212529') }}"
+                                        style="width: 60px;">
+                                    <input type="text" class="form-control"
+                                        value="{{ old('title_text_color', $settings->title_text_color ?? '#212529') }}"
+                                        readonly>
                                 </div>
                             </div>
 
@@ -370,13 +341,9 @@
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-expand-arrows-alt me-2"></i>Logo Size (Height in pixels)
                                 </label>
-                                <input type="number"
-                                       class="form-control"
-                                       name="logo_size"
-                                       value="{{ old('logo_size', $settings->logo_size ?? 45) }}"
-                                       min="20"
-                                       max="200"
-                                       placeholder="45">
+                                <input type="number" class="form-control" name="logo_size"
+                                    value="{{ old('logo_size', $settings->logo_size ?? 45) }}" min="20"
+                                    max="200" placeholder="45">
                                 <div class="form-text">Recommended: 40-50px for best appearance</div>
                             </div>
                         </div>
@@ -384,8 +351,8 @@
                 </div>
 
                 <!-- ========================================
-                     FOOTER SETTINGS
-                ========================================= -->
+                             FOOTER SETTINGS
+                        ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-dark text-white">
@@ -400,10 +367,8 @@
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-align-left me-2"></i>Footer Text
                                 </label>
-                                <textarea class="form-control"
-                                          name="footer_text"
-                                          rows="2"
-                                          placeholder="© 2024 MyCompany. All rights reserved.">{{ old('footer_text', $settings->footer_text ?? '') }}</textarea>
+                                <textarea class="form-control" name="footer_text" rows="2"
+                                    placeholder="© 2024 MyCompany. All rights reserved.">{{ old('footer_text', $settings->footer_text ?? '') }}</textarea>
                             </div>
 
                             <!-- Footer Background Color -->
@@ -412,15 +377,12 @@
                                     <i class="fas fa-fill-drip me-2"></i>Footer Background Color
                                 </label>
                                 <div class="input-group">
-                                    <input type="color"
-                                           class="form-control form-control-color"
-                                           name="footer_bg_color"
-                                           value="{{ old('footer_bg_color', $settings->footer_bg_color ?? '#f8f9fa') }}"
-                                           style="width: 60px;">
-                                    <input type="text"
-                                           class="form-control"
-                                           value="{{ old('footer_bg_color', $settings->footer_bg_color ?? '#f8f9fa') }}"
-                                           readonly>
+                                    <input type="color" class="form-control form-control-color" name="footer_bg_color"
+                                        value="{{ old('footer_bg_color', $settings->footer_bg_color ?? '#f8f9fa') }}"
+                                        style="width: 60px;">
+                                    <input type="text" class="form-control"
+                                        value="{{ old('footer_bg_color', $settings->footer_bg_color ?? '#f8f9fa') }}"
+                                        readonly>
                                 </div>
                             </div>
 
@@ -430,15 +392,13 @@
                                     <i class="fas fa-paint-brush me-2"></i>Footer Text Color
                                 </label>
                                 <div class="input-group">
-                                    <input type="color"
-                                           class="form-control form-control-color"
-                                           name="footer_text_color"
-                                           value="{{ old('footer_text_color', $settings->footer_text_color ?? '#6c757d') }}"
-                                           style="width: 60px;">
-                                    <input type="text"
-                                           class="form-control"
-                                           value="{{ old('footer_text_color', $settings->footer_text_color ?? '#6c757d') }}"
-                                           readonly>
+                                    <input type="color" class="form-control form-control-color"
+                                        name="footer_text_color"
+                                        value="{{ old('footer_text_color', $settings->footer_text_color ?? '#6c757d') }}"
+                                        style="width: 60px;">
+                                    <input type="text" class="form-control"
+                                        value="{{ old('footer_text_color', $settings->footer_text_color ?? '#6c757d') }}"
+                                        readonly>
                                 </div>
                             </div>
 
@@ -447,13 +407,9 @@
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-expand-arrows-alt me-2"></i>Footer Logo Size (Height in pixels)
                                 </label>
-                                <input type="number"
-                                       class="form-control"
-                                       name="footer_logo_size"
-                                       value="{{ old('footer_logo_size', $settings->footer_logo_size ?? 40) }}"
-                                       min="20"
-                                       max="100"
-                                       placeholder="40">
+                                <input type="number" class="form-control" name="footer_logo_size"
+                                    value="{{ old('footer_logo_size', $settings->footer_logo_size ?? 40) }}"
+                                    min="20" max="100" placeholder="40">
                                 <div class="form-text">Recommended: 30-40px</div>
                             </div>
 
@@ -467,30 +423,26 @@
                                 @if (isset($settings) && $settings->footer_logo_path)
                                     <div class="mb-3 p-3 bg-light rounded text-center">
                                         <img src="{{ asset('storage/' . $settings->footer_logo_path) }}"
-                                             alt="Footer Logo"
-                                             style="max-height: 60px;">
+                                            alt="Footer Logo" style="max-height: 60px;">
                                         <div class="mt-2">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-danger"
-                                                    onclick="deleteLogo('footer_logo_path')">
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="deleteLogo('footer_logo_path')">
                                                 <i class="fas fa-trash me-1"></i>Remove
                                             </button>
                                         </div>
                                     </div>
                                 @endif
 
-                                <input type="file"
-                                       class="form-control"
-                                       name="footer_logo"
-                                       accept="image/jpeg,image/png,image/jpg,image/svg+xml">
+                                <input type="file" class="form-control" name="footer_logo"
+                                    accept="image/jpeg,image/png,image/jpg,image/svg+xml">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ========================================
-                     CONTACT INFORMATION
-                ========================================= -->
+                             CONTACT INFORMATION
+                        ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-warning text-dark">
@@ -500,34 +452,76 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-envelope me-2"></i>Contact Email
+                            <!-- Contact Emails -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-envelope me-2"></i>Contact Emails</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="addContactField('email')">
+                                        <i class="fas fa-plus me-1"></i>Add Email
+                                    </button>
                                 </label>
-                                <input type="email"
-                                       class="form-control"
-                                       name="contact_email"
-                                       value="{{ old('contact_email', $settings->contact_email ?? '') }}"
-                                       placeholder="info@example.com">
+                                <div id="email_container">
+                                    @php
+                                        $emails = old('contact_email', $settings->contact_email ?? ['']);
+                                        if (empty($emails)) {
+                                            $emails = [''];
+                                        }
+                                    @endphp
+                                    @foreach ($emails as $email)
+                                        <div class="input-group mb-2">
+                                            <input type="email" class="form-control" name="contact_email[]"
+                                                value="{{ $email }}" placeholder="info@example.com">
+                                            <button type="button" class="btn btn-outline-danger"
+                                                onclick="removeContactField(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @error('contact_email.*')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
 
+                            <!-- Contact Phones -->
                             <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-phone me-2"></i>Contact Phone
+                                <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-phone me-2"></i>Contact Phone Numbers</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="addContactField('phone')">
+                                        <i class="fas fa-plus me-1"></i>Add Phone
+                                    </button>
                                 </label>
-                                <input type="text"
-                                       class="form-control"
-                                       name="contact_phone"
-                                       value="{{ old('contact_phone', $settings->contact_phone ?? '') }}"
-                                       placeholder="+1 234 567 8900">
+                                <div id="phone_container">
+                                    @php
+                                        $phones = old('contact_phone', $settings->contact_phone ?? ['']);
+                                        if (empty($phones)) {
+                                            $phones = [''];
+                                        }
+                                    @endphp
+                                    @foreach ($phones as $phone)
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" name="contact_phone[]"
+                                                value="{{ $phone }}" placeholder="+1 234 567 8900">
+                                            <button type="button" class="btn btn-outline-danger"
+                                                onclick="removeContactField(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @error('contact_phone.*')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ========================================
-                     SOCIAL MEDIA LINKS
-                ========================================= -->
+                             SOCIAL MEDIA LINKS
+                        ========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-secondary text-white">
@@ -541,44 +535,36 @@
                                 <label class="form-label fw-bold">
                                     <i class="fab fa-facebook me-2"></i>Facebook
                                 </label>
-                                <input type="url"
-                                       class="form-control"
-                                       name="social_facebook"
-                                       value="{{ old('social_facebook', $settings->social_links['facebook'] ?? '') }}"
-                                       placeholder="https://facebook.com/yourpage">
+                                <input type="url" class="form-control" name="social_facebook"
+                                    value="{{ old('social_facebook', $settings->social_links['facebook'] ?? '') }}"
+                                    placeholder="https://facebook.com/yourpage">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
                                     <i class="fab fa-twitter me-2"></i>Twitter
                                 </label>
-                                <input type="url"
-                                       class="form-control"
-                                       name="social_twitter"
-                                       value="{{ old('social_twitter', $settings->social_links['twitter'] ?? '') }}"
-                                       placeholder="https://twitter.com/yourhandle">
+                                <input type="url" class="form-control" name="social_twitter"
+                                    value="{{ old('social_twitter', $settings->social_links['twitter'] ?? '') }}"
+                                    placeholder="https://twitter.com/yourhandle">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
                                     <i class="fab fa-instagram me-2"></i>Instagram
                                 </label>
-                                <input type="url"
-                                       class="form-control"
-                                       name="social_instagram"
-                                       value="{{ old('social_instagram', $settings->social_links['instagram'] ?? '') }}"
-                                       placeholder="https://instagram.com/yourhandle">
+                                <input type="url" class="form-control" name="social_instagram"
+                                    value="{{ old('social_instagram', $settings->social_links['instagram'] ?? '') }}"
+                                    placeholder="https://instagram.com/yourhandle">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
                                     <i class="fab fa-linkedin me-2"></i>LinkedIn
                                 </label>
-                                <input type="url"
-                                       class="form-control"
-                                       name="social_linkedin"
-                                       value="{{ old('social_linkedin', $settings->social_links['linkedin'] ?? '') }}"
-                                       placeholder="https://linkedin.com/company/yourcompany">
+                                <input type="url" class="form-control" name="social_linkedin"
+                                    value="{{ old('social_linkedin', $settings->social_links['linkedin'] ?? '') }}"
+                                    placeholder="https://linkedin.com/company/yourcompany">
                             </div>
                         </div>
                     </div>
@@ -600,66 +586,93 @@
 @endsection
 
 @push('styles')
-<style>
-    .icon-selector .btn-check:checked + label {
-        border-width: 2px;
-        font-weight: 600;
-    }
+    <style>
+        .icon-selector .btn-check:checked+label {
+            border-width: 2px;
+            font-weight: 600;
+        }
 
-    .icon-selector label {
-        cursor: pointer;
-        transition: all 0.3s;
-        height: 100%;
-    }
+        .icon-selector label {
+            cursor: pointer;
+            transition: all 0.3s;
+            height: 100%;
+        }
 
-    .icon-selector label:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+        .icon-selector label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-    .form-control-color {
-        height: 38px;
-    }
-</style>
+        .form-control-color {
+            height: 38px;
+        }
+    </style>
 @endpush
 
 @push('scripts')
-<script>
-    // Delete Logo Function
-    function deleteLogo(type) {
-        if (!confirm('Are you sure you want to delete this file?')) {
-            return;
+    <script>
+        // Delete Logo Function
+        function deleteLogo(type) {
+            if (!confirm('Are you sure you want to delete this file?')) {
+                return;
+            }
+
+            fetch(`/layout-settings/delete-logo/${type}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Failed to delete file');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the file');
+                });
         }
 
-        fetch(`/layout-settings/delete-logo/${type}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.error || 'Failed to delete file');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while deleting the file');
+        // Color Picker Sync
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            colorInput.addEventListener('input', function() {
+                const textInput = this.parentElement.querySelector('input[type="text"]');
+                if (textInput) {
+                    textInput.value = this.value;
+                }
+            });
         });
-    }
 
-    // Color Picker Sync
-    document.querySelectorAll('input[type="color"]').forEach(colorInput => {
-        colorInput.addEventListener('input', function() {
-            const textInput = this.parentElement.querySelector('input[type="text"]');
-            if (textInput) {
-                textInput.value = this.value;
+        // Add dynamic contact fields
+        function addContactField(type) {
+            const container = document.getElementById(`${type}_container`);
+            const placeholder = type === 'email' ? 'info@example.com' : '+1 234 567 8900';
+            const inputType = type === 'email' ? 'email' : 'text';
+
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+                <input type="${inputType}" class="form-control" name="contact_${type}[]" placeholder="${placeholder}">
+                <button type="button" class="btn btn-outline-danger" onclick="removeContactField(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeContactField(button) {
+            const container = button.closest('[id$="_container"]');
+            if (container.children.length > 1) {
+                button.closest('.input-group').remove();
+            } else {
+                // Just clear the input instead of removing if it's the last one
+                button.closest('.input-group').querySelector('input').value = '';
             }
-        });
-    });
-</script>
+        }
+    </script>
 @endpush

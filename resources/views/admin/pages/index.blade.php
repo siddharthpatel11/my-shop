@@ -23,6 +23,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Title</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -31,6 +32,18 @@
                                 <tr>
                                     <td>
                                         <strong>{{ $page->title }}</strong>
+                                        <div class="small text-muted">Slug: {{ $page->slug }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input status-toggle" type="checkbox"
+                                                data-id="{{ $page->slug }}"
+                                                {{ $page->status === 'active' ? 'checked' : '' }} style="cursor: pointer;">
+                                            <span
+                                                class="badge bg-{{ $page->status === 'active' ? 'success' : 'secondary' }} status-badge">
+                                                {{ ucfirst($page->status ?? 'Active') }}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -82,6 +95,40 @@
                     if (!confirm('Are you sure you want to delete this page?')) {
                         e.preventDefault();
                     }
+                });
+            });
+
+            // Status toggle
+            document.querySelectorAll('.status-toggle').forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const slug = this.dataset.id;
+                    const badge = this.parentElement.querySelector('.status-badge');
+
+                    fetch(`/pages/${slug}/toggle-status`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                badge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(
+                                    1);
+                                badge.className =
+                                    `badge status-badge bg-${data.status === 'active' ? 'success' : 'secondary'}`;
+                            } else {
+                                alert('Error updating status');
+                                this.checked = !this.checked;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Something went wrong');
+                            this.checked = !this.checked;
+                        });
                 });
             });
         </script>

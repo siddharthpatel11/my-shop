@@ -39,8 +39,8 @@ return new class extends Migration
             $table->integer('footer_logo_size')->default(40); // Footer logo height in pixels
 
             // Contact Information
-            $table->string('contact_email')->nullable();
-            $table->string('contact_phone')->nullable();
+            $table->json('contact_email')->nullable();
+            $table->json('contact_phone')->nullable();
 
             // Footer Settings
             $table->string('footer_logo_path')->nullable(); // Alternative footer logo

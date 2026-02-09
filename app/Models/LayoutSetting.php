@@ -57,6 +57,8 @@ class LayoutSetting extends Model
         'is_active' => 'boolean',
         'menu_items' => 'array',
         'social_links' => 'array',
+        'contact_email' => 'array',
+        'contact_phone' => 'array',
         'logo_size' => 'integer',
         'footer_logo_size' => 'integer',
     ];
