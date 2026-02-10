@@ -28,9 +28,7 @@
 
             <div class="row g-4">
 
-                <!-- ========================================
-                                                                                                                                 ADMIN PANEL SETTINGS
-                                                                                                                            ========================================= -->
+                {{--  <!-- ========================================ADMIN PANEL SETTINGS========================================= -->  --}}
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-primary text-white">
@@ -161,9 +159,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================
-                                                                                                                                 FRONTEND SETTINGS
-                                                                                                                            ========================================= -->
+                {{--  <!-- ========================================FRONTEND SETTINGS========================================= -->  --}}
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-success text-white">
@@ -284,9 +280,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================
-                                                                                                                                 HEADER & TITLE SETTINGS
-                                                                                                                            ========================================= -->
+                {{--  <!-- ========================================HEADER & TITLE SETTINGS========================================= -->  --}}
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-info text-white">
@@ -378,9 +372,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================
-                                                                                                                                 FOOTER SETTINGS
-                                                                                                                            ========================================= -->
+                {{--  <!-- ========================================FOOTER SETTINGS========================================= -->  --}}
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-dark text-white">
@@ -461,9 +453,7 @@
                     </div>
                 </div>
 
-                <!-- ========================================
-                                                                                                                                 CONTACT INFORMATION
-                                                                                                                            ========================================= -->
+                <!-- ======================================CONTACT INFORMATION========================================= -->
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-warning text-dark">
@@ -536,13 +526,63 @@
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <!-- Physical Address -->
+                            <div class="mb-3 border-top pt-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-location-dot me-2"></i>Physical Address
+                                </label>
+                                <textarea class="form-control" name="contact_address" id="contact_address" rows="3"
+                                    placeholder="123 Shopping Street, City, Country">{{ old('contact_address', $settings->contact_address ?? '') }}</textarea>
+                            </div>
+
+                            <!-- Google Maps Link -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-map-location-dot me-2"></i>Google Maps Link (for "Get Directions")
+                                </label>
+                                <input type="text" class="form-control" name="address_link" id="address_link"
+                                    value="{{ old('address_link', $settings->address_link ?? '') }}"
+                                    placeholder="https://maps.google.com/...">
+                                <div class="form-text">Paste the full URL to your location on Google Maps</div>
+                            </div>
+
+                            <!-- Google Maps Embed Code -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-code me-2"></i>Google Maps Embed Code (Optional)
+                                </label>
+                                <textarea class="form-control" name="map_embed" id="map_embed" rows="3"
+                                    placeholder='<iframe src="..." ...></iframe>'>{{ old('map_embed', $settings->map_embed ?? '') }}</textarea>
+                                <div class="form-text">
+                                    <p class="mb-1">Paste the <code>&lt;iframe&gt;</code> code from Google Maps to show
+                                        a visual map in the footer.</p>
+                                    <small class="text-primary fw-bold">
+                                        <i class="fas fa-magic me-1"></i> Tip: If you leave this empty, the system will
+                                        try to auto-generate a map from your Link or Address above!
+                                    </small>
+                                    <br>
+                                    <a href="https://support.google.com/maps/answer/144361" target="_blank"
+                                        class="small text-decoration-none">
+                                        <i class="fas fa-question-circle me-1"></i> How to get embed code?
+                                    </a>
+                                </div>
+
+                                <!-- Map Preview -->
+                                <div id="map_preview_container" class="mt-3"
+                                    style="display: {{ old('map_embed', $settings->map_embed) ? 'block' : 'none' }};">
+                                    <label class="form-label small fw-bold">Map Preview:</label>
+                                    <div id="map_preview" class="border rounded p-2 bg-white text-center"
+                                        style="min-height: 200px;">
+                                        {!! old('map_embed', $settings->map_embed ?? '') !!}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ========================================
-                                                                                                                                 SOCIAL MEDIA LINKS
-                                                                                                                            ========================================= -->
+                {{--  <!-- ========================================SOCIAL MEDIA LINKS========================================= -->  --}}
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-secondary text-white">
@@ -768,6 +808,67 @@
         function removeSocialLink(button) {
             button.closest('.social-link-item').remove();
         }
+
+        // Map Preview Logic
+        const mapEmbedArea = document.getElementById('map_embed');
+        const mapLinkInput = document.getElementById('address_link');
+        const mapAddressArea = document.getElementById('contact_address');
+        const mapPreviewContainer = document.getElementById('map_preview_container');
+        const mapPreview = document.getElementById('map_preview');
+
+        function updateMapPreview() {
+            let code = mapEmbedArea.value.trim();
+
+            if (!code) {
+                // Try fallback from link or address
+                let query = '';
+                const link = mapLinkInput ? mapLinkInput.value.trim() : '';
+                const address = mapAddressArea ? mapAddressArea.value.trim() : '';
+
+                if (link) {
+                    // Simple extraction logic for common Google Maps links
+                    const searchRegex = /maps\/search\/(.*?)\//;
+                    const qRegex = /q=(.*?)(&|$)/;
+                    let match = link.match(searchRegex) || link.match(qRegex);
+
+                    if (match) {
+                        query = decodeURIComponent(match[1]);
+                    } else {
+                        query = link;
+                    }
+                } else if (address) {
+                    query = address;
+                }
+
+                if (query && query.length > 3) {
+                    const encoded = encodeURIComponent(query);
+                    code =
+                        `<iframe src="https://maps.google.com/maps?q=${encoded}&t=&z=13&ie=UTF8&iwloc=&output=embed" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>`;
+                }
+            }
+
+            if (code) {
+                mapPreviewContainer.style.display = 'block';
+                mapPreview.innerHTML = code;
+
+                // Ensure iframes inside preview are responsive
+                const iframes = mapPreview.getElementsByTagName('iframe');
+                if (iframes.length > 0) {
+                    iframes[0].style.width = '100%';
+                    iframes[0].style.height = '200px';
+                }
+            } else {
+                mapPreviewContainer.style.display = 'none';
+                mapPreview.innerHTML = '';
+            }
+        }
+
+        if (mapEmbedArea) mapEmbedArea.addEventListener('input', updateMapPreview);
+        if (mapLinkInput) mapLinkInput.addEventListener('input', updateMapPreview);
+        if (mapAddressArea) mapAddressArea.addEventListener('input', updateMapPreview);
+
+        // Initial preview check
+        updateMapPreview();
 
         function updateSocialIconPreview(input) {
             const iconPreview = input.previousElementSibling.querySelector('i');

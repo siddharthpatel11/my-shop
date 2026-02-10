@@ -39,6 +39,9 @@ class LayoutSetting extends Model
         // Contact Information
         'contact_email',
         'contact_phone',
+        'contact_address',
+        'address_link',
+        'map_embed',
 
         // Footer Settings
         'footer_logo_path',
@@ -71,6 +74,7 @@ class LayoutSetting extends Model
         'frontend_logo_url',
         'frontend_favicon_url',
         'footer_logo_url',
+        'map_html',
     ];
 
     /**
@@ -147,6 +151,45 @@ class LayoutSetting extends Model
         }
 
         return $this->logo_size ?? 50;
+    }
+
+    /**
+     * Get the map HTML (either specialized embed code or fallback from link/address)
+     */
+    public function getMapHtmlAttribute()
+    {
+        // 1. If we have explicit embed code, use it
+        if ($this->map_embed) {
+            return $this->map_embed;
+        }
+
+        // 2. Identify a search query for fallback
+        $query = null;
+
+        // Try link first (extracting from google maps search URL if possible)
+        if ($this->address_link) {
+            if (preg_match('/maps\/search\/(.*?)\//', $this->address_link, $matches)) {
+                $query = urldecode($matches[1]);
+            } elseif (preg_match('/q=(.*?)(&|$)/', $this->address_link, $matches)) {
+                $query = urldecode($matches[1]);
+            } else {
+                // If it's a generic link, we might not be able to embed it easily,
+                // but we can try to use it as a query if it's short.
+                $query = $this->address_link;
+            }
+        }
+
+        // If no query from link, use contact address
+        if (!$query && $this->contact_address) {
+            $query = $this->contact_address;
+        }
+
+        if ($query) {
+            $encodedQuery = urlencode($query);
+            return '<iframe src="https://maps.google.com/maps?q=' . $encodedQuery . '&t=&z=13&ie=UTF8&iwloc=&output=embed" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>';
+        }
+
+        return null;
     }
 
     /**

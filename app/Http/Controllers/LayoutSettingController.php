@@ -67,9 +67,11 @@ class LayoutSettingController extends Controller
             'contact_email.*' => 'nullable|email|max:255',
             'contact_phone' => 'nullable|array',
             'contact_phone.*' => 'nullable|string|max:20',
+            'contact_address' => 'nullable|string|max:500',
+            'address_link' => 'nullable|string|max:1000',
+            'map_embed' => 'nullable|string',
 
             // Footer Settings
-            'footer_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'footer_text' => 'nullable|string|max:500',
             'footer_bg_color' => 'nullable|string|max:7',
             'footer_text_color' => 'nullable|string|max:7',

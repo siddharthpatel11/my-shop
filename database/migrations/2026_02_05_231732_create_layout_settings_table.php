@@ -42,6 +42,13 @@ return new class extends Migration
             $table->json('contact_email')->nullable();
             $table->json('contact_phone')->nullable();
 
+            // address fields
+            $table->text('contact_address')->nullable();
+            $table->text('address_link')->nullable();
+
+            // Map Embed
+            $table->text('map_embed')->nullable();
+
             // Footer Settings
             $table->string('footer_logo_path')->nullable(); // Alternative footer logo
             $table->string('footer_text')->nullable();

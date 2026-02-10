@@ -55,7 +55,7 @@
         }
 
         .navbar-brand-logo {
-            max-height: 45px;
+            max-height: {{ $layoutSettings->logo_size ?? 45 }}px;
             width: auto;
         }
 
@@ -102,6 +102,48 @@
         .nav-link.active {
             color: #667eea !important;
             border-bottom: 2px solid #667eea;
+        }
+
+        /* Footer Improvements */
+        footer h6 {
+            color: {{ $layoutSettings->footer_text_color ?? '#212529' }} !important;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        footer .hover-link {
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        footer .hover-link:hover {
+            color: #667eea !important;
+            padding-left: 5px;
+        }
+
+        footer .social-icon {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        footer .social-icon:hover {
+            background: #667eea;
+            color: white !important;
+            transform: translateY(-3px);
+        }
+
+        footer .map-container {
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        footer .contact-info i {
+            min-width: 20px;
         }
     </style>
 
@@ -247,27 +289,54 @@
     <main>
         @yield('content')
     </main>
-    <footer class="bg-light border-top mt-3">
-        <div class="container py-4">
-            <div class="row md-5">
-                <a class="navbar-brand-with-logo" href="{{ route('frontend.home') }}">
-                    @if (isset($layoutSettings) && $layoutSettings->frontend_logo_url)
-                        <img src="{{ $layoutSettings->frontend_logo_url }}" alt="{{ $appName }}"
-                            class="navbar-brand-logo">
-                    @else
-                        <span class="navbar-brand">
-                            <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>
-                            <span class="navbar-brand-text">{{ $layoutSettings->site_title ?? $appName }}</span>
-                        </span>
-                    @endif
-                </a>
-                <div class="col-md-3 mt-2">
-                    <h5 class="mb-3">Quick Links</h5>
+    <footer class="bg-light border-top mt-5">
+        <div class="container py-5">
+            <!-- Top Section: Logo + Sections -->
+            <div class="row mb-4">
+                <!-- Brand Section -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <a class="navbar-brand-with-logo mb-3 d-block" href="{{ route('frontend.home') }}">
+                        @if (isset($layoutSettings) && $layoutSettings->frontend_logo_url)
+                            <img src="{{ $layoutSettings->frontend_logo_url }}" alt="{{ $appName }}"
+                                class="navbar-brand-logo">
+                        @else
+                            <span class="navbar-brand">
+                                <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>
+                                <span class="navbar-brand-text">{{ $layoutSettings->site_title ?? $appName }}</span>
+                            </span>
+                        @endif
+                    </a>
+                    <p class="text-muted small">Your trusted online shopping destination for quality products and
+                        exceptional service.</p>
+
+                    <!-- Social Media -->
+                    <div class="mt-3">
+                        <h6 class="fw-bold mb-3">Follow Us</h6>
+                        <div class="social-links">
+                            @if (isset($layoutSettings) && !empty($layoutSettings->social_links))
+                                @foreach ($layoutSettings->social_links as $social)
+                                    @if (isset($social['url']) && $social['url'])
+                                        <a href="{{ $social['url'] }}" target="_blank"
+                                            class="text-muted text-decoration-none me-2 social-icon"
+                                            title="{{ $social['title'] ?? '' }}">
+                                            <i class="{{ $social['icon'] ?? 'fab fa-link' }}"></i>
+                                        </a>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                    <h6 class="fw-bold mb-3">Quick Links</h6>
                     <ul class="list-unstyled">
                         @if (isset($layoutSettings) && $layoutSettings->footer_menu)
                             @foreach ($layoutSettings->footer_menu as $item)
                                 <li class="mb-2">
-                                    <a href="{{ $item['url'] ?? '#' }}" class="text-decoration-none text-muted">
+                                    <a href="{{ $item['url'] ?? '#' }}"
+                                        class="text-decoration-none text-muted hover-link">
                                         {{ $item['label'] ?? '' }}
                                     </a>
                                 </li>
@@ -276,7 +345,7 @@
                             @foreach ($dynamicPages as $page)
                                 <li class="mb-2">
                                     <a href="{{ route('page.show', $page->slug) }}"
-                                        class="text-decoration-none text-muted">
+                                        class="text-decoration-none text-muted hover-link">
                                         {{ $page->title }}
                                     </a>
                                 </li>
@@ -284,17 +353,19 @@
                         @endif
                     </ul>
                 </div>
-                <div class="col-md-3">
-                    <h5 class="mb-3">Contact Information</h5>
+
+                <!-- Contact Information -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <h6 class="fw-bold mb-3">Contact Us</h6>
                     @if (isset($layoutSettings))
                         <div class="contact-info">
                             @if ($layoutSettings->contact_email)
                                 @foreach ($layoutSettings->contact_email as $email)
                                     @if ($email)
-                                        <p class="mb-2 text-muted">
-                                            <i class="fas fa-envelope me-2 text-primary"></i>
+                                        <p class="mb-2 text-muted small d-flex align-items-start">
+                                            <i class="fas fa-envelope me-2 mt-1" style="color: #667eea;"></i>
                                             <a href="mailto:{{ $email }}"
-                                                class="text-decoration-none text-muted">{{ $email }}</a>
+                                                class="text-decoration-none text-muted hover-link text-break">{{ $email }}</a>
                                         </p>
                                     @endif
                                 @endforeach
@@ -303,39 +374,58 @@
                             @if ($layoutSettings->contact_phone)
                                 @foreach ($layoutSettings->contact_phone as $phone)
                                     @if ($phone)
-                                        <p class="mb-2 text-muted">
-                                            <i class="fas fa-phone me-2 text-primary"></i>
+                                        <p class="mb-2 text-muted small d-flex align-items-start">
+                                            <i class="fas fa-phone me-2 mt-1" style="color: #667eea;"></i>
                                             <a href="tel:{{ $phone }}"
-                                                class="text-decoration-none text-muted">{{ $phone }}</a>
+                                                class="text-decoration-none text-muted hover-link">{{ $phone }}</a>
                                         </p>
                                     @endif
                                 @endforeach
                             @endif
+
+                            @if ($layoutSettings->contact_address)
+                                <p class="mb-2 text-muted small d-flex align-items-start">
+                                    <i class="fas fa-location-dot me-2 mt-1" style="color: #667eea;"></i>
+                                    @if ($layoutSettings->address_link)
+                                        <a href="{{ $layoutSettings->address_link }}" target="_blank"
+                                            class="text-decoration-none text-muted hover-link">
+                                            {{ $layoutSettings->contact_address }}
+                                        </a>
+                                    @else
+                                        <span>{{ $layoutSettings->contact_address }}</span>
+                                    @endif
+                                </p>
+                            @endif
                         </div>
                     @endif
                 </div>
-                <div class="col-md-3">
-                    <h5 class="mb-3">Social Media</h5>
-                    @if (isset($layoutSettings) && !empty($layoutSettings->social_links))
-                        @foreach ($layoutSettings->social_links as $social)
-                            @if (isset($social['url']) && $social['url'])
-                                <a href="{{ $social['url'] }}" target="_blank"
-                                    class="text-muted text-decoration-none ms-3">
-                                    <i class="{{ $social['icon'] ?? 'fab fa-link' }} fa-lg me-1"></i>
-                                    <small>{{ $social['title'] ?? '' }}</small>
-                                </a>
-                            @endif
-                        @endforeach
+
+                <!-- Google Map -->
+                <div class="col-lg-4 col-md-6">
+                    @if ($layoutSettings->map_html)
+                        <h6 class="fw-bold mb-3">Find Us</h6>
+                        <div class="map-container overflow-hidden rounded shadow-sm" style="height: 200px;">
+                            {!! $layoutSettings->map_html !!}
+                        </div>
+                        <style>
+                            .map-container iframe {
+                                width: 100% !important;
+                                height: 200px !important;
+                                border: 0 !important;
+                            }
+                        </style>
                     @endif
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+
+            <!-- Bottom Section: Copyright -->
+            <div class="row pt-4 border-top">
+                <div class="col-12 text-center">
                     @if (isset($layoutSettings) && $layoutSettings->footer_text)
-                        <p class="text-muted mb-0">{{ $layoutSettings->footer_text }}</p>
+                        <p class="text-muted mb-0 small">{{ $layoutSettings->footer_text }}</p>
                     @else
-                        <p class="text-muted mb-0">© {{ date('Y') }} {{ $appName }}. All rights reserved.
-                        </p>
+                        <p class="text-muted mb-0 small">© {{ date('Y') }} {{ $appName }}. All rights
+                            reserved.</p>
                     @endif
                 </div>
             </div>

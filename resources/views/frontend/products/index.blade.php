@@ -536,17 +536,17 @@
     <div class="d-flex">
         <div class="toast-body">
             ${product ? `
-                                        <div class="d-flex align-items-center gap-2 mb-2">
-                                            <img src="${product.image}" style="width:50px;height:50px;object-fit:contain;">
-                                            <div>
-                                                <strong>${product.name}</strong><br>
-                                                <small>
-                                                    ${product.color ? `Color: ${product.color}` : ''}
-                                                    ${product.size ? ` | Size: ${product.size}` : ''}
-                                                </small>
-                                            </div>
-                                        </div>
-                                        ` : ''}
+                                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                                            <img src="${product.image}" style="width:50px;height:50px;object-fit:contain;">
+                                                            <div>
+                                                                <strong>${product.name}</strong><br>
+                                                                <small>
+                                                                    ${product.color ? `Color: ${product.color}` : ''}
+                                                                    ${product.size ? ` | Size: ${product.size}` : ''}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                        ` : ''}
             ${message}
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
