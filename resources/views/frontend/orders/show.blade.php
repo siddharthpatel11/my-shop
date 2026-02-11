@@ -213,10 +213,10 @@
 
                         <div class="bg-light rounded p-3 mb-3">
                             <div class="d-flex align-items-center">
-                                <i class="bi bi-cash-coin fs-4 text-success me-3"></i>
+                                <i class="bi bi-{{ $order->payment_method_icon }} fs-4 text-primary me-3"></i>
                                 <div>
                                     <small class="text-muted d-block">Payment Method</small>
-                                    <span class="fw-semibold">Cash on Delivery</span>
+                                    <span class="fw-semibold">{{ $order->payment_method_name }}</span>
                                 </div>
                             </div>
                         </div>

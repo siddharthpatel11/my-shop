@@ -61,7 +61,7 @@
                                 @if ($address->full_address)
                                     {{ $address->full_address }},
                                 @endif
-                                {{ $address->area }}, {{ $address->city }}, {{ $address->district }},
+                                {{ $address->city }}, {{ $address->district }},
                                 {{ $address->state }}, {{ $address->country }}
                                 @if ($address->pincode)
                                     - {{ $address->pincode }}
@@ -219,6 +219,43 @@
                         @endif
 
                         <hr>
+
+                        {{-- Payment Method Selection --}}
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Select Payment Method</h6>
+                            <div class="form-check border rounded p-3 mb-2 cursor-pointer transition-all payment-option"
+                                onclick="document.getElementById('cod').checked = true">
+                                <input class="form-check-input" type="radio" name="payment_method" id="cod"
+                                    value="cod" checked>
+                                <label class="form-check-label w-100 cursor-pointer" for="cod">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-cash-stack me-2 text-success"></i>
+                                            Cash on Delivery (COD)
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="form-check border rounded p-3 mb-2 cursor-pointer transition-all payment-option"
+                                onclick="document.getElementById('razorpay').checked = true">
+                                <input class="form-check-input" type="radio" name="payment_method" id="razorpay"
+                                    value="razorpay">
+                                <label class="form-check-label w-100 cursor-pointer" for="razorpay">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-credit-card me-2 text-primary"></i>
+                                            Online Payment (Razorpay)
+                                        </span>
+                                        <div class="razorpay-icons">
+                                            <img src="https://razorpay.com/assets/razorpay-glyph.svg" height="20"
+                                                alt="Razorpay">
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <hr>
                         <button class="btn btn-primary w-100 py-3 fw-semibold mb-2" onclick="placeOrder()">
                             <i class="bi bi-lock-fill me-2"></i>
                             Place Order
@@ -295,11 +332,6 @@
                                     <label for="city" class="form-label">City <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="city" name="city" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="area" class="form-label">Area <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="area" name="area" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="pincode" class="form-label">Pincode</label>
@@ -402,7 +434,7 @@
                                    id="address${address.id}" value="${address.id}"
                                    ${isSelected ? 'checked' : ''}>
                             <label class="form-check-label w-100" for="address${address.id}">
-                                <strong>${address.area}, ${address.city}</strong><br>
+                                <strong>${address.city}</strong><br>
                                 <small class="text-muted">
                                     ${address.full_address ? address.full_address + ', ' : ''}
                                     ${address.district}, ${address.state}, ${address.country}
@@ -503,9 +535,18 @@
 
         // Place order
         function placeOrder() {
-            if (!confirm('Are you sure you want to place this order?')) {
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+            if (!confirm(
+                    `Are you sure you want to place this order using ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}?`
+                )) {
                 return;
             }
+
+            const btn = event.currentTarget || document.querySelector('button[onclick="placeOrder()"]');
+            const originalBtnHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
             fetch("{{ route('checkout.process') }}", {
                     method: "POST",
@@ -516,27 +557,107 @@
                     },
                     body: JSON.stringify({
                         address_id: {{ $address->id }},
-                        payment_method: 'cod'
+                        payment_method: paymentMethod
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('orderNumber').textContent = data.order.order_number;
-                        const confirmModal = new bootstrap.Modal(document.getElementById('orderConfirmationModal'));
-                        confirmModal.show();
-
-                        setTimeout(() => {
-                            window.location.href = "{{ route('frontend.products.index') }}";
-                        }, 3000);
+                        if (paymentMethod === 'razorpay') {
+                            openRazorpayModal(data);
+                            btn.disabled = false;
+                            btn.innerHTML = originalBtnHtml;
+                        } else {
+                            handleOrderSuccess(data.order);
+                        }
                     } else {
+                        btn.disabled = false;
+                        btn.innerHTML = originalBtnHtml;
                         showNotification(data.message || 'Failed to place order', 'danger');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnHtml;
                     showNotification('Error processing order', 'danger');
                 });
+        }
+
+        function openRazorpayModal(data) {
+            const options = {
+                "key": data.razorpay_key,
+                "amount": data.amount,
+                "currency": data.currency,
+                "name": "{{ $layoutSettings->site_title ?? 'MyShop' }}",
+                "description": "Order Payment #" + data.order.order_number,
+                "image": "{{ $layoutSettings->frontend_logo_url ?? '' }}",
+                "order_id": data.razorpay_order_id,
+                "handler": function(response) {
+                    verifyPayment(response, data.order.id);
+                },
+                "prefill": {
+                    "name": "{{ auth('customer')->user()->name }}",
+                    "email": "{{ auth('customer')->user()->email }}",
+                    "contact": ""
+                },
+                "theme": {
+                    "color": "#667eea"
+                }
+            };
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(response) {
+                showNotification("Payment Failed: " + response.error.description, "danger");
+            });
+            rzp.open();
+        }
+
+        function verifyPayment(razorpayResponse, orderId) {
+            fetch("{{ route('checkout.verify-payment') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        razorpay_order_id: razorpayResponse.razorpay_order_id,
+                        razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                        razorpay_signature: razorpayResponse.razorpay_signature
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const orderShowUrl = "{{ route('frontend.order.show', ':id') }}".replace(':id', orderId);
+                        fetch(orderShowUrl)
+                            .then(() => {
+                                // Get the order data again or just show success
+                                handleOrderSuccess({
+                                    order_number: razorpayResponse.razorpay_order_id
+                                }); // We need the actual order number
+                                // Actually, let's just refresh to orders page or show modal
+                                window.location.href = "{{ route('frontend.orders') }}";
+                            });
+                    } else {
+                        showNotification(data.message || "Payment verification failed", "danger");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification("Error verifying payment", "danger");
+                });
+        }
+
+        function handleOrderSuccess(order) {
+            document.getElementById('orderNumber').textContent = order.order_number || 'Order Placed';
+            const confirmModal = new bootstrap.Modal(document.getElementById('orderConfirmationModal'));
+            confirmModal.show();
+
+            setTimeout(() => {
+                window.location.href = "{{ route('frontend.orders') }}";
+            }, 3000);
         }
 
         // View order details
@@ -561,16 +682,25 @@
             }, 3000);
         }
     </script>
-
     <style>
-        .address-card:hover {
-            background-color: #f8f9ff;
-        }
-
+        .address-card:hover,
         .address-card.selected {
             background-color: #f8f9ff;
         }
+
+        .payment-option:hover {
+            border-color: #667eea !important;
+            background-color: #f8f9ff;
+        }
+
+        .payment-option.active {
+            border-color: #667eea !important;
+            background-color: #f8f9ff;
+        }
     </style>
+
+    {{-- Razorpay Script --}}
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     {{-- Bootstrap Icons CDN --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">

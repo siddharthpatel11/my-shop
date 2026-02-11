@@ -112,6 +112,8 @@ Route::middleware('customer.auth')->group(function () {
         ->name('checkout.review');
     Route::post('/checkout/process', [CheckoutController::class, 'processCheckout'])
         ->name('checkout.process');
+    Route::post('/checkout/verify-payment', [CheckoutController::class, 'verifyPayment'])
+        ->name('checkout.verify-payment');
 
     Route::get('/orders', [OrderController::class, 'index'])
         ->name('frontend.orders');
