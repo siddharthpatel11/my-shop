@@ -407,12 +407,22 @@
             const hasSizeOptions = document.querySelectorAll('.size-option').length > 0;
 
             if (hasColorOptions && !selectedColor) {
-                showNotification('Please select a color', 'warning');
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Please select a color',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 return;
             }
 
             if (hasSizeOptions && !selectedSize) {
-                showNotification('Please select a size', 'warning');
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Please select a size',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 return;
             }
 
@@ -471,19 +481,15 @@
 
         // Show notification function
         function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            Swal.fire({
+                icon: type === 'info' ? 'info' : (type === 'success' ? 'success' : (type === 'warning' ? 'warning' :
+                    'error')),
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
         }
 
         // Toggle wishlist

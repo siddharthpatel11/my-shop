@@ -63,20 +63,38 @@ class LayoutSettingController extends Controller
             'footer_logo_size' => 'nullable|integer|min:20|max:100',
 
             // Contact Information
-            'contact_email' => 'nullable|email|max:255',
-            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|array',
+            'contact_email.*' => 'nullable|email|max:255',
+            'contact_phone' => 'nullable|array',
+            'contact_phone.*' => 'nullable|string|max:20',
+            'contact_address' => 'nullable|string|max:500',
+            'address_link' => 'nullable|string|max:1000',
+            'map_embed' => 'nullable|string',
 
             // Footer Settings
-            'footer_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'footer_text' => 'nullable|string|max:500',
             'footer_bg_color' => 'nullable|string|max:7',
             'footer_text_color' => 'nullable|string|max:7',
 
+            // Menu Items (Header)
+            'menu_label' => 'nullable|array',
+            'menu_label.*' => 'nullable|string|max:100',
+            'menu_url' => 'nullable|array',
+            'menu_url.*' => 'nullable|string|max:255',
+
+            // Footer Menu
+            'footer_menu_label' => 'nullable|array',
+            'footer_menu_label.*' => 'nullable|string|max:100',
+            'footer_menu_url' => 'nullable|array',
+            'footer_menu_url.*' => 'nullable|string|max:255',
+
             // Social Links
-            'social_facebook' => 'nullable|url|max:255',
-            'social_twitter' => 'nullable|url|max:255',
-            'social_instagram' => 'nullable|url|max:255',
-            'social_linkedin' => 'nullable|url|max:255',
+            'social_icon' => 'nullable|array',
+            'social_icon.*' => 'nullable|string|max:100',
+            'social_title' => 'nullable|array',
+            'social_title.*' => 'nullable|string|max:100',
+            'social_url' => 'nullable|array',
+            'social_url.*' => 'nullable|url|max:255',
         ]);
 
         // Handle Admin Logo Upload
@@ -107,29 +125,49 @@ class LayoutSettingController extends Controller
                 ->store('favicons/frontend', 'public');
         }
 
-        // Handle Footer Logo Upload
-        if ($request->hasFile('footer_logo')) {
-            $settings->deleteOldFile('footer_logo_path');
-            $validated['footer_logo_path'] = $request->file('footer_logo')
-                ->store('logos/footer', 'public');
-        }
-
         // Prepare social links array
         $socialLinks = [];
-        if ($request->filled('social_facebook')) {
-            $socialLinks['facebook'] = $request->social_facebook;
-        }
-        if ($request->filled('social_twitter')) {
-            $socialLinks['twitter'] = $request->social_twitter;
-        }
-        if ($request->filled('social_instagram')) {
-            $socialLinks['instagram'] = $request->social_instagram;
-        }
-        if ($request->filled('social_linkedin')) {
-            $socialLinks['linkedin'] = $request->social_linkedin;
+        if ($request->has('social_url')) {
+            foreach ($request->social_url as $key => $url) {
+                if ($url) {
+                    $socialLinks[] = [
+                        'icon' => $request->social_icon[$key] ?? 'fab fa-link',
+                        'title' => $request->social_title[$key] ?? '',
+                        'url' => $url,
+                    ];
+                }
+            }
         }
 
         $validated['social_links'] = $socialLinks;
+
+        // Prepare Header Menu items
+        $menuItems = [];
+        if ($request->has('menu_label')) {
+            foreach ($request->menu_label as $key => $label) {
+                if ($label) {
+                    $menuItems[] = [
+                        'label' => $label,
+                        'url' => $request->menu_url[$key] ?? '#',
+                    ];
+                }
+            }
+        }
+        $validated['menu_items'] = $menuItems;
+
+        // Prepare Footer Menu items
+        $footerMenu = [];
+        if ($request->has('footer_menu_label')) {
+            foreach ($request->footer_menu_label as $key => $label) {
+                if ($label) {
+                    $footerMenu[] = [
+                        'label' => $label,
+                        'url' => $request->footer_menu_url[$key] ?? '#',
+                    ];
+                }
+            }
+        }
+        $validated['footer_menu'] = $footerMenu;
 
         // Update settings
         $settings->update($validated);

@@ -12,8 +12,10 @@ use App\Models\Discount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\CustomerOrderPlaced;
 use App\Mail\AdminNewOrder;
+use Razorpay\Api\Api;
 
 class CheckoutController extends Controller
 {
@@ -64,7 +66,7 @@ class CheckoutController extends Controller
     /**
      * Get customer addresses
      */
-    public function addresses()
+    public function getAddresses()
     {
         if (!auth('customer')->check()) {
             return response()->json([
@@ -221,6 +223,33 @@ class CheckoutController extends Controller
         // Total (Subtotal + Tax - Discount)
         $total = $subtotalWithTax - $discountAmount + $shipping;
 
+        if ($request->payment_method === 'razorpay' && $total < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Razorpay requires a minimum order amount of ₹1.00. Please choose another payment method or add more items.'
+            ], 400);
+        }
+
+        $razorpayOrderId = null;
+        if ($request->payment_method === 'razorpay') {
+            try {
+                $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+                $razorpayOrderData = [
+                    'receipt'         => 'rcpt_' . uniqid(),
+                    'amount'          => (int) round($total * 100), // Amount in paise
+                    'currency'        => 'INR',
+                    'payment_capture' => 1 // Auto capture
+                ];
+                $razorpayOrder = $api->order->create($razorpayOrderData);
+                $razorpayOrderId = $razorpayOrder['id'];
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create Razorpay order: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
         DB::beginTransaction();
         try {
             // Create order
@@ -238,6 +267,7 @@ class CheckoutController extends Controller
                 'order_status' => 'pending',
                 'payment_status' => 'pending',
                 'payment_method' => $request->payment_method ?? 'cod',
+                'razorpay_order_id' => $razorpayOrderId,
                 'status' => 'active',
             ]);
 
@@ -277,7 +307,7 @@ class CheckoutController extends Controller
                 Mail::to($order->customer->email)->send(new CustomerOrderPlaced($order));
             } catch (\Exception $e) {
                 //Log email error but don't fail the order
-                \Log::error('Failed to send customer order email: ' . $e->getMessage());
+                Log::error('Failed to send customer order email: ' . $e->getMessage());
             }
 
             //Send email to admin
@@ -285,14 +315,18 @@ class CheckoutController extends Controller
                 $adminEmail = config('mail.admin_email', 'siddharthchhayani11@gmail.com');
                 Mail::to($adminEmail)->send(new AdminNewOrder($order));
             } catch (\Exception $e) {
-                \Log::error('Failed to send admin order email: ' . $e->getMessage());
+                Log::error('Failed to send admin order email: ' . $e->getMessage());
             }
 
 
             return response()->json([
                 'success' => true,
                 'message' => 'Order placed successfully',
-                'order' => $order //->load('address', 'items.product', 'items.color', 'items.size')
+                'order' => $order,
+                'razorpay_key' => config('services.razorpay.key'),
+                'amount' => (int) round($total * 100),
+                'currency' => 'INR',
+                'razorpay_order_id' => $razorpayOrderId
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -301,6 +335,52 @@ class CheckoutController extends Controller
                 'success' => false,
                 'message' => 'Failed to place order: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Verify Razorpay payment
+     */
+    public function verifyPayment(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|exists:customer_orders,id',
+            'razorpay_payment_id' => 'required',
+            'razorpay_order_id' => 'required',
+            'razorpay_signature' => 'required',
+        ]);
+
+        $order = Order::findOrFail($request->order_id);
+
+        try {
+            $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+
+            $attributes = [
+                'razorpay_order_id' => $request->razorpay_order_id,
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature
+            ];
+
+            $api->utility->verifyPaymentSignature($attributes);
+
+            // Update order status
+            $order->update([
+                'payment_status' => 'paid',
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment verified successfully'
+            ]);
+        } catch (\Exception $e) {
+            $order->update(['payment_status' => 'failed']);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment verification failed: ' . $e->getMessage()
+            ], 400);
         }
     }
 }

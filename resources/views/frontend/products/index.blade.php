@@ -365,12 +365,22 @@
             let sizeId = sizeSelect ? sizeSelect.value : null;
 
             if (colorSelect && !colorId) {
-                alert('Please select a color');
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Please select a color',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 return;
             }
 
             if (sizeSelect && !sizeId) {
-                alert('Please select a size');
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Please select a size',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 return;
             }
 
@@ -398,7 +408,10 @@
                     const data = await response.json();
 
                     if (!response.ok) {
-                        alert(data.message || 'Error adding to cart');
+                        Swal.fire({
+                            icon: 'error',
+                            text: data.message || 'Error adding to cart'
+                        });
                         return;
                     }
 
@@ -408,7 +421,10 @@
                 })
                 .catch(error => {
                     console.error(error);
-                    alert('Something went wrong');
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Something went wrong'
+                    });
                 });
         }
 
@@ -522,40 +538,15 @@
         }  --}}
 
         function showNotification(message, type = 'success', product = null) {
-            const notification = document.createElement('div');
-            notification.className = `toast align-items-center text-bg-${type} border-0 show`;
-            notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    width: 320px;
-    `;
-
-            notification.innerHTML = `
-    <div class="d-flex">
-        <div class="toast-body">
-            ${product ? `
-                                        <div class="d-flex align-items-center gap-2 mb-2">
-                                            <img src="${product.image}" style="width:50px;height:50px;object-fit:contain;">
-                                            <div>
-                                                <strong>${product.name}</strong><br>
-                                                <small>
-                                                    ${product.color ? `Color: ${product.color}` : ''}
-                                                    ${product.size ? ` | Size: ${product.size}` : ''}
-                                                </small>
-                                            </div>
-                                        </div>
-                                        ` : ''}
-            ${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
-    </div>
-    `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => notification.remove(), 3500);
+            Swal.fire({
+                icon: type,
+                title: product ? product.name : '',
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
         }
     </script>
 @endsection

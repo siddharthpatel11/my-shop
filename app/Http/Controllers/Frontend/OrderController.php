@@ -61,7 +61,7 @@ class OrderController extends Controller
         }
 
         $order->update([
-            'status' => 'cancelled'
+            'order_status' => 'cancelled'
         ]);
 
         return response()->json([

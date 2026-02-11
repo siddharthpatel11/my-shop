@@ -230,8 +230,7 @@
                                         </td>
                                         <td>
                                             <form action="{{ route('admin.orders.update-status', $order->id) }}"
-                                                method="POST" class="d-inline"
-                                                onsubmit="return confirm('This will update all order items and send email notification to customer. Continue?');">
+                                                method="POST" class="d-inline status-form">
                                                 @csrf
                                                 @method('PATCH')
                                                 <select name="order_status"
@@ -287,45 +286,33 @@
         </div>
     </div>
 
-    <style>
-        .status-select {
-            cursor: pointer;
-        }
-
-        .status-select:hover {
-            border-color: #0d6efd;
-        }
-
-        .payment-status-select {
-            cursor: pointer;
-        }
-
-        .payment-status-select:hover {
-            border-color: #198754;
-        }
     </style>
 
-    @if (session('success'))
+    @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                alert('{{ session('success') }}');
+            document.querySelectorAll('.status-form select').forEach(select => {
+                let originalValue = select.value;
+                select.addEventListener('change', function(e) {
+                    e.preventDefault();
+                    const form = this.closest('form');
+                    Swal.fire({
+                        title: 'Update Status?',
+                        text: "This will update all order items and send email notification to customer. Continue?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#aaa',
+                        confirmButtonText: 'Yes, update it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        } else {
+                            this.value = originalValue;
+                        }
+                    });
+                });
             });
         </script>
-    @endif
+    @endpush
 
-    @if (session('error'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                alert('ERROR: {{ session('error') }}');
-            });
-        </script>
-    @endif
-
-    @if (session('warning'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                alert('WARNING: {{ session('warning') }}');
-            });
-        </script>
-    @endif
 @endsection

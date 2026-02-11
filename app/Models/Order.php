@@ -24,6 +24,9 @@ class Order extends Model
         'order_status',
         'payment_status',
         'payment_method',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
         'notes',
         'status',
         'partial_delivery_notified',
@@ -291,6 +294,26 @@ class Order extends Model
             'stripe' => 'Stripe',
             'bank_transfer' => 'Bank Transfer',
             default => 'N/A',
+        };
+    }
+
+    /**
+     * Get payment method icon
+     */
+    public function getPaymentMethodIconAttribute()
+    {
+        return match ($this->payment_method) {
+            'cod' => 'cash-stack',
+            'cash' => 'cash',
+            'upi' => 'lightning-fill',
+            'razorpay' => 'credit-card',
+            'razorpay_upi' => 'lightning-charge-fill',
+            'credit_card' => 'credit-card-2-front',
+            'debit_card' => 'credit-card-2-back',
+            'paypal' => 'paypal',
+            'stripe' => 'stripe',
+            'bank_transfer' => 'bank',
+            default => 'question-circle',
         };
     }
 }

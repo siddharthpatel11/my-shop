@@ -580,37 +580,52 @@
 
         // Remove discount
         function removeDiscount() {
-            if (!confirm('Are you sure you want to remove the discount?')) {
-                return;
-            }
-
-            fetch("{{ route('cart.remove-discount') }}", {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Accept": "application/json"
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Discount removed', 'info');
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+            Swal.fire({
+                title: 'Remove Discount?',
+                text: "Are you sure you want to remove the discount?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, remove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{{ route('cart.remove-discount') }}", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'info',
+                                    text: 'Discount removed',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            });
         }
 
         // Show discount error
         function showDiscountError(message) {
-            const errorDiv = document.getElementById('discountError');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 3000);
+            Swal.fire({
+                icon: 'error',
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'bottom-end'
+            });
         }
 
 
@@ -766,34 +781,54 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showNotification('Error updating quantity', 'danger');
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Error updating quantity',
+                        timer: 3000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
                 });
         }
 
         // Remove item from cart
         function removeItem(cartId) {
-            if (!confirm('Are you sure you want to remove this item?')) {
-                return;
-            }
-
-            fetch(`/cart/remove/${cartId}`, {
-                    method: "DELETE",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Accept": "application/json"
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Item removed from cart', 'info');
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('Error removing item', 'danger');
-                });
+            Swal.fire({
+                title: 'Remove Item?',
+                text: "Are you sure you want to remove this item from your cart?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, remove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/cart/remove/${cartId}`, {
+                            method: "DELETE",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    text: 'Item removed from cart',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showNotification('Error removing item', 'error');
+                        });
+                }
+            });
         }
 
         // Apply promo code
@@ -828,4 +863,16 @@
 
     {{-- Font Awesome for icons --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    function showNotification(message, type = 'info') {
+    Swal.fire({
+    icon: type === 'danger' ? 'error' : (type === 'info' ? 'info' : (type === 'success' ? 'success' : (type
+    === 'warning' ? 'warning' : 'info'))),
+    text: message,
+    timer: 3000,
+    showConfirmButton: false,
+    toast: true,
+    position: 'top-end'
+    });
+    }
+    </script>
 @endsection

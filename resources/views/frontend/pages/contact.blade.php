@@ -74,7 +74,16 @@
                                 <div>
                                     <h5 class="mb-1">Address</h5>
                                     <p class="mb-0">
-                                        @if ($page->custom_fields && isset($page->custom_fields['address']))
+                                        @if (isset($layoutSettings) && $layoutSettings->contact_address)
+                                            @if ($layoutSettings->address_link)
+                                                <a href="{{ $layoutSettings->address_link }}" target="_blank"
+                                                    class="text-decoration-none text-muted">
+                                                    {{ $layoutSettings->contact_address }}
+                                                </a>
+                                            @else
+                                                {{ $layoutSettings->contact_address }}
+                                            @endif
+                                        @elseif($page->custom_fields && isset($page->custom_fields['address']))
                                             {{ $page->custom_fields['address'] }}
                                         @else
                                             Your Business Address Here
@@ -200,17 +209,35 @@
             </div>
 
             <!-- Map or Additional Images -->
-            @if ($page->images && count($page->images) > 0)
+            @if ((isset($layoutSettings) && $layoutSettings->map_html) || ($page->images && count($page->images) > 0))
                 <div class="mt-5 pt-5 border-top">
-                    <h3 class="mb-4 text-center">Our Location & Facilities</h3>
-                    <div class="row g-4">
-                        @foreach ($page->gallery_images as $image)
-                            <div class="col-md-4">
-                                <img src="{{ $image }}" alt="{{ $page->title }}"
-                                    class="img-fluid rounded shadow-sm">
+                    @if (isset($layoutSettings) && $layoutSettings->map_html)
+                        <div class="mb-5">
+                            <h3 class="mb-4 text-center">Our Location</h3>
+                            <div class="map-container rounded shadow-sm overflow-hidden" style="height: 450px;">
+                                {!! $layoutSettings->map_html !!}
                             </div>
-                        @endforeach
-                    </div>
+                            <style>
+                                .map-container iframe {
+                                    width: 100% !important;
+                                    height: 450px !important;
+                                    border: 0 !important;
+                                }
+                            </style>
+                        </div>
+                    @endif
+
+                    @if ($page->gallery_images && count($page->gallery_images) > 0)
+                        <h3 class="mb-4 text-center">Our Facilities</h3>
+                        <div class="row g-4">
+                            @foreach ($page->gallery_images as $image)
+                                <div class="col-md-4">
+                                    <img src="{{ $image }}" alt="{{ $page->title }}"
+                                        class="img-fluid rounded shadow-sm">
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
