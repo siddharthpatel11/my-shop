@@ -14,13 +14,7 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+        <!-- Session messages handled globally -->
 
         <form action="{{ route('layout-settings.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -713,29 +707,49 @@
     <script>
         // Delete Logo Function
         function deleteLogo(type) {
-            if (!confirm('Are you sure you want to delete this file?')) {
-                return;
-            }
-
-            fetch(`/layout-settings/delete-logo/${type}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.error || 'Failed to delete file');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while deleting the file');
-                });
+            Swal.fire({
+                title: 'Delete file?',
+                text: "Are you sure you want to delete this file?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/layout-settings/delete-logo/${type}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    text: 'File deleted successfully',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                setTimeout(() => location.reload(), 1000);
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    text: data.error || 'Failed to delete file'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'An error occurred while deleting the file'
+                            });
+                        });
+                }
+            });
         }
 
         // Color Picker Sync

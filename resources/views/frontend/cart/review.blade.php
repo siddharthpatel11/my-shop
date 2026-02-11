@@ -334,8 +334,8 @@
                                     <input type="text" class="form-control" id="city" name="city" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="pincode" class="form-label">Pincode</label>
-                                    <input type="text" class="form-control" id="pincode" name="pincode">
+                                    <label for="pincode" class="form-label">Pincode</labelsuu>
+                                        <input type="text" class="form-control" id="pincode" name="pincode">
                                 </div>
                                 <div class="col-12">
                                     <label for="full_address" class="form-label">Full Address (House No., Street,
@@ -537,51 +537,57 @@
         function placeOrder() {
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
 
-            if (!confirm(
-                    `Are you sure you want to place this order using ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}?`
-                )) {
-                return;
-            }
+            Swal.fire({
+                title: 'Place Order?',
+                text: `Are you sure you want to place this order using ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Yes, place order!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const btn = document.querySelector('button[onclick="placeOrder()"]');
+                    const originalBtnHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
-            const btn = event.currentTarget || document.querySelector('button[onclick="placeOrder()"]');
-            const originalBtnHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-            fetch("{{ route('checkout.process') }}", {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        address_id: {{ $address->id }},
-                        payment_method: paymentMethod
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if (paymentMethod === 'razorpay') {
-                            openRazorpayModal(data);
+                    fetch("{{ route('checkout.process') }}", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json",
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                address_id: {{ $address->id }},
+                                payment_method: paymentMethod
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (paymentMethod === 'razorpay') {
+                                    openRazorpayModal(data);
+                                    btn.disabled = false;
+                                    btn.innerHTML = originalBtnHtml;
+                                } else {
+                                    handleOrderSuccess(data.order);
+                                }
+                            } else {
+                                btn.disabled = false;
+                                btn.innerHTML = originalBtnHtml;
+                                showNotification(data.message || 'Failed to place order', 'danger');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
                             btn.disabled = false;
                             btn.innerHTML = originalBtnHtml;
-                        } else {
-                            handleOrderSuccess(data.order);
-                        }
-                    } else {
-                        btn.disabled = false;
-                        btn.innerHTML = originalBtnHtml;
-                        showNotification(data.message || 'Failed to place order', 'danger');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    btn.disabled = false;
-                    btn.innerHTML = originalBtnHtml;
-                    showNotification('Error processing order', 'danger');
-                });
+                            showNotification('Error processing order', 'danger');
+                        });
+                }
+            });
         }
 
         function openRazorpayModal(data) {
@@ -667,19 +673,15 @@
 
         // Show notification
         function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            Swal.fire({
+                icon: type === 'danger' ? 'error' : (type === 'success' ? 'success' : (type === 'warning' ?
+                    'warning' : 'info')),
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
         }
     </script>
     <style>

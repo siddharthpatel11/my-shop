@@ -130,33 +130,54 @@
         });
 
         function deleteGalleryImage(imagePath, pageSlug) {
-            if (!confirm('Are you sure you want to delete this image?')) return;
-
-            fetch(`/pages/${pageSlug}/delete-gallery-image`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        image_path: imagePath
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Use md5 filter logic if needed, but easier to just find the element
-                        // Or reload if preferred. Let's try removing it dynamically.
-                        location.reload();
-                    } else {
-                        alert(data.message || 'Error deleting image');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Something went wrong');
-                });
+            Swal.fire({
+                title: 'Delete image?',
+                text: "Are you sure you want to delete this image?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/pages/${pageSlug}/delete-gallery-image`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                image_path: imagePath
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    text: 'Image deleted successfully',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    text: data.message || 'Error deleting image'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Something went wrong'
+                            });
+                        });
+                }
+            });
         }
     </script>
 @endpush

@@ -9,12 +9,7 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+        {{-- SweetAlert handles session notifications globally --}}
 
         <div class="card shadow-sm">
             <div class="card-body">
@@ -91,10 +86,13 @@
         <script>
             // Confirm delete
             document.querySelectorAll('.delete-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    if (!confirm('Are you sure you want to delete this page?')) {
-                        e.preventDefault();
-                    }
+                form.querySelector('button[type="submit"]').type = 'button';
+                form.querySelector('button[type="button"]').addEventListener('click', function(e) {
+                    confirmDelete('Are you sure?', 'You want to delete this page?').then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 });
             });
 
@@ -120,13 +118,19 @@
                                 badge.className =
                                     `badge status-badge bg-${data.status === 'active' ? 'success' : 'secondary'}`;
                             } else {
-                                alert('Error updating status');
+                                Swal.fire({
+                                    icon: 'error',
+                                    text: 'Error updating status'
+                                });
                                 this.checked = !this.checked;
                             }
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('Something went wrong');
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Something went wrong'
+                            });
                             this.checked = !this.checked;
                         });
                 });

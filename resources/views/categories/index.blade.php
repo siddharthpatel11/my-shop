@@ -1,14 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-
     <div class="card mt-5">
         <h2 class="card-header">Category Management</h2>
         <div class="card-body">
 
-            @session('success')
-                <div class="alert alert-success" role="alert"> {{ $value }} </div>
-            @endsession
+
+            {{-- SweetAlert handles session notifications globally via app.blade.php --}}
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
@@ -90,8 +88,8 @@
                                     style="display: inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm"
-                                        onclick="return confirm('Are you sure you want to delete this category?')">
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                        onclick="confirmDelete('Are you sure?', 'You want to delete this category?').then((result) => { if (result.isConfirmed) { this.closest('form').submit(); } })">
                                         <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </form>

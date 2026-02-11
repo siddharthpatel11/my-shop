@@ -16,13 +16,7 @@
             </a>
         </div>
 
-        {{-- Success Message --}}
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+        {{-- SweetAlert handles session notifications globally --}}
 
         {{-- Taxes Table --}}
         <div class="card shadow-sm border-0">
@@ -123,13 +117,19 @@
                             // Reload page to update badge color
                             location.reload();
                         } else {
-                            alert('Failed to update status');
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Failed to update status'
+                            });
                             checkbox.checked = !originalState;
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred');
+                        Swal.fire({
+                            icon: 'error',
+                            text: 'An error occurred'
+                        });
                         checkbox.checked = !originalState;
                     });
             }
