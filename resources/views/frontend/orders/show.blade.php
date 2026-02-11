@@ -14,17 +14,18 @@
         </nav>
 
         {{-- Order Success Message --}}
+        <!-- Order Success Message handled by global SweetAlert2 if set to 'success' -->
         @if (session('order_success'))
-            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-                    <div>
-                        <h5 class="alert-heading mb-1">Order Placed Successfully!</h5>
-                        <p class="mb-0">Your order has been placed and is being processed.</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order Placed Successfully!',
+                        text: "Your order has been placed and is being processed.",
+                        timer: 5000
+                    });
+                });
+            </script>
         @endif
 
         {{-- Order Header --}}
@@ -213,10 +214,10 @@
 
                         <div class="bg-light rounded p-3 mb-3">
                             <div class="d-flex align-items-center">
-                                <i class="bi bi-cash-coin fs-4 text-success me-3"></i>
+                                <i class="bi bi-{{ $order->payment_method_icon }} fs-4 text-primary me-3"></i>
                                 <div>
                                     <small class="text-muted d-block">Payment Method</small>
-                                    <span class="fw-semibold">Cash on Delivery</span>
+                                    <span class="fw-semibold">{{ $order->payment_method_name }}</span>
                                 </div>
                             </div>
                         </div>
@@ -234,7 +235,7 @@
 
                         {{-- Action Buttons --}}
                         @if ($order->canBeCancelled())
-                            <button class="btn btn-outline-danger w-100 mb-2" onclick="cancelOrder()">
+                            <button class="btn btn-outline-danger w-100 mb-2" onclick="confirmCancelOrder()">
                                 <i class="bi bi-x-circle me-2"></i>
                                 Cancel Order
                             </button>
@@ -258,58 +259,57 @@
         </div>
     </div>
 
-    {{-- Cancel Order Modal --}}
-    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold" id="cancelOrderModalLabel">Cancel Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to cancel this order?</p>
-                    <p class="text-muted small mb-0">
-                        Order #{{ $order->order_number }}
-                    </p>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Order</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmCancelOrder()">
-                        Yes, Cancel Order
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
-        function cancelOrder() {
-            const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
-            modal.show();
-        }
-
         function confirmCancelOrder() {
-            fetch("{{ route('frontend.order.cancel', $order->id) }}", {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.message || 'Failed to cancel order');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error cancelling order');
-                });
+            Swal.fire({
+                title: 'Cancel Order?',
+                text: "Are you sure you want to cancel order #{{ $order->order_number }}?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, cancel it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{{ route('frontend.order.cancel', $order->id) }}", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json",
+                                "Content-Type": "application/json"
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Cancelled!',
+                                    text: 'Your order has been cancelled.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: data.message || 'Failed to cancel order'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Something went wrong while cancelling the order'
+                            });
+                        });
+                }
+            });
         }
     </script>
 

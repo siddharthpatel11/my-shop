@@ -24,6 +24,9 @@
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         .cart-badge {
             position: absolute;
@@ -55,7 +58,7 @@
         }
 
         .navbar-brand-logo {
-            max-height: 45px;
+            max-height: {{ $layoutSettings->logo_size ?? 45 }}px;
             width: auto;
         }
 
@@ -81,10 +84,69 @@
 
         .navbar {
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: {{ $layoutSettings->title_bg_color ?? '#ffffff' }} !important;
+        }
+
+        .navbar .nav-link,
+        .navbar-brand-text {
+            color: {{ $layoutSettings->title_text_color ?? '#212529' }} !important;
+        }
+
+        footer {
+            background-color: {{ $layoutSettings->footer_bg_color ?? '#f8f9fa' }} !important;
+            color: {{ $layoutSettings->footer_text_color ?? '#6c757d' }} !important;
+        }
+
+        footer .text-muted,
+        footer a.text-muted {
+            color: {{ $layoutSettings->footer_text_color ?? '#6c757d' }} !important;
         }
 
         .nav-link.active {
             color: #667eea !important;
+            border-bottom: 2px solid #667eea;
+        }
+
+        /* Footer Improvements */
+        footer h6 {
+            color: {{ $layoutSettings->footer_text_color ?? '#212529' }} !important;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        footer .hover-link {
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        footer .hover-link:hover {
+            color: #667eea !important;
+            padding-left: 5px;
+        }
+
+        footer .social-icon {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        footer .social-icon:hover {
+            background: #667eea;
+            color: white !important;
+            transform: translateY(-3px);
+        }
+
+        footer .map-container {
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        footer .contact-info i {
+            min-width: 20px;
         }
     </style>
 
@@ -101,7 +163,8 @@
                         class="navbar-brand-logo">
                 @else
                     <span class="navbar-brand">
-                        <i class="fas fa-store me-2"></i>{{ $appName }}
+                        <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>
+                        <span class="navbar-brand-text">{{ $layoutSettings->site_title ?? $appName }}</span>
                     </span>
                 @endif
             </a>
@@ -124,6 +187,36 @@
                             <i class="fas fa-box-open me-1"></i> Products
                         </a>
                     </li>
+                    {{-- Dynamic Menu Items --}}
+                    @if (isset($layoutSettings) && $layoutSettings->menu_items)
+                        @foreach ($layoutSettings->menu_items as $item)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ $item['url'] ?? '#' }}">
+                                    {{ $item['label'] ?? '' }}
+                                </a>
+                            </li>
+                        @endforeach
+                    @endif
+                    @php
+                        $dynamicPages = \App\Models\Page::all();
+                    @endphp
+                    @if ($dynamicPages->count() > 0)
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPages" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-alt me-1"></i> Pages
+                            </a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarDropdownPages">
+                                @foreach ($dynamicPages as $page)
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('page.show', $page->slug) }}">
+                                            {{ $page->title }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endif
                     @auth('customer')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('frontend.orders*') || request()->routeIs('frontend.order.*') ? 'active' : '' }}"
@@ -199,53 +292,143 @@
     <main>
         @yield('content')
     </main>
-
     <footer class="bg-light border-top mt-5">
-        <div class="container py-4">
-            <div class="row">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    @if (isset($layoutSettings) && $layoutSettings->footer_text)
-                        <p class="text-muted mb-0">{{ $layoutSettings->footer_text }}</p>
-                    @else
-                        <p class="text-muted mb-0">© {{ date('Y') }} {{ $appName }}. All rights reserved.</p>
+        <div class="container py-5">
+            <!-- Top Section: Logo + Sections -->
+            <div class="row mb-4">
+                <!-- Brand Section -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <a class="navbar-brand-with-logo mb-3 d-block" href="{{ route('frontend.home') }}">
+                        @if (isset($layoutSettings) && $layoutSettings->frontend_logo_url)
+                            <img src="{{ $layoutSettings->frontend_logo_url }}" alt="{{ $appName }}"
+                                class="navbar-brand-logo">
+                        @else
+                            <span class="navbar-brand">
+                                <i class="{{ $layoutSettings->frontend_icon ?? 'fas fa-store' }} me-2"></i>
+                                <span class="navbar-brand-text">{{ $layoutSettings->site_title ?? $appName }}</span>
+                            </span>
+                        @endif
+                    </a>
+                    <p class="text-muted small">Your trusted online shopping destination for quality products and
+                        exceptional service.</p>
+
+                    <!-- Social Media -->
+                    <div class="mt-3">
+                        <h6 class="fw-bold mb-3">Follow Us</h6>
+                        <div class="social-links">
+                            @if (isset($layoutSettings) && !empty($layoutSettings->social_links))
+                                @foreach ($layoutSettings->social_links as $social)
+                                    @if (isset($social['url']) && $social['url'])
+                                        <a href="{{ $social['url'] }}" target="_blank"
+                                            class="text-muted text-decoration-none me-2 social-icon"
+                                            title="{{ $social['title'] ?? '' }}">
+                                            <i class="{{ $social['icon'] ?? 'fab fa-link' }}"></i>
+                                        </a>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                    <h6 class="fw-bold mb-3">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        @if (isset($layoutSettings) && $layoutSettings->footer_menu)
+                            @foreach ($layoutSettings->footer_menu as $item)
+                                <li class="mb-2">
+                                    <a href="{{ $item['url'] ?? '#' }}"
+                                        class="text-decoration-none text-muted hover-link">
+                                        {{ $item['label'] ?? '' }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        @else
+                            @foreach ($dynamicPages as $page)
+                                <li class="mb-2">
+                                    <a href="{{ route('page.show', $page->slug) }}"
+                                        class="text-decoration-none text-muted hover-link">
+                                        {{ $page->title }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        @endif
+                    </ul>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <h6 class="fw-bold mb-3">Contact Us</h6>
+                    @if (isset($layoutSettings))
+                        <div class="contact-info">
+                            @if ($layoutSettings->contact_email)
+                                @foreach ($layoutSettings->contact_email as $email)
+                                    @if ($email)
+                                        <p class="mb-2 text-muted small d-flex align-items-start">
+                                            <i class="fas fa-envelope me-2 mt-1" style="color: #667eea;"></i>
+                                            <a href="mailto:{{ $email }}"
+                                                class="text-decoration-none text-muted hover-link text-break">{{ $email }}</a>
+                                        </p>
+                                    @endif
+                                @endforeach
+                            @endif
+
+                            @if ($layoutSettings->contact_phone)
+                                @foreach ($layoutSettings->contact_phone as $phone)
+                                    @if ($phone)
+                                        <p class="mb-2 text-muted small d-flex align-items-start">
+                                            <i class="fas fa-phone me-2 mt-1" style="color: #667eea;"></i>
+                                            <a href="tel:{{ $phone }}"
+                                                class="text-decoration-none text-muted hover-link">{{ $phone }}</a>
+                                        </p>
+                                    @endif
+                                @endforeach
+                            @endif
+
+                            @if ($layoutSettings->contact_address)
+                                <p class="mb-2 text-muted small d-flex align-items-start">
+                                    <i class="fas fa-location-dot me-2 mt-1" style="color: #667eea;"></i>
+                                    @if ($layoutSettings->address_link)
+                                        <a href="{{ $layoutSettings->address_link }}" target="_blank"
+                                            class="text-decoration-none text-muted hover-link">
+                                            {{ $layoutSettings->contact_address }}
+                                        </a>
+                                    @else
+                                        <span>{{ $layoutSettings->contact_address }}</span>
+                                    @endif
+                                </p>
+                            @endif
+                        </div>
                     @endif
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    @if (isset($layoutSettings) && $layoutSettings->social_links)
-                        @if (isset($layoutSettings->social_links['facebook']))
-                            <a href="{{ $layoutSettings->social_links['facebook'] }}" target="_blank"
-                                class="text-muted text-decoration-none me-3">
-                                <i class="fab fa-facebook fa-lg"></i>
-                            </a>
-                        @endif
-                        @if (isset($layoutSettings->social_links['twitter']))
-                            <a href="{{ $layoutSettings->social_links['twitter'] }}" target="_blank"
-                                class="text-muted text-decoration-none me-3">
-                                <i class="fab fa-twitter fa-lg"></i>
-                            </a>
-                        @endif
-                        @if (isset($layoutSettings->social_links['instagram']))
-                            <a href="{{ $layoutSettings->social_links['instagram'] }}" target="_blank"
-                                class="text-muted text-decoration-none">
-                                <i class="fab fa-instagram fa-lg"></i>
-                            </a>
-                        @endif
-                        @if (isset($layoutSettings->social_links['linkedin']))
-                            <a href="{{ $layoutSettings->social_links['linkedin'] }}" target="_blank"
-                                class="text-muted text-decoration-none ms-3">
-                                <i class="fab fa-linkedin fa-lg"></i>
-                            </a>
-                        @endif
+
+                <!-- Google Map -->
+                <div class="col-lg-4 col-md-6">
+                    @if ($layoutSettings->map_html)
+                        <h6 class="fw-bold mb-3">Find Us</h6>
+                        <div class="map-container overflow-hidden rounded shadow-sm" style="height: 200px;">
+                            {!! $layoutSettings->map_html !!}
+                        </div>
+                        <style>
+                            .map-container iframe {
+                                width: 100% !important;
+                                height: 200px !important;
+                                border: 0 !important;
+                            }
+                        </style>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Bottom Section: Copyright -->
+            <div class="row pt-4 border-top">
+                <div class="col-12 text-center">
+                    @if (isset($layoutSettings) && $layoutSettings->footer_text)
+                        <p class="text-muted mb-0 small">{{ $layoutSettings->footer_text }}</p>
                     @else
-                        <a href="#" class="text-muted text-decoration-none me-3">
-                            <i class="fab fa-facebook fa-lg"></i>
-                        </a>
-                        <a href="#" class="text-muted text-decoration-none me-3">
-                            <i class="fab fa-twitter fa-lg"></i>
-                        </a>
-                        <a href="#" class="text-muted text-decoration-none">
-                            <i class="fab fa-instagram fa-lg"></i>
-                        </a>
+                        <p class="text-muted mb-0 small">© {{ date('Y') }} {{ $appName }}. All rights
+                            reserved.</p>
                     @endif
                 </div>
             </div>
@@ -280,6 +463,45 @@
 
         // Custom event for same-tab updates
         window.addEventListener('cartUpdated', updateCartCount);
+    </script>
+
+    {{-- Global Alert Handler --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: "{{ session('success') }}",
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: "{{ session('error') }}"
+                });
+            @endif
+
+            @if (session('info'))
+                Swal.fire({
+                    icon: 'info',
+                    text: "{{ session('info') }}",
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            @endif
+
+            @if (session('warning'))
+                Swal.fire({
+                    icon: 'warning',
+                    text: "{{ session('warning') }}"
+                });
+            @endif
+        });
     </script>
 
     @stack('scripts')

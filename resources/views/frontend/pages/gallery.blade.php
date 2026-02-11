@@ -28,13 +28,14 @@
             @endif
 
             <!-- Gallery Grid -->
-            @if ($page->images && count($page->images) > 0)
+            @if ($page->gallery_images && count($page->gallery_images) > 0)
                 <div class="row g-4">
                     @foreach ($page->gallery_images as $index => $image)
                         <div class="col-md-6 col-lg-4">
                             <div class="gallery-item position-relative overflow-hidden rounded shadow-sm"
                                 style="height: 300px;">
-                                <img src="{{ $image }}" alt="{{ $page->title }} - Image {{ $index + 1 }}"
+                                <img src="{{ asset('storage/' . $image) }}"
+                                    alt="{{ $page->title }} - Image {{ $index + 1 }}"
                                     class="w-100 h-100 object-fit-cover gallery-img"
                                     style="cursor: pointer; transition: transform 0.3s;" data-bs-toggle="modal"
                                     data-bs-target="#imageModal{{ $index }}">
@@ -50,11 +51,12 @@
                         <div class="modal fade" id="imageModal{{ $index }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered modal-lg">
                                 <div class="modal-content bg-transparent border-0">
-                                    <div class="modal-body p-0">
+                                    <div class="modal-body p-0 text-center">
                                         <button type="button"
                                             class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
                                             data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
-                                        <img src="{{ $image }}" alt="{{ $page->title }}" class="w-100 rounded">
+                                        <img src="{{ asset('storage/' . $image) }}" alt="{{ $page->title }}"
+                                            class="img-fluid rounded shadow-lg">
                                     </div>
                                 </div>
                             </div>

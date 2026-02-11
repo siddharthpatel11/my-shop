@@ -6,9 +6,7 @@
         <h2 class="card-header">Laravel CRUD</h2>
         <div class="card-body">
 
-            @session('success')
-                <div class="alert alert-success">{{ $value }}</div>
-            @endsession
+            <!-- Session messages handled globally -->
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <a class="btn btn-success btn-sm" href="{{ route('products.create') }}">
@@ -152,7 +150,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm"
-                                        onclick="return confirm('Are you sure you want to delete this product?')">
+                                        onclick="event.preventDefault(); confirmDelete('Are you sure?', 'You want to delete this product?').then((result) => { if (result.isConfirmed) { this.closest('form').submit(); } })">
                                         <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </form>

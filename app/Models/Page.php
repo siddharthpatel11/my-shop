@@ -17,6 +17,12 @@ class Page extends Model
         'title',
         'slug',
         'content',
+        'gallery_images',
+        'status',
+    ];
+
+    protected $casts = [
+        'gallery_images' => 'array',
     ];
 
     /**

@@ -9,12 +9,7 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+        {{-- SweetAlert handles session notifications globally --}}
 
         <div class="card shadow-sm">
             <div class="card-body">
@@ -23,6 +18,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Title</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -31,6 +27,18 @@
                                 <tr>
                                     <td>
                                         <strong>{{ $page->title }}</strong>
+                                        <div class="small text-muted">Slug: {{ $page->slug }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input status-toggle" type="checkbox"
+                                                data-id="{{ $page->slug }}"
+                                                {{ $page->status === 'active' ? 'checked' : '' }} style="cursor: pointer;">
+                                            <span
+                                                class="badge bg-{{ $page->status === 'active' ? 'success' : 'secondary' }} status-badge">
+                                                {{ ucfirst($page->status ?? 'Active') }}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -78,10 +86,53 @@
         <script>
             // Confirm delete
             document.querySelectorAll('.delete-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    if (!confirm('Are you sure you want to delete this page?')) {
-                        e.preventDefault();
-                    }
+                form.querySelector('button[type="submit"]').type = 'button';
+                form.querySelector('button[type="button"]').addEventListener('click', function(e) {
+                    confirmDelete('Are you sure?', 'You want to delete this page?').then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            // Status toggle
+            document.querySelectorAll('.status-toggle').forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const slug = this.dataset.id;
+                    const badge = this.parentElement.querySelector('.status-badge');
+
+                    fetch(`/pages/${slug}/toggle-status`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                badge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(
+                                    1);
+                                badge.className =
+                                    `badge status-badge bg-${data.status === 'active' ? 'success' : 'secondary'}`;
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    text: 'Error updating status'
+                                });
+                                this.checked = !this.checked;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Something went wrong'
+                            });
+                            this.checked = !this.checked;
+                        });
                 });
             });
         </script>

@@ -13,21 +13,42 @@
                     </div>
 
                     <div class="card-body">
-                        <form action="{{ isset($page) ? route('pages.update', $page) : route('pages.store') }}"
-                            method="POST">
+                        <form action="{{ isset($page) ? route('pages.update', $page) : route('pages.store') }}" method="POST"
+                            enctype="multipart/form-data">
                             @csrf
                             @if (isset($page))
                                 @method('PUT')
                             @endif
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Page Title *</label>
-                                <input type="text" name="title"
-                                    class="form-control @error('title') is-invalid @enderror"
-                                    value="{{ old('title', $page->title ?? '') }}" placeholder="Enter page title" required>
-                                @error('title')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Page Title *</label>
+                                        <input type="text" name="title"
+                                            class="form-control @error('title') is-invalid @enderror"
+                                            value="{{ old('title', $page->title ?? '') }}" placeholder="Enter page title"
+                                            required>
+                                        @error('title')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Page Status</label>
+                                        <select name="status" class="form-select @error('status') is-invalid @enderror">
+                                            <option value="active"
+                                                {{ old('status', $page->status ?? 'active') == 'active' ? 'selected' : '' }}>
+                                                Active</option>
+                                            <option value="inactive"
+                                                {{ old('status', $page->status ?? '') == 'inactive' ? 'selected' : '' }}>
+                                                Inactive</option>
+                                        </select>
+                                        @error('status')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -38,6 +59,41 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Gallery Images</label>
+                                <input type="file" name="gallery_images[]"
+                                    class="form-control @error('gallery_images.*') is-invalid @enderror" multiple
+                                    accept="image/*">
+                                <div class="form-text">You can upload multiple images. Best for the Gallery page.</div>
+                                @error('gallery_images.*')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            @if (isset($page) && $page->gallery_images && count($page->gallery_images) > 0)
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Current Gallery Images</label>
+                                    <div class="row g-2">
+                                        @foreach ($page->gallery_images as $image)
+                                            <div class="col-md-2 position-relative gallery-item-wrapper"
+                                                id="image-{{ md5($image) }}">
+                                                <div class="card h-100 shadow-sm border-0">
+                                                    <img src="{{ asset('storage/' . $image) }}"
+                                                        class="card-img-top rounded" alt="Gallery Image"
+                                                        style="height: 100px; object-fit: cover;">
+                                                    <button type="button"
+                                                        class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle"
+                                                        onclick="deleteGalleryImage('{{ $image }}', '{{ $page->slug }}')"
+                                                        title="Delete Image">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
 
                             <div class="mt-4 pt-3 border-top">
                                 <button type="submit" class="btn btn-primary btn-lg">
@@ -72,5 +128,56 @@
                 });
             }
         });
+
+        function deleteGalleryImage(imagePath, pageSlug) {
+            Swal.fire({
+                title: 'Delete image?',
+                text: "Are you sure you want to delete this image?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/pages/${pageSlug}/delete-gallery-image`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                image_path: imagePath
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    text: 'Image deleted successfully',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    text: data.message || 'Error deleting image'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Something went wrong'
+                            });
+                        });
+                }
+            });
+        }
     </script>
 @endpush

@@ -390,26 +390,4 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                alert('{{ session('success') }}');
-            });
-        </script>
-    @endif
-    @if (session('error'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                alert('ERROR: {{ session('error') }}');
-            });
-        </script>
-    @endif
-
-    @if (session('warning'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                alert('WARNING: {{ session('warning') }}');
-            });
-        </script>
-    @endif
 @endsection

@@ -19,6 +19,14 @@ Route::get('/', function () {
     return view('frontend.home');
 })->name('frontend.home');
 
+// Contact and Gallery Pages
+Route::get('/contact', [PageController::class, 'show'])->defaults('slug', 'contact')->name('contact');
+Route::get('/gallery', [PageController::class, 'show'])->defaults('slug', 'gallery')->name('gallery');
+
+// Contact Form Submission (Public)
+Route::post('/contact/submit', [ContactController::class, 'submit'])
+    ->name('contact.submit');
+
 /* =====================================================
    AUTHENTICATION ROUTES
 ===================================================== */
@@ -104,6 +112,8 @@ Route::middleware('customer.auth')->group(function () {
         ->name('checkout.review');
     Route::post('/checkout/process', [CheckoutController::class, 'processCheckout'])
         ->name('checkout.process');
+    Route::post('/checkout/verify-payment', [CheckoutController::class, 'verifyPayment'])
+        ->name('checkout.verify-payment');
 
     Route::get('/orders', [OrderController::class, 'index'])
         ->name('frontend.orders');
@@ -111,10 +121,6 @@ Route::middleware('customer.auth')->group(function () {
         ->name('frontend.order.show');
     Route::post('/order/{id}/cancel', [OrderController::class, 'cancel'])
         ->name('frontend.order.cancel');
-
-    // Contact Form Submission
-    Route::post('/contact/submit', [ContactController::class, 'submit'])
-        ->name('contact.submit');
 });
 
 // Customer-facing page route (NO auth required)
