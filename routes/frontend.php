@@ -8,6 +8,8 @@ use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\CustomerAuthController;
 use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\PageController;
+use App\Http\Controllers\Frontend\WishlistController;
+use App\Http\Controllers\Frontend\MyPanelController;
 use App\Http\Controllers\TaxController as ControllersTaxController;
 
 /* =====================================================
@@ -121,6 +123,18 @@ Route::middleware('customer.auth')->group(function () {
         ->name('frontend.order.show');
     Route::post('/order/{id}/cancel', [OrderController::class, 'cancel'])
         ->name('frontend.order.cancel');
+
+    // Wishlist Routes
+    Route::get('/wishlist', [WishlistController::class, 'index'])
+        ->name('frontend.wishlist');
+    Route::post('/wishlist/add', [WishlistController::class, 'store'])
+        ->name('wishlist.add');
+    Route::delete('/wishlist/remove/{id}', [WishlistController::class, 'destroy'])
+        ->name('wishlist.remove');
+
+    // My Panel Dashboard
+    Route::get('/my-panel', [MyPanelController::class, 'index'])
+        ->name('frontend.my-panel');
 });
 
 // Customer-facing page route (NO auth required)

@@ -7,7 +7,9 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Size;
 use App\Models\Color;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -22,9 +24,15 @@ class ProductController extends Controller
         $sizes = Size::all();
         $colors = Color::all();
         $categories = Category::where('status', 'active')->get();
-        // return redirect()->route('categories.index')
-        //     ->with('success', 'Category created successfully.');
-        return view('frontend.products.index', compact('products', 'sizes', 'colors', 'categories'));
+
+        $wishlistProductIds = [];
+        if (Auth::guard('customer')->check()) {
+            $wishlistProductIds = Wishlist::where('customer_id', Auth::guard('customer')->id())
+                ->pluck('product_id')
+                ->toArray();
+        }
+
+        return view('frontend.products.index', compact('products', 'sizes', 'colors', 'categories', 'wishlistProductIds'));
     }
 
     public function show(Product $product): View
@@ -40,6 +48,15 @@ class ProductController extends Controller
         $sizes = Size::all();
         $colors = Color::all();
 
-        return view('frontend.products.show', compact('product', 'relatedProducts', 'sizes', 'colors'));
+        $inWishlist = false;
+        $wishlistProductIds = [];
+        if (Auth::guard('customer')->check()) {
+            $wishlistProductIds = Wishlist::where('customer_id', Auth::guard('customer')->id())
+                ->pluck('product_id')
+                ->toArray();
+            $inWishlist = in_array($product->id, $wishlistProductIds);
+        }
+
+        return view('frontend.products.show', compact('product', 'relatedProducts', 'sizes', 'colors', 'inWishlist', 'wishlistProductIds'));
     }
 }

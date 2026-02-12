@@ -37,7 +37,10 @@ class LayoutSettingController extends Controller
         $settings = LayoutSetting::getActive();
 
         if (!$settings) {
-            $settings = LayoutSetting::create([]);
+            $settings = LayoutSetting::create([
+                'admin_app_name' => 'Admin Panel',
+                'frontend_app_name' => 'MyShop',
+            ]);
         }
 
         $validated = $request->validate([

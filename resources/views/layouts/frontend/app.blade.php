@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
 
     @php
-        $appName = $layoutSettings->frontend_app_name ?? 'MyShop';
+        $layoutSettings = $layoutSettings ?? new \App\Models\LayoutSetting();
+        $appName = $layoutSettings->frontend_app_name ?? config('app.name', 'MyShop');
     @endphp
 
     <title>@yield('title', $appName)</title>
@@ -148,6 +149,19 @@
         footer .contact-info i {
             min-width: 20px;
         }
+
+        .no-caret::after {
+            display: none !important;
+        }
+
+        /* Fix for z-index issues with sticky elements */
+        .navbar.sticky-top {
+            z-index: 1050 !important;
+        }
+
+        .dropdown-menu {
+            z-index: 1060 !important;
+        }
     </style>
 
     @stack('styles')
@@ -218,16 +232,11 @@
                         </li>
                     @endif
                     @auth('customer')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('frontend.orders*') || request()->routeIs('frontend.order.*') ? 'active' : '' }}"
-                                href="{{ route('frontend.orders') }}">
-                                <i class="fas fa-receipt me-1"></i> My Orders
-                            </a>
-                        </li>
+                        {{-- My Panel Consolidated into Profile --}}
                     @endauth
                     <li class="nav-item ms-lg-3">
                         <a class="nav-link position-relative {{ request()->routeIs('frontend.cart') || request()->routeIs('checkout.*') ? 'active' : '' }}"
-                            href="{{ route('frontend.cart') }}">
+                            href="{{ route('frontend.cart') }}" title="Cart">
                             <div class="cart-icon-wrapper">
                                 <i class="fas fa-shopping-cart fa-lg"></i>
                                 @auth('customer')
@@ -244,6 +253,83 @@
                             </div>
                         </a>
                     </li>
+                    @auth('customer')
+                        <li class="nav-item dropdown ms-lg-3">
+                            <a class="nav-link position-relative dropdown-toggle no-caret" href="#"
+                                id="wishlistDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="Wishlist">
+                                <div class="cart-icon-wrapper">
+                                    <i class="fas fa-heart fa-lg text-danger"></i>
+                                    @php
+                                        $wishlistCount = \App\Models\Wishlist::where(
+                                            'customer_id',
+                                            auth('customer')->id(),
+                                        )->count();
+                                        $wishlistItemsPreview = \App\Models\Wishlist::with('product')
+                                            ->where('customer_id', auth('customer')->id())
+                                            ->latest()
+                                            ->take(5)
+                                            ->get();
+                                    @endphp
+                                    @if ($wishlistCount > 0)
+                                        <span class="cart-badge">{{ $wishlistCount }}</span>
+                                    @endif
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm p-3" aria-labelledby="wishlistDropdown"
+                                style="width: 300px; border-radius: 12px;">
+                                <h6 class="dropdown-header px-0 mb-3 fw-bold text-dark">
+                                    <i class="fas fa-heart text-danger me-2"></i>My Wishlist Preview
+                                </h6>
+                                @forelse($wishlistItemsPreview as $item)
+                                    <li class="mb-3">
+                                        <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                            class="text-decoration-none dropdown-item p-0 bg-transparent">
+                                            <div class="d-flex align-items-center">
+                                                @php $images = $item->product->image ? explode(',', $item->product->image) : []; @endphp
+                                                <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
+                                                    alt="{{ $item->product->name }}"
+                                                    style="width: 50px; height: 50px; object-fit: contain;"
+                                                    class="me-3 rounded border bg-light">
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <div class="text-truncate fw-bold text-dark small mb-1">
+                                                        {{ $item->product->name }}</div>
+                                                    <div class="text-primary fw-bold small">
+                                                        ₹{{ number_format($item->product->price, 2) }}</div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                @empty
+                                    <li class="text-center py-3 text-muted">
+                                        <i class="far fa-heart fa-2x mb-2 d-block opacity-25"></i>
+                                        <small>Your wishlist is empty</small>
+                                    </li>
+                                @endforelse
+                                @if ($wishlistCount > 0)
+                                    <li>
+                                        <hr class="dropdown-divider my-3">
+                                    </li>
+                                    <li>
+                                        <a class="btn btn-primary btn-sm w-100 py-2"
+                                            href="{{ route('frontend.wishlist') }}">
+                                            View All Wishlist ({{ $wishlistCount }})
+                                        </a>
+                                    </li>
+                                @else
+                                    <li>
+                                        <hr class="dropdown-divider my-3">
+                                    </li>
+                                    <li>
+                                        <a class="btn btn-outline-primary btn-sm w-100 py-2"
+                                            href="{{ route('frontend.products.index') }}">
+                                            Go to Shop
+                                        </a>
+                                    </li>
+                                @endif
+                            </ul>
+                        </li>
+                    @endauth
                     {{-- Profile Menu --}}
                     @auth('customer')
                         <li class="nav-item dropdown ms-lg-3">
@@ -255,18 +341,36 @@
 
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 10px;">
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('customer.profile') }}">
+                                    <h6 class="dropdown-header">Account Management</h6>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('customer.profile') ? 'active' : '' }}"
+                                        href="{{ route('customer.profile') }}">
                                         <i class="fas fa-user me-2"></i> Profile
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('frontend.orders') }}">
-                                        <i class="fas fa-receipt me-2"></i> My Orders
+                                    <a class="dropdown-item {{ request()->routeIs('frontend.my-panel') ? 'active' : '' }}"
+                                        href="{{ route('frontend.my-panel') }}">
+                                        <i class="fas fa-th-large me-2 text-primary"></i> My Panel
                                     </a>
                                 </li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
+                                {{--  <li>
+                                    <a class="dropdown-item" href="{{ route('frontend.orders') }}">
+                                        <i class="fas fa-receipt me-2"></i> My Orders
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('frontend.wishlist') }}">
+                                        <i class="fas fa-heart me-2 text-danger"></i> Wishlist
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>  --}}
                                 <li>
                                     <form method="POST" action="{{ route('customer.logout') }}">
                                         @csrf
@@ -427,7 +531,8 @@
                     @if (isset($layoutSettings) && $layoutSettings->footer_text)
                         <p class="text-muted mb-0 small">{{ $layoutSettings->footer_text }}</p>
                     @else
-                        <p class="text-muted mb-0 small">© {{ date('Y') }} {{ $appName }}. All rights
+                        <p class="text-muted mb-0 small">© {{ date('Y') }}
+                            {{ $appName ?? config('app.name', 'MyShop') }}. All rights
                             reserved.</p>
                     @endif
                 </div>

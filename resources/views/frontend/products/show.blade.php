@@ -150,8 +150,9 @@
                             <button class="btn btn-primary btn-lg flex-fill" onclick="addToCart()">
                                 <i class="fas fa-shopping-cart me-2"></i> Add to Cart
                             </button>
-                            <button class="btn btn-outline-danger btn-lg" onclick="toggleWishlist()">
-                                <i class="far fa-heart"></i>
+                            <button class="btn {{ $inWishlist ? 'btn-danger' : 'btn-outline-danger' }} btn-lg"
+                                onclick="toggleWishlist()">
+                                <i class="{{ $inWishlist ? 'fas' : 'far' }} fa-heart"></i>
                             </button>
                         @else
                             <a href="{{ route('customer.login') }}" class="btn btn-primary btn-lg flex-fill">
@@ -210,9 +211,20 @@
                     @endphp
                     <div class="col-lg-3 col-md-4 col-sm-6">
                         <div class="card h-100 border-0 shadow-sm product-card">
-                            <div class="related-product-image-wrapper">
+                            <div class="related-product-image-wrapper position-relative">
                                 <img src="{{ asset('images/products/' . ($relatedImages[0] ?? 'no-image.png')) }}"
                                     class="card-img-top" alt="{{ $related->name }}">
+
+                                {{-- Wishlist Indicator (Top Right) --}}
+                                @auth('customer')
+                                    <div class="position-absolute top-0 end-0 p-2">
+                                        <a href="javascript:void(0)" onclick="addToWishlistFromId({{ $related->id }}, this)"
+                                            class="wishlist-btn-top {{ in_array($related->id, $wishlistProductIds ?? []) ? 'active' : '' }}">
+                                            <i
+                                                class="{{ in_array($related->id, $wishlistProductIds ?? []) ? 'fas' : 'far' }} fa-heart"></i>
+                                        </a>
+                                    </div>
+                                @endauth
                             </div>
                             <div class="card-body">
                                 <h6 class="card-title text-truncate">{{ $related->name }}</h6>
@@ -330,6 +342,33 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        /* Wishlist Button Top Right */
+        .wishlist-btn-top {
+            background: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .wishlist-btn-top:hover {
+            transform: scale(1.1);
+        }
+
+        .wishlist-btn-top i {
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        .wishlist-btn-top.active i {
+            color: #dc3545;
         }
 
         @media (max-width: 768px) {
@@ -492,22 +531,58 @@
             });
         }
 
-        // Toggle wishlist
+        // Add/Remove from wishlist (for main product)
         function toggleWishlist() {
+            const productId = {{ $product->id }};
             const btn = event.currentTarget;
             const icon = btn.querySelector('i');
 
-            if (icon.classList.contains('far')) {
-                icon.classList.remove('far');
-                icon.classList.add('fas');
-                btn.classList.add('btn-danger');
-                btn.classList.remove('btn-outline-danger');
-            } else {
-                icon.classList.remove('fas');
-                icon.classList.add('far');
-                btn.classList.remove('btn-danger');
-                btn.classList.add('btn-outline-danger');
-            }
+            fetch("{{ route('wishlist.add') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product_id: productId
+                    })
+                })
+                .then(async response => {
+                    if (response.status === 401) {
+                        window.location.href = "{{ route('customer.login') }}";
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        showNotification(data.message, 'success');
+
+                        if (data.action === 'added') {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                            btn.classList.add('btn-danger', 'active');
+                            btn.classList.remove('btn-outline-danger');
+                        } else {
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                            btn.classList.remove('btn-danger', 'active');
+                            btn.classList.add('btn-outline-danger');
+                        }
+
+                        // Reload to update badge in nav after a delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification(data.message || 'Error updating wishlist', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    showNotification('Something went wrong', 'error');
+                });
         }
 
         // Initialize first selections
@@ -524,6 +599,56 @@
                 document.getElementById('selectedSizeName').textContent = `(${firstSize.dataset.sizeName})`;
             }
         });
+
+        // Add to wishlist from ID (for related products)
+        function addToWishlistFromId(productId, element) {
+            const icon = element.querySelector('i');
+
+            fetch("{{ route('wishlist.add') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product_id: productId
+                    })
+                })
+                .then(async response => {
+                        if (response.status === 401) {
+                            window.location.href = "{{ route('customer.login') }}";
+                            return;
+                        }
+
+                        const data = await response.json();
+
+                        if (data.status === 'success') {
+                            showNotification(data.message, 'success');
+
+                            if (data.action === 'added') {
+                                icon.classList.remove('far');
+                                icon.classList.add('fas');
+                                element.classList.add('active');
+                            } else {
+                                icon.classList.remove('fas');
+                                icon.classList.add('far');
+                                element.classList.remove('active');
+                            }
+
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showNotification(data.message || 'Error updating wishlist', 'error');
+                        }
+                    }
+                })
+        .catch(error => {
+            console.error(error);
+            showNotification('Something went wrong', 'error');
+        });
+        }
     </script>
 
     {{-- Font Awesome for icons --}}

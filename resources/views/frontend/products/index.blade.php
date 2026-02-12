@@ -53,12 +53,33 @@
                                 @endif
                             </div>
 
+                            {{-- Wishlist Indicator (Top Right) --}}
+                            @auth('customer')
+                                <div class="position-absolute top-0 end-0 p-2">
+                                    <a href="javascript:void(0)" onclick="addToWishlist(this)"
+                                        data-product-id="{{ $product->id }}"
+                                        class="wishlist-btn-top {{ in_array($product->id, $wishlistProductIds ?? []) ? 'active' : '' }}">
+                                        <i
+                                            class="{{ in_array($product->id, $wishlistProductIds ?? []) ? 'fas' : 'far' }} fa-heart"></i>
+                                    </a>
+                                </div>
+                            @endauth
+
                             {{-- Quick View --}}
                             <div class="product-overlay">
                                 <a href="{{ route('frontend.products.show', $product->id) }}"
-                                    class="btn btn-light btn-sm rounded-pill">
+                                    class="btn btn-light btn-sm rounded-pill mb-2">
                                     <i class="fas fa-eye"></i> Quick View
                                 </a>
+                                @auth('customer')
+                                    @php $isInWishlist = in_array($product->id, $wishlistProductIds ?? []); @endphp
+                                    <button class="btn btn-light btn-sm rounded-pill add-to-wishlist"
+                                        data-product-id="{{ $product->id }}" onclick="addToWishlist(this)">
+                                        <i class="{{ $isInWishlist ? 'fas' : 'far' }} fa-heart"
+                                            style="{{ $isInWishlist ? 'color: #dc3545;' : '' }}"></i>
+                                        {{ $isInWishlist ? 'In Wishlist' : 'Wishlist' }}
+                                    </button>
+                                @endauth
                             </div>
                         </div>
 
@@ -312,6 +333,33 @@
                 font-size: 2rem;
             }
         }
+
+        /* Wishlist Button Top Right */
+        .wishlist-btn-top {
+            background: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .wishlist-btn-top:hover {
+            transform: scale(1.1);
+        }
+
+        .wishlist-btn-top i {
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        .wishlist-btn-top.active i {
+            color: #dc3545;
+        }
     </style>
 
     {{-- Scripts --}}
@@ -547,6 +595,83 @@
                 toast: true,
                 position: 'top-end'
             });
+        }
+
+        function addToWishlist(button) {
+            const productId = button.getAttribute('data-product-id');
+            const icon = button.querySelector('i');
+            const textNode = button.childNodes[1]; // The text part of the button
+
+            // Find the top-right heart as well if it exists
+            const topHeart = document.querySelector(`.wishlist-btn-top[data-product-id="${productId}"]`);
+            const topIcon = topHeart ? topHeart.querySelector('i') : null;
+
+            fetch("{{ route('wishlist.add') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product_id: productId
+                    })
+                })
+                .then(async response => {
+                    if (response.status === 401) {
+                        window.location.href = "{{ route('customer.login') }}";
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        showNotification(data.message, 'success');
+
+                        if (data.action === 'added') {
+                            // Update button
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                            button.classList.add('active');
+                            icon.style.color = '#dc3545';
+                            if (textNode && textNode.nodeType === Node.TEXT_NODE) textNode.textContent =
+                                ' In Wishlist';
+
+                            // Update top-right icon
+                            if (topIcon) {
+                                topIcon.classList.remove('far');
+                                topIcon.classList.add('fas');
+                                topHeart.classList.add('active');
+                            }
+                        } else {
+                            // Update button
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                            button.classList.remove('active');
+                            icon.style.color = '';
+                            if (textNode && textNode.nodeType === Node.TEXT_NODE) textNode.textContent =
+                            ' Wishlist';
+
+                            // Update top-right icon
+                            if (topIcon) {
+                                topIcon.classList.remove('fas');
+                                topIcon.classList.add('far');
+                                topHeart.classList.remove('active');
+                            }
+                        }
+
+                        // Reload to update badge in nav after a delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification(data.message || 'Error updating wishlist', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    showNotification('Something went wrong', 'error');
+                });
         }
     </script>
 @endsection
