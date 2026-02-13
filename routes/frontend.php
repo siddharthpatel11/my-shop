@@ -131,6 +131,10 @@ Route::middleware('customer.auth')->group(function () {
         ->name('wishlist.add');
     Route::delete('/wishlist/remove/{id}', [WishlistController::class, 'destroy'])
         ->name('wishlist.remove');
+    Route::delete('/wishlist/clear', [WishlistController::class, 'clear'])
+        ->name('wishlist.clear');
+    Route::post('/wishlist/remove-multiple', [WishlistController::class, 'removeMultiple'])
+        ->name('wishlist.remove-multiple');
 
     // My Panel Dashboard
     Route::get('/my-panel', [MyPanelController::class, 'index'])

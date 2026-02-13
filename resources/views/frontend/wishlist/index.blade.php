@@ -12,8 +12,25 @@
                         <li class="breadcrumb-item active">My Wishlist</li>
                     </ol>
                 </nav>
-                <h2 class="fw-bold"><i class="fas fa-heart text-danger me-2"></i> My Wishlist</h2>
-                <p class="text-muted">You have {{ $wishlistItems->count() }} items in your wishlist.</p>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold mb-1"><i class="fas fa-heart text-danger me-2"></i> My Wishlist</h2>
+                        <p class="text-muted mb-0">You have {{ $wishlistItems->count() }} items in your wishlist.</p>
+                    </div>
+                    <div class="bulk-actions d-flex gap-2">
+                        <div class="form-check d-flex align-items-center me-2">
+                            <input class="form-check-input me-2" type="checkbox" id="selectAllItems">
+                            <label class="form-check-label small fw-bold" for="selectAllItems">Select All</label>
+                        </div>
+                        <button id="removeSelectedBtn" class="btn btn-outline-danger btn-sm rounded-pill"
+                            style="display: none;">
+                            <i class="fas fa-minus-circle me-1"></i> Remove Selected
+                        </button>
+                        <button onclick="clearWishlist()" class="btn btn-danger btn-sm rounded-pill">
+                            <i class="fas fa-trash-alt me-1"></i> Clear All
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -24,8 +41,11 @@
                         $product = $item->product;
                         $images = $product->image ? explode(',', $product->image) : [];
                     @endphp
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card h-100 border-0 shadow-sm product-card">
+                    <div class="col-lg-3 col-md-4 col-sm-6 wishlist-item-card" data-id="{{ $item->id }}">
+                        <div class="card h-100 border-0 shadow-sm product-card position-relative">
+                            <div class="form-check position-absolute top-0 start-0 m-3" style="z-index: 10;">
+                                <input class="form-check-input item-checkbox" type="checkbox" value="{{ $item->id }}">
+                            </div>
                             <div class="product-image-wrapper position-relative" style="height: 200px;">
                                 <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
                                     class="card-img-top" alt="{{ $product->name }}"
@@ -77,6 +97,125 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('selectAllItems');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            const removeSelectedBtn = document.getElementById('removeSelectedBtn');
+
+            // Handle Select All
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                    toggleRemoveSelectedBtn();
+                });
+            }
+
+            // Handle Individual Checkbox
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    toggleRemoveSelectedBtn();
+                    // Update Select All checkbox state
+                    if (selectAll) {
+                        const allChecked = Array.from(itemCheckboxes).every(c => c.checked);
+                        selectAll.checked = allChecked;
+                    }
+                });
+            });
+
+            function toggleRemoveSelectedBtn() {
+                const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+                if (removeSelectedBtn) {
+                    removeSelectedBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+                    removeSelectedBtn.innerHTML =
+                        `<i class="fas fa-minus-circle me-1"></i> Remove Selected (${checkedCount})`;
+                }
+            }
+
+            // Handle Multi-Remove
+            if (removeSelectedBtn) {
+                removeSelectedBtn.addEventListener('click', function() {
+                    const selectedIds = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+                        .map(cb => cb.value);
+
+                    if (selectedIds.length === 0) return;
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: `You are about to remove ${selectedIds.length} items from your wishlist.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, remove them!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch("{{ route('wishlist.remove-multiple') }}", {
+                                    method: "POST",
+                                    headers: {
+                                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                        "Accept": "application/json",
+                                        "Content-Type": "application/json"
+                                    },
+                                    body: JSON.stringify({
+                                        ids: selectedIds
+                                    })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        showNotification(data.message, 'success');
+                                        setTimeout(() => window.location.reload(), 1500);
+                                    } else {
+                                        showNotification(data.message, 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error(error);
+                                    showNotification('Something went wrong', 'error');
+                                });
+                        }
+                    });
+                });
+            }
+        });
+
+        function clearWishlist() {
+            Swal.fire({
+                title: 'Clear entire wishlist?',
+                text: "All items will be removed from your wishlist.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, clear all!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{{ route('wishlist.clear') }}", {
+                            method: "DELETE",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                showNotification(data.message, 'success');
+                                setTimeout(() => window.location.reload(), 1500);
+                            } else {
+                                showNotification(data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            showNotification('Something went wrong', 'error');
+                        });
+                }
+            });
+        }
+
         function addToCart(button) {
             const productId = button.dataset.productId;
             const price = button.dataset.productPrice;

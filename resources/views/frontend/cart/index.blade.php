@@ -861,7 +861,7 @@
         }
     </script>
 
-    {{-- Font Awesome for icons --}}
+    {{--  Font Awesome for icons
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     function showNotification(message, type = 'info') {
     Swal.fire({
@@ -874,5 +874,5 @@
     position: 'top-end'
     });
     }
-    </script>
+    </script>  --}}
 @endsection

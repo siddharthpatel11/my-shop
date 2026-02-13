@@ -74,4 +74,39 @@ class WishlistController extends Controller
 
         return redirect()->back()->with('error', 'Product not found in wishlist.');
     }
+
+    /**
+     * Remove all items from wishlist
+     */
+    public function clear()
+    {
+        if (!Auth::guard('customer')->check()) {
+            return response()->json(['status' => 'error', 'message' => 'Please login.'], 401);
+        }
+
+        Wishlist::where('customer_id', Auth::guard('customer')->id())->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Wishlist cleared successfully!']);
+    }
+
+    /**
+     * Remove multiple items from wishlist
+     */
+    public function removeMultiple(Request $request)
+    {
+        if (!Auth::guard('customer')->check()) {
+            return response()->json(['status' => 'error', 'message' => 'Please login.'], 401);
+        }
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:wishlists,id'
+        ]);
+
+        Wishlist::where('customer_id', Auth::guard('customer')->id())
+            ->whereIn('id', $request->ids)
+            ->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Selected items removed successfully!']);
+    }
 }
