@@ -332,6 +332,79 @@
 
     @stack('scripts')
 
+    {{-- Firebase Messaging --}}
+    @auth
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+        <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyASbdtKoxsgRTkvos2oNn4PMAIYidlXYz0",
+                authDomain: "my-shop-a2caf.firebaseapp.com",
+                projectId: "my-shop-a2caf",
+                storageBucket: "my-shop-a2caf.firebasestorage.app",
+                messagingSenderId: "588832126711",
+                appId: "1:588832126711:web:eed4fdf0968ee1d2c345f2"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const messaging = firebase.messaging();
+
+            function initFirebaseMessagingRegistration() {
+                messaging.requestPermission().then(function() {
+                    return messaging.getToken({
+                        vapidKey: "BIqlM6-XRP1-R4Db767sxeUoOp_hv-TrJM5LgiqmRRTTGtvHHwDRc1HkHLW11KTaSX9AJ4K8NRwrKVbrz7zvwCw"
+                    });
+                }).then(function(token) {
+                    saveToken(token);
+                }).catch(function(err) {
+                    console.log('User denied notification permission or error occurred:', err);
+                });
+            }
+
+            function saveToken(token) {
+                fetch('{{ route('admin.fcm-token.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            token: token
+                        })
+                    }).then(response => response.json())
+                    .then(data => console.log('Token saved:', data))
+                    .catch(err => console.error('Error saving token:', err));
+            }
+
+            messaging.onMessage(function(payload) {
+                console.log('Message received. ', payload);
+                const notificationTitle = payload.notification.title;
+                const notificationOptions = {
+                    body: payload.notification.body,
+                    icon: '/images/logo.png'
+                };
+
+                // Use SweetAlert2 for foreground notifications if available
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: notificationTitle,
+                        text: notificationOptions.body,
+                        icon: 'info',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    new Notification(notificationTitle, notificationOptions);
+                }
+            });
+
+            initFirebaseMessagingRegistration();
+        </script>
+    @endauth
+
     {{-- Global Alert Handler --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {

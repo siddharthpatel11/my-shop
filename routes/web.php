@@ -11,6 +11,7 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\LayoutSettingController;  // ← ADD THIS
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Admin\NotificationController;
 
 Route::get('/welcome', function () {
     return view('welcome');
@@ -102,6 +103,8 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 
     Route::patch('/orders/{id}/partial-delivery', [AdminOrderController::class, 'processPartialDelivery'])
         ->name('orders.process-partial-delivery');
+
+    Route::post('/fcm-token', [NotificationController::class, 'storeToken'])->name('fcm-token.store');
 });
 
 require __DIR__ . '/auth.php';

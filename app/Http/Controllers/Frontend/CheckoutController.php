@@ -318,6 +318,23 @@ class CheckoutController extends Controller
                 Log::error('Failed to send admin order email: ' . $e->getMessage());
             }
 
+            // Send FCM Notification to Admin
+            try {
+                $firebaseService = new \App\Services\FirebaseService();
+                $admins = \App\Models\User::whereNotNull('fcm_token')->get();
+
+                foreach ($admins as $admin) {
+                    $firebaseService->sendNotification(
+                        'New Order Received!',
+                        'Order #' . $order->order_number . ' has been placed by ' . $order->customer->name,
+                        $admin->fcm_token,
+                        ['order_id' => (string) $order->id]
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send FCM notification: ' . $e->getMessage());
+            }
+
 
             return response()->json([
                 'success' => true,

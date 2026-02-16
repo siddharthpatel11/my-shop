@@ -40,4 +40,7 @@ return [
         'secret' => env('RAZORPAY_SECRET'),
     ],
 
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+    ],
 ];
