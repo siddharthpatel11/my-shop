@@ -18,7 +18,7 @@ class ProductController extends Controller
     {
         $products = Product::with(['category'])
             ->where('status', 'active')
-            ->latest()
+            ->orderBy('created_at', 'asc')
             ->paginate(12);
 
         $sizes = Size::all();
