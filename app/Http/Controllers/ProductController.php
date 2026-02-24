@@ -40,7 +40,7 @@ class ProductController extends Controller
 
         $products = $query
             ->orderBy('created_at', 'asc')
-            ->paginate(5)
+            ->paginate(10)
             ->withQueryString();
 
         // Needed for index view

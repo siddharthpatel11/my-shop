@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ImportExport\ProductImportExportController;
+use App\Http\Controllers\ImportExport\OrderImportExportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ColorController;
@@ -29,9 +31,12 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
 
+    Route::get('products/export',          [ProductImportExportController::class, 'export'])->name('products.export');
+    Route::post('products/import',         [ProductImportExportController::class, 'import'])->name('products.import');
+    Route::get('products/import/template', [ProductImportExportController::class, 'template'])->name('products.import.template');
+
     Route::resource('products', ProductController::class);
-    Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
-        ->name('products.toggle-status');
+    Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
 
     // Category Routes
     Route::resource('categories', CategoryController::class);
@@ -80,6 +85,9 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 
+    Route::get('/orders/export', [OrderImportExportController::class, 'export'])
+        ->name('orders.export');
+
     Route::get('/orders', [AdminOrderController::class, 'index'])
         ->name('orders.index');
 
@@ -98,8 +106,8 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::delete('/orders/{id}', [AdminOrderController::class, 'destroy'])
         ->name('orders.destroy');
 
-    Route::get('/orders/export/csv', [AdminOrderController::class, 'export'])
-        ->name('orders.export');
+    // Route::get('/orders/export/csv', [AdminOrderController::class, 'export'])
+    //     ->name('orders.export');
 
     Route::patch('/orders/{id}/partial-delivery', [AdminOrderController::class, 'processPartialDelivery'])
         ->name('orders.process-partial-delivery');

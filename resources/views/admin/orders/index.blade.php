@@ -140,9 +140,16 @@
                     <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-redo"></i> Clear Filters
                     </a>
-                    <a href="{{ route('admin.orders.export', request()->all()) }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-file-excel"></i> Export to CSV
+                    <a href="{{ route('admin.orders.export', request()->all()) }}" class="btn btn-outline-success btn-sm">
+                        <i class="fa-solid fa-file-csv"></i> Export to CSV
                     </a>
+                    <a href="{{ route('admin.orders.export', request()->only('search', 'order_status', 'payment_status', 'date_from', 'date_to')) }}"
+                        class="btn btn-outline-success btn-sm" title="Export filtered results to Excel">
+                        <i class="fa-solid fa-file-excel"></i> Export Excel
+                    </a>
+                    {{--  <a href="{{ route('admin.orders.export', request()->all()) }}" class="btn btn-sm btn-success">
+                        <i class="fas fa-file-excel"></i> Export to CSV
+                    </a>  --}}
                 </div>
             </div>
         </div>
