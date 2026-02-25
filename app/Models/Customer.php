@@ -23,6 +23,10 @@ class Customer extends Authenticatable
         'password',
         'phone_number',
         'status',
+        'google_id',
+        'facebook_id',
+        'avatar',
+        'social_provider',
     ];
 
     protected $hidden = [

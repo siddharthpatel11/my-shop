@@ -10,16 +10,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class OrderImportExportController extends Controller
 {
     /**
-     * Export orders to Excel (.xlsx)
+     * Export orders to Excel (.xlsx) or CSV
      * Applies same filters as AdminOrderController@index
+     *
+     * Query params:
+     *   format         = excel | csv   (default: excel)
+     *   order_status   = pending | processing | shipped | delivered | cancelled
+     *   payment_status = pending | paid | failed
+     *   date_from      = Y-m-d
+     *   date_to        = Y-m-d
+     *   search         = string
      */
-
     public function export(Request $request): StreamedResponse
     {
         $query = Order::with(['customer', 'items.product', 'address', 'tax'])
             ->where('status', 'active');
 
-        // --Same filters as index --
+        // -- Same filters as index --
 
         if ($request->filled('order_status')) {
             $query->where('order_status', $request->order_status);
@@ -51,7 +58,7 @@ class OrderImportExportController extends Controller
         $orders = $query->latest()->get();
 
         $headers = [
-            'order Number',
+            'Order Number',
             'Customer Name',
             'Customer Email',
             'Order Date',
@@ -74,14 +81,22 @@ class OrderImportExportController extends Controller
             ucfirst($order->order_status),
             ucfirst($order->payment_status),
             ucfirst($order->payment_method ?? '-'),
-            number_format($order->subtotal,    2, '.', ''),
-            number_format($order->tax_amount,  2, '.', ''),
-            number_format($order->discount,    2, '.', ''),
-            number_format($order->total,       2, '.', ''),
+            number_format($order->subtotal,   2, '.', ''),
+            number_format($order->tax_amount, 2, '.', ''),
+            number_format($order->discount,   2, '.', ''),
+            number_format($order->total,      2, '.', ''),
             $order->items->count(),
             $order->getDeliveryStatusMessage(),
         ])->toArray();
 
+        // ----- Format selection -----
+        $format = strtolower($request->get('format', 'excel'));
+
+        if ($format === 'csv') {
+            return $this->streamCsv($headers, $rows);
+        }
+
+        // Excel path
         $filename = 'orders_export_' . now()->format('Ymd_His') . '.xlsx';
 
         if (class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
@@ -94,6 +109,36 @@ class OrderImportExportController extends Controller
     /* ─────────────────────────────────────────────
      |  PRIVATE HELPERS
      ────────────────────────────────────────────── */
+
+    /**
+     * Stream a plain CSV download (no extra dependencies required).
+     */
+    private function streamCsv(array $headers, array $rows): StreamedResponse
+    {
+        $filename = 'orders_export_' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($headers, $rows) {
+            $handle = fopen('php://output', 'w');
+
+            // UTF-8 BOM so Excel opens the file with correct encoding
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, $headers);
+
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Stream Excel using PhpSpreadsheet (when available).
+     */
     private function streamWithSpreadsheet(string $filename, array $headers, array $rows): StreamedResponse
     {
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -105,7 +150,7 @@ class OrderImportExportController extends Controller
 
         $lastCol     = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
         $headerStyle = [
-            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
             'fill'      => ['fillType' => 'solid', 'startColor' => ['argb' => 'FF4F81BD']],
             'alignment' => ['horizontal' => 'center'],
         ];
@@ -121,11 +166,10 @@ class OrderImportExportController extends Controller
             $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
         }
 
-        //Freeze header row
+        // Freeze header row
         $sheet->freezePane('A2');
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
@@ -135,7 +179,9 @@ class OrderImportExportController extends Controller
         ]);
     }
 
-    /** Fallback: SpreadsheetMl - no extra dependency needed, opens in Excel */
+    /**
+     * Fallback: SpreadsheetML — no extra dependency needed, opens in Excel.
+     */
     private function streamSpreadsheetML(string $filename, array $headers, array $rows): StreamedResponse
     {
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
@@ -154,8 +200,8 @@ class OrderImportExportController extends Controller
         foreach ($rows as $row) {
             $xml .= '<Row>';
             foreach ($row as $cell) {
-                $type = is_numeric(str_replace([',', '.'], '', (string)$cell)) ? 'Number' : 'String';
-                $xml .= '<Cell><Data ss:Type="' . $type . '">' . htmlspecialchars((string)$cell) . '</Data></Cell>';
+                $type = is_numeric(str_replace([',', '.'], '', (string) $cell)) ? 'Number' : 'String';
+                $xml .= '<Cell><Data ss:Type="' . $type . '">' . htmlspecialchars((string) $cell) . '</Data></Cell>';
             }
             $xml .= '</Row>' . PHP_EOL;
         }

@@ -53,35 +53,6 @@ class CustomerAuthController extends Controller
         return view('frontend.auth.login');
     }
 
-    // public function login(Request $request)
-    // {
-    //     try {
-    //         $request->validate([
-    //             'email'    => 'required|email',
-    //             'password' => 'required',
-    //         ]);
-
-    //         $customer = Customer::where('email', $request->email)
-    //             ->where('status', 'active')
-    //             ->first();
-
-    //         if (!$customer || !Hash::check($request->password, $customer->password)) {
-    //             return back()
-    //                 ->withInput($request->only('email'))
-    //                 ->with('error', 'Invalid credentials or inactive account');
-    //         }
-
-    //         // Login the customer
-    //         Auth::guard('customer')->login($customer, $request->has('remember'));
-
-    //         return redirect()->intended(route('frontend.products.index'))
-    //             ->with('success', 'Welcome back, ' . $customer->name . '!');
-    //     } catch (\Illuminate\Validation\ValidationException $e) {
-    //         return back()
-    //             ->withInput()
-    //             ->with('error', $e->validator->errors()->first());
-    //     }
-    // }
     public function login(Request $request)
     {
         try {

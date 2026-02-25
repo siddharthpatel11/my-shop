@@ -10,6 +10,7 @@ use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\WishlistController;
 use App\Http\Controllers\Frontend\MyPanelController;
+use App\Http\Controllers\Frontend\SocialAuthController;
 use App\Http\Controllers\TaxController as ControllersTaxController;
 
 /* =====================================================
@@ -39,6 +40,12 @@ Route::get('/customer/login', [CustomerAuthController::class, 'showLogin'])
 
 Route::post('/customer/login', [CustomerAuthController::class, 'login'])
     ->name('customer.login.post');
+
+//Social Login Routes
+Route::prefix('customer/auth/{provider}')->group(function () {
+    Route::get('redirect', [SocialAuthController::class, 'redirect'])->name('customer.social.redirect');
+    Route::get('callback', [SocialAuthController::class, 'callback'])->name('customer.social.callback');
+});
 
 // Register Routes
 Route::get('/customer/register', [CustomerAuthController::class, 'showRegister'])

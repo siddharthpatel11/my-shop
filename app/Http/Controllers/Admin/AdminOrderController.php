@@ -48,7 +48,7 @@ class AdminOrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $orders = $query->latest()->paginate(15);
+        $orders = $query->orderBy('created_at', 'asc')->paginate(10);
 
         // Statistics
         $stats = [
@@ -300,67 +300,67 @@ class AdminOrderController extends Controller
     /**
      * Export orders to CSV
      */
-    public function export(Request $request)
-    {
-        $query = Order::with(['customer', 'items.product'])->where('status', 'active');
+    // public function export(Request $request)
+    // {
+    //     $query = Order::with(['customer', 'items.product'])->where('status', 'active');
 
-        // Apply same filters as index
-        if ($request->filled('order_status')) {
-            $query->where('order_status', $request->order_status);
-        }
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
+    //     // Apply same filters as index
+    //     if ($request->filled('order_status')) {
+    //         $query->where('order_status', $request->order_status);
+    //     }
+    //     if ($request->filled('payment_status')) {
+    //         $query->where('payment_status', $request->payment_status);
+    //     }
 
-        $orders = $query->latest()->get();
+    //     $orders = $query->latest()->get();
 
-        $filename = 'orders_' . date('Y-m-d_His') . '.csv';
+    //     $filename = 'orders_' . date('Y-m-d_His') . '.csv';
 
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
+    //     $headers = [
+    //         'Content-Type' => 'text/csv',
+    //         'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+    //     ];
 
-        $callback = function () use ($orders) {
-            $file = fopen('php://output', 'w');
+    //     $callback = function () use ($orders) {
+    //         $file = fopen('php://output', 'w');
 
-            // Header row
-            fputcsv($file, [
-                'Order Number',
-                'Customer Name',
-                'Customer Email',
-                'Order Date',
-                'Order Status',
-                'Payment Status',
-                'Subtotal',
-                'Tax',
-                'Discount',
-                'Total',
-                'Items Count',
-                'Delivery Status'
-            ]);
+    //         // Header row
+    //         fputcsv($file, [
+    //             'Order Number',
+    //             'Customer Name',
+    //             'Customer Email',
+    //             'Order Date',
+    //             'Order Status',
+    //             'Payment Status',
+    //             'Subtotal',
+    //             'Tax',
+    //             'Discount',
+    //             'Total',
+    //             'Items Count',
+    //             'Delivery Status'
+    //         ]);
 
-            // Data rows
-            foreach ($orders as $order) {
-                fputcsv($file, [
-                    $order->order_number,
-                    $order->customer->name,
-                    $order->customer->email,
-                    $order->created_at->format('Y-m-d H:i:s'),
-                    $order->order_status,
-                    $order->payment_status,
-                    $order->subtotal,
-                    $order->tax_amount,
-                    $order->discount,
-                    $order->total,
-                    $order->items->count(),
-                    $order->getDeliveryStatusMessage()
-                ]);
-            }
+    //         // Data rows
+    //         foreach ($orders as $order) {
+    //             fputcsv($file, [
+    //                 $order->order_number,
+    //                 $order->customer->name,
+    //                 $order->customer->email,
+    //                 $order->created_at->format('Y-m-d H:i:s'),
+    //                 $order->order_status,
+    //                 $order->payment_status,
+    //                 $order->subtotal,
+    //                 $order->tax_amount,
+    //                 $order->discount,
+    //                 $order->total,
+    //                 $order->items->count(),
+    //                 $order->getDeliveryStatusMessage()
+    //             ]);
+    //         }
 
-            fclose($file);
-        };
+    //         fclose($file);
+    //     };
 
-        return response()->stream($callback, 200, $headers);
-    }
+    //     return response()->stream($callback, 200, $headers);
+    // }
 }

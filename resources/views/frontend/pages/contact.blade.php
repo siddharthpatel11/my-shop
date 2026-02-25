@@ -104,12 +104,6 @@
                                             <i class="fab fa-facebook"></i>
                                         </a>
                                     @endif
-                                    @if (isset($layoutSettings->social_links['twitter']))
-                                        <a href="{{ $layoutSettings->social_links['twitter'] }}" target="_blank"
-                                            class="btn btn-outline-info btn-lg">
-                                            <i class="fab fa-twitter"></i>
-                                        </a>
-                                    @endif
                                     @if (isset($layoutSettings->social_links['instagram']))
                                         <a href="{{ $layoutSettings->social_links['instagram'] }}" target="_blank"
                                             class="btn btn-outline-danger btn-lg">
