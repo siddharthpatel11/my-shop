@@ -68,7 +68,7 @@
                             {{-- Quick View --}}
                             <div class="product-overlay">
                                 <a href="{{ route('frontend.products.show', $product->id) }}"
-                                    class="btn btn-light btn-sm rounded-pill mb-2">
+                                    class="btn btn-light btn-sm rounded-pill mb-1 pd-1">
                                     <i class="fas fa-eye"></i> Quick View
                                 </a>
                                 @auth('customer')
@@ -650,7 +650,7 @@
                             button.classList.remove('active');
                             icon.style.color = '';
                             if (textNode && textNode.nodeType === Node.TEXT_NODE) textNode.textContent =
-                            ' Wishlist';
+                                ' Wishlist';
 
                             // Update top-right icon
                             if (topIcon) {

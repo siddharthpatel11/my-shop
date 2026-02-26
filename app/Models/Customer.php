@@ -25,6 +25,7 @@ class Customer extends Authenticatable
         'status',
         'google_id',
         'facebook_id',
+        'twitter_id',
         'avatar',
         'social_provider',
     ];

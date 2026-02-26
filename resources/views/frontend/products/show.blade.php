@@ -248,18 +248,37 @@
             background: #f8f9fa;
             border-radius: 12px;
             overflow: hidden;
-            height: 500px;
+            height: auto;
+            /* ✅ Remove fixed height */
+            min-height: 400px;
+            /* ✅ Minimum height only */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .main-product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: auto;
+            height: auto;
+            max-height: 550px;
+            object-fit: contain;
+            padding: 15px;
+            background: #fff;
+
+            /* Add these lines to improve rendering of low-res images */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            filter: sharpen(1);
         }
 
         .thumbnail-image {
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            width: 100%;
+            height: 100px;
+            object-fit: contain;
+            /* ✅ Fix thumbnails too */
+            background: #f8f9fa;
         }
 
         .thumbnail-image.active,
@@ -373,7 +392,7 @@
 
         @media (max-width: 768px) {
             .main-image-container {
-                height: 300px;
+                height: 550px;
             }
         }
     </style>

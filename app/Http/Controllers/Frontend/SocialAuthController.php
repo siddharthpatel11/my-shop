@@ -9,7 +9,7 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
 {
-    private array $providers = ['google', 'facebook'];
+    private array $providers = ['google', 'facebook', 'twitter'];
 
     /**
      * Redirect to the provider's OAuth page.
@@ -21,6 +21,9 @@ class SocialAuthController extends Controller
         // TEMPORARY DEBUG - remove after fixing
         // dd(config('services.' . $provider . '.redirect'));
 
+        if ($provider === 'twitter') {
+            return Socialite::driver('twitter')->redirect();
+        }
         return Socialite::driver($provider)->stateless()->redirect();
     }
 
@@ -32,13 +35,17 @@ class SocialAuthController extends Controller
         $this->validateProvider($provider);
 
         try {
-            $socialUser = Socialite::driver($provider)->stateless()->user();
+            // Must match redirect(): twitter=stateful, others=stateless
+            $socialUser = ($provider === 'twitter')
+                ? Socialite::driver('twitter')->user()
+                : Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
             return redirect()->route('customer.login')
                 ->with('error', 'Social login failed: ' . $e->getMessage());
         }
 
         $customer = $this->findOrCreateCustomer($socialUser, $provider);
+        // dd($customer);
 
         if (!$customer || $customer->status !== 'active') {
             return redirect()->route('customer.login')
@@ -63,7 +70,7 @@ class SocialAuthController extends Controller
      */
     private function findOrCreateCustomer($socialUser, string $provider): Customer
     {
-        $providerIdField = $provider . '_id'; // google_id / facebook_id
+        $providerIdField = $provider . '_id'; // google_id / facebook_id / twitter_id
 
         // 1. Returning user — find by provider ID
         $customer = Customer::where($providerIdField, $socialUser->getId())->first();
