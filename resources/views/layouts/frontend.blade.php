@@ -455,8 +455,8 @@
                 <!-- Contact Information -->
                 <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
                     <h6 class="fw-bold mb-3">Contact Us</h6>
-                    @if (isset($layoutSettings))
-                        <div class="contact-info">
+                    <div class="contact-info">
+                        @if (isset($layoutSettings))
                             @if ($layoutSettings->contact_email)
                                 @foreach ($layoutSettings->contact_email as $email)
                                     @if ($email)
@@ -494,8 +494,19 @@
                                     @endif
                                 </p>
                             @endif
+                        @endif
+
+                        {{-- Contact Modal Trigger in Footer - Moved up and outside conditional details --}}
+                        <div class="mt-3">
+                            <button type="button"
+                                class="btn btn-primary btn-sm rounded-pill px-4 py-2 shadow-sm border-0"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+                                data-bs-toggle="modal" data-bs-target="#contactModal">
+                                <i class="fas fa-comment-dots fa-lg me-2"></i>
+                                <span class="fw-bold">Contact Us</span>
+                            </button>
                         </div>
-                    @endif
+                    </div>
                 </div>
 
                 <!-- Google Map -->
@@ -531,6 +542,7 @@
         </div>
     </footer>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     {{-- Cart Count Update Script --}}
@@ -597,6 +609,125 @@
                     text: "{{ session('warning') }}"
                 });
             @endif
+        });
+    </script>
+
+    <!-- Contact Us Floating Button -->
+    <div class="position-fixed bottom-0 end-0 m-4" style="z-index: 9999;">
+        <button type="button" class="btn btn-primary rounded-pill shadow-lg p-3 d-flex align-items-center border-0"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-bs-toggle="modal"
+            data-bs-target="#contactModal">
+            <i class="fas fa-comment-dots fa-lg me-2"></i>
+            <span class="fw-bold">Contact Us</span>
+        </button>
+    </div>
+
+    <!-- Contact Us Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold" id="contactModalLabel">
+                        <i class="fas fa-envelope me-2"></i> Send us a Message
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="contactForm" action="{{ route('contact.submit') }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label for="name" class="form-label small fw-bold text-muted">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required
+                                placeholder="Enter your name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label small fw-bold text-muted">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required
+                                placeholder="name@example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="number" class="form-label small fw-bold text-muted">Phone Number</label>
+                            <input type="text" class="form-control" id="number" name="number" required
+                                placeholder="Your phone number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label small fw-bold text-muted">Your Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="4" required
+                                placeholder="How can we help you?"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4 py-2" id="submitContactBtn">
+                            <span class="spinner-border spinner-border-sm d-none me-2" role="status"
+                                aria-hidden="true"></span>
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Contact Form Ajax Handling --}}
+    <script>
+        $(document).ready(function() {
+            $('#contactForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const btn = $('#submitContactBtn');
+                const spinner = btn.find('.spinner-border');
+
+                // Disable button and show spinner
+                btn.prop('disabled', true);
+                spinner.removeClass('d-none');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        // Close modal
+                        bootstrap.Modal.getInstance(document.getElementById('contactModal'))
+                            .hide();
+
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Message Sent!',
+                            text: response.message,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+
+                        // Reset form
+                        form[0].reset();
+                    },
+                    error: function(xhr) {
+                        let msg = 'Something went wrong. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            // Show first validation error
+                            msg = Object.values(xhr.responseJSON.errors)[0][0];
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: msg
+                        });
+                    },
+                    complete: function() {
+                        // Re-enable button and hide spinner
+                        btn.prop('disabled', false);
+                        spinner.addClass('d-none');
+                    }
+                });
+            });
         });
     </script>
 

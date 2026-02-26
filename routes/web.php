@@ -113,6 +113,11 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         ->name('orders.process-partial-delivery');
 
     Route::post('/fcm-token', [NotificationController::class, 'storeToken'])->name('fcm-token.store');
+
+    // Contact Messages
+    Route::get('/contacts', [\App\Http\Controllers\Admin\AdminContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{id}', [\App\Http\Controllers\Admin\AdminContactController::class, 'show'])->name('contacts.show');
+    Route::delete('/contacts/{id}', [\App\Http\Controllers\Admin\AdminContactController::class, 'destroy'])->name('contacts.destroy');
 });
 
 require __DIR__ . '/auth.php';

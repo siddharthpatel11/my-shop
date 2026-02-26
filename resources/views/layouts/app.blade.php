@@ -277,6 +277,12 @@
                             <i class="fas fa-file-alt me-1"></i> Pages
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}"
+                            href="{{ route('admin.contacts.index') }}">
+                            <i class="fas fa-envelope me-1"></i> Contact-us
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- User Menu -->

@@ -41,20 +41,20 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ $page->url }}" target="_blank" class="btn btn-sm btn-info"
-                                                title="View Page">
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ $page->url }}" target="_blank" class="btn btn-sm btn-light text-info border shadow-sm"
+                                                title="View Page" style="border-radius: 8px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('pages.edit', $page) }}" class="btn btn-sm btn-warning"
-                                                title="Edit">
+                                            <a href="{{ route('pages.edit', $page) }}" class="btn btn-sm btn-light text-warning border shadow-sm"
+                                                title="Edit" style="border-radius: 8px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('pages.destroy', $page) }}" method="POST"
                                                 class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                                <button type="submit" class="btn btn-sm btn-light text-danger border shadow-sm" title="Delete" style="border-radius: 8px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>

@@ -464,8 +464,8 @@
                 <!-- Contact Information -->
                 <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
                     <h6 class="fw-bold mb-3">Contact Us</h6>
-                    @if (isset($layoutSettings))
-                        <div class="contact-info">
+                    <div class="contact-info">
+                        @if (isset($layoutSettings))
                             @if ($layoutSettings->contact_email)
                                 @foreach ($layoutSettings->contact_email as $email)
                                     @if ($email)
@@ -503,8 +503,20 @@
                                     @endif
                                 </p>
                             @endif
+                        @endif
+
+                        {{-- Contact Modal Trigger in Footer --}}
+                        <div class="mt-3">
+                            <button type="button"
+                                class="btn btn-primary btn-sm rounded-pill px-4 py-2 shadow-sm border-0"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+                                data-bs-toggle="modal" data-bs-target="#contactModal">
+                                {{--  <i class="fas fa-paper-plane me-2"></i> Contact Us  --}}
+                                <i class="fas fa-comment-dots fa-lg me-2"></i>
+                                <span class="fw-bold">Contact Us</span>
+                            </button>
                         </div>
-                    @endif
+                    </div>
                 </div>
 
                 <!-- Google Map -->
@@ -606,6 +618,133 @@
                     text: "{{ session('warning') }}"
                 });
             @endif
+        });
+    </script>
+
+    <!-- Contact Us Floating Button -->
+    <div class="position-fixed bottom-0 end-0 m-4" style="z-index: 9999;">
+        <button type="button" class="btn btn-primary rounded-pill shadow-lg p-3 d-flex align-items-center border-0"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-bs-toggle="modal"
+            data-bs-target="#contactModal">
+            <i class="fas fa-comment-dots fa-lg me-2"></i>
+            <span class="fw-bold">Contact Us</span>
+        </button>
+    </div>
+
+    <!-- Contact Us Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true"
+        style="z-index: 10000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+                <div class="modal-header text-white border-0 py-3"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="modal-title fw-bold" id="contactModalLabel">
+                        <i class="fas fa-envelope me-2"></i> Send us a Message
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="contactForm" action="{{ route('contact.submit') }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label for="name" class="form-label small fw-bold text-muted">Full Name</label>
+                            <input type="text" class="form-control border-light-subtle" id="name"
+                                name="name" required placeholder="Enter your name"
+                                style="border-radius: 8px; padding: 10px;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label small fw-bold text-muted">Email Address</label>
+                            <input type="email" class="form-control border-light-subtle" id="email"
+                                name="email" required placeholder="name@example.com"
+                                style="border-radius: 8px; padding: 10px;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="number" class="form-label small fw-bold text-muted">Phone Number</label>
+                            <input type="text" class="form-control border-light-subtle" id="number"
+                                name="number" required placeholder="Your phone number"
+                                style="border-radius: 8px; padding: 10px;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label small fw-bold text-muted">Your Message</label>
+                            <textarea class="form-control border-light-subtle" id="message" name="message" rows="4" required
+                                placeholder="How can we help you?" style="border-radius: 8px; padding: 10px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 border-0"
+                            id="submitContactBtn"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <span class="spinner-border spinner-border-sm d-none me-2" role="status"
+                                aria-hidden="true"></span>
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Contact Form Ajax Handling --}}
+    <script>
+        $(document).ready(function() {
+            $('#contactForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const btn = $('#submitContactBtn');
+                const spinner = btn.find('.spinner-border');
+
+                // Disable button and show spinner
+                btn.prop('disabled', true);
+                spinner.removeClass('d-none');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById(
+                            'contactModal'));
+                        if (modal) modal.hide();
+
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Message Sent!',
+                            text: response.message,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+
+                        // Reset form
+                        form[0].reset();
+                    },
+                    error: function(xhr) {
+                        let msg = 'Something went wrong. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            // Show first validation error
+                            msg = Object.values(xhr.responseJSON.errors)[0][0];
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: msg
+                        });
+                    },
+                    complete: function() {
+                        // Re-enable button and hide spinner
+                        btn.prop('disabled', false);
+                        spinner.addClass('d-none');
+                    }
+                });
+            });
         });
     </script>
 
