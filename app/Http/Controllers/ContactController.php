@@ -23,7 +23,24 @@ class ContactController extends Controller
 
         try {
             // Save to database
-            Contact::create($validated);
+            $contact = Contact::create($validated);
+
+            // Send Email to Admin(s)
+            try {
+                $admins = \App\Models\User::all();
+
+                if ($admins->count() > 0) {
+                    foreach ($admins as $admin) {
+                        Mail::to($admin->email)->send(new \App\Mail\ContactMessageNotification($contact));
+                    }
+                } else {
+                    // Fallback to .env email if no admins found in database
+                    $adminEmail = env('MAIL_ADMIN_EMAIL', 'siddharthchhayani11@gmail.com');
+                    Mail::to($adminEmail)->send(new \App\Mail\ContactMessageNotification($contact));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send contact email: ' . $e->getMessage());
+            }
 
             // For now, just log it
             Log::info('Contact Form Submission:', $validated);
