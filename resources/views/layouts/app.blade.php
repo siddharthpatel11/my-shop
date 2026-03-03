@@ -207,7 +207,12 @@
 
             <!-- Navigation Menu -->
             <div class="collapse navbar-collapse" id="adminNavbar">
+                @php
+                    $is2faPending = auth()->check() && auth()->user()->google2fa_enabled && !session('2fa_verified');
+                @endphp
+
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    @if(!$is2faPending)
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
                             href="{{ route('dashboard') }}">
@@ -264,13 +269,6 @@
                             <span>Orders</span>
                         </a>
                     </li>
-                    {{--  <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('layout-settings.*') ? 'active' : '' }}"
-                            href="{{ route('layout-settings.index') }}">
-                            <i class="fas fa-cog"></i>
-                            <span>Settings</span>
-                        </a>
-                    </li>  --}}
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('pages.*') ? 'active' : '' }}"
                             href="{{ route('pages.index') }}">
@@ -283,6 +281,14 @@
                             <i class="fas fa-envelope me-1"></i> Contact-us
                         </a>
                     </li>
+                    @else
+                    <li class="nav-item">
+                        <span class="nav-link text-white-50">
+                            <i class="fas fa-lock"></i>
+                            <span>2FA Verification Required</span>
+                        </span>
+                    </li>
+                    @endif
                 </ul>
 
                 <!-- User Menu -->
@@ -326,8 +332,19 @@
         </div>
     </nav>
 
+    @if (isset($header))
+        <header class="bg-white shadow-sm border-bottom">
+            <div class="container-fluid px-3 px-lg-4 py-3">
+                {{ $header }}
+            </div>
+        </header>
+    @endif
+
     <!-- Main Content Area -->
     <main class="main-content">
+        @if(isset($slot))
+            {{ $slot }}
+        @endif
         @yield('content')
     </main>
 

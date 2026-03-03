@@ -17,6 +17,7 @@
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
         "phpoffice/phpspreadsheet": "^5.4",
+        "pragmarx/google2fa-laravel": "^2.3",
         "razorpay/razorpay": "*",
         "socialiteproviders/twitter": "^4.1",
         "tinymce/tinymce": "^8.3"

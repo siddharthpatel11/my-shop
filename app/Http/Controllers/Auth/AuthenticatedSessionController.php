@@ -25,8 +25,15 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
+
+        $user = $request->user();
+        \Illuminate\Support\Facades\Log::info('User logged in: ' . $user->email . ', 2FA enabled: ' . ($user->google2fa_enabled ? 'Yes' : 'No'));
+
+        if ($user->google2fa_enabled) {
+            \Illuminate\Support\Facades\Log::info('Redirecting user ' . $user->email . ' to 2FA verification.');
+            return redirect()->route('admin.2fa.verify');
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

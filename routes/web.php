@@ -15,21 +15,31 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Admin\NotificationController;
 
+use App\Http\Controllers\Auth\TwoFactorController;
+
 Route::get('/welcome', function () {
     return view('welcome');
 });
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'prevent-back', '2fa'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 2FA Routes
+    Route::prefix('admin/2fa')->name('admin.2fa.')->group(function () {
+        Route::get('/verify', [TwoFactorController::class, 'showVerifyForm'])->name('verify');
+        Route::post('/verify', [TwoFactorController::class, 'verify']);
+        Route::get('/setup', [TwoFactorController::class, 'showSetupForm'])->name('setup');
+        Route::post('/setup', [TwoFactorController::class, 'enable']);
+    });
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'prevent-back', '2fa'])->group(function () {
 
     Route::get('products/export',          [ProductImportExportController::class, 'export'])->name('products.export');
     Route::post('products/import',         [ProductImportExportController::class, 'import'])->name('products.import');
@@ -83,7 +93,7 @@ Route::middleware('auth')->group(function () {
         ->name('pages.delete-gallery-image');
 });
 
-Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'prevent-back', '2fa'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/orders/export', [OrderImportExportController::class, 'export'])
         ->name('orders.export');

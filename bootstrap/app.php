@@ -6,11 +6,11 @@ use Illuminate\Foundation\Configuration\Middleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-          web: [
-            __DIR__.'/../routes/web.php',
-            __DIR__.'/../routes/frontend.php', // ✅ ADD THIS
+        web: [
+            __DIR__ . '/../routes/web.php',
+            __DIR__ . '/../routes/frontend.php', // ✅ ADD THIS
         ],
-        api: __DIR__.'/../routes/api.php',
+        api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
@@ -25,7 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
     // )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware  ::class,
+            'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
+            'prevent-back' => \App\Http\Middleware\PreventBackHistory::class,
+            '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

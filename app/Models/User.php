@@ -22,6 +22,8 @@ class User extends Authenticatable
         'email',
         'password',
         'fcm_token',
+        'google2fa_secret',
+        'google2fa_enabled',
     ];
 
     /**
@@ -44,6 +46,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'google2fa_enabled' => 'boolean',
         ];
     }
 }
