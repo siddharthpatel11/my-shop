@@ -5,20 +5,70 @@ namespace App\Http\Controllers\Api\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\Customer\AddressResource;
 use App\Models\CustomerAddress;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AddressController extends Controller
 {
+    // public function index(Request $request)
+    // {
+    //     $addresses = CustomerAddress::where('customer_id', $request->user()->id)
+    //         ->orderByDesc('is_default')
+    //         ->orderByDesc('id')
+    //         ->get();
+
+    //     return response()->json([
+    //         'success'   => true,
+    //         'addresses' => AddressResource::collection($addresses),
+    //     ]);
+    // }
+    
     public function index(Request $request)
     {
-        $addresses = CustomerAddress::where('customer_id', $request->user()->id)
-            ->orderByDesc('is_default')
+        $customerId = $request->header('customer_id') ?? $request->user()->id;
+
+        $query = CustomerAddress::where('customer_id', $customerId);
+
+        // Filter by ID
+        if ($request->id) {
+            $query->where('id', $request->id);
+        }
+        // Filter by Country
+        if ($request->country) {
+            $query->where('country', 'like', '%' . $request->country . '%');
+        }
+        // Filter by State
+        if ($request->state) {
+            $query->where('state', 'like', '%' . $request->state . '%');
+        }
+        // Filter by District
+        if ($request->district) {
+            $query->where('district', 'like', '%' . $request->district . '%');
+        }
+        // Filter by City
+        if ($request->city) {
+            $query->where('city', 'like', '%' . $request->city . '%');
+        }
+        // Filter by Pincode
+        if ($request->pincode) {
+            $query->where('pincode', $request->pincode);
+        }
+        // Search filter
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('city', 'like', "%{$request->search}%")
+                    ->orWhere('state', 'like', "%{$request->search}%")
+                    ->orWhere('district', 'like', "%{$request->search}%");
+            });
+        }
+
+        $addresses = $query->orderByDesc('is_default')
             ->orderByDesc('id')
             ->get();
 
         return response()->json([
-            'success'   => true,
-            'addresses' => AddressResource::collection($addresses),
+            'success' => true,
+            'addresses' => AddressResource::collection($addresses)
         ]);
     }
 
@@ -105,21 +155,50 @@ class AddressController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, $id)
+    // public function destroy(Request $request, $id)
+    // {
+    //     $address = CustomerAddress::where('id', $id)
+    //         ->where('customer_id', $request->user()->id)
+    //         ->first();
+
+    //     if (!$address) {
+    //         return response()->json(['success' => false, 'message' => 'Address not found'], 404);
+    //     }
+
+    //     $address->delete();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Address deleted successfully',
+    //     ]);
+    // }
+    public function destroy(Request $request): JsonResponse
     {
+        $id = $request->query('id');
+
+        if (!$id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ID required'
+            ]);
+        }
+
         $address = CustomerAddress::where('id', $id)
             ->where('customer_id', $request->user()->id)
             ->first();
 
         if (!$address) {
-            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Address not found'
+            ]);
         }
 
         $address->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Address deleted successfully',
+            'message' => 'Address deleted successfully'
         ]);
     }
 

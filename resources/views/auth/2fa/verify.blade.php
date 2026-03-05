@@ -14,34 +14,39 @@
 
                     <form method="POST" action="{{ route('admin.2fa.verify') }}" class="max-w-sm mx-auto">
                         @csrf
-                        
+
                         <div class="mb-5 p-4 bg-light rounded-4 border shadow-sm text-center">
-                            <p class="text-muted small mb-3 uppercase tracking-wider font-bold">Scan QR Code or Use Manual Key</p>
+                            <p class="text-muted small mb-3 uppercase tracking-wider font-bold">Scan QR Code or Use
+                                Manual Key</p>
                             <div class="d-flex justify-content-center mb-4">
                                 <div class="bg-white p-3 rounded-3 shadow-sm border">
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode($qrCodeUrl) }}" alt="QR Code">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode($qrCodeUrl) }}"
+                                        alt="QR Code">
                                 </div>
                             </div>
                             <div class="bg-white py-2 px-3 rounded-pill border d-inline-block">
-                                <code class="text-primary fw-bold" style="font-size: 1.1rem; letter-spacing: 1px;">{{ $secret }}</code>
+                                <code class="text-primary fw-bold"
+                                    style="font-size: 1.1rem; letter-spacing: 1px;">{{ $secret }}</code>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="one_time_password" class="form-label fw-bold">{{ __('Enter 6-digit OTP') }}</label>
-                            <input id="one_time_password" type="text" 
-                                   class="form-control form-control-lg text-center @error('one_time_password') is-invalid @enderror" 
-                                   name="one_time_password" 
-                                   required autofocus 
-                                   maxlength="6" 
-                                   style="font-size: 2rem; letter-spacing: 0.5rem; height: 70px;">
+                        <div class="mb-4" style="max-width:300px; margin:auto;">
+                            <label for="one_time_password" class="form-label fw-bold">
+                                {{ __('Enter 6-digit OTP') }}
+                            </label>
+
+                            <input id="one_time_password" type="text"
+                                class="form-control text-center @error('one_time_password') is-invalid @enderror"
+                                name="one_time_password" required autofocus maxlength="6"
+                                style="font-size:20px; letter-spacing:8px; height:45px;">
+
                             @error('one_time_password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-check-circle me-2"></i> {{ __('Verify OTP') }}
                             </button>
                         </div>

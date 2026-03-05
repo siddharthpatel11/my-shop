@@ -85,7 +85,8 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', [AddressController::class, 'store'])->name('store');
                 Route::get('/{id}', [AddressController::class, 'show'])->name('show');
                 Route::put('/{id}', [AddressController::class, 'update'])->name('update');
-                Route::delete('/{id}', [AddressController::class, 'destroy'])->name('destroy');
+                // Route::delete('/{id}', [AddressController::class, 'destroy'])->name('destroy');
+                Route::delete('/destroy', [AddressController::class, 'destroy'])->name('destroy');
                 Route::post('/{id}/set-default', [AddressController::class, 'setDefault'])->name('set-default');
             });
 
