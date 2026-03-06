@@ -18,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use phpDocumentor\Reflection\Types\Nullable;
 use Razorpay\Api\Api;
 
 class OrderController extends Controller
@@ -147,10 +146,19 @@ class OrderController extends Controller
 
         if ($request->filled('discount_code')) {
             $discount = Discount::where('code', strtoupper($request->discount_code))
-                ->valid()
+                ->valid($subtotalWithTax)
                 ->first();
 
             if (!$discount) {
+                // Check if it's invalid because of min_amount
+                $anyDiscount = Discount::where('code', strtoupper($request->discount_code))->first();
+                if ($anyDiscount && $anyDiscount->status === 'active' && $subtotalWithTax < $anyDiscount->min_amount) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Minimum purchase of ₹' . number_format($anyDiscount->min_amount, 2) . ' required to apply this discount.'
+                    ], 422);
+                }
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid or expired discount code',

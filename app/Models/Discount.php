@@ -14,6 +14,7 @@ class Discount extends Model
     protected $fillable = [
         'code',
         'value',
+        'min_amount',
         'type',
         'start_date',
         'end_date',
@@ -24,15 +25,21 @@ class Discount extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'value' => 'decimal:2',
+        'min_amount' => 'decimal:2',
     ];
 
-    public function isValid(): bool
+    public function isValid(float $amount = null): bool
     {
         if ($this->status !== 'active') {
             return false;
         }
+
+        if ($amount !== null && $amount < $this->min_amount) {
+            return false;
+        }
+
         $now = Carbon::now();
-        if ($this->stat_date && $now->lt($this->start_date)) {
+        if ($this->start_date && $now->lt($this->start_date)) {
             return false;
         }
         if ($this->end_date && $now->gt($this->end_date)) {
@@ -44,7 +51,7 @@ class Discount extends Model
 
     public function calculateDiscount(float $amount): float
     {
-        if (!$this->isValid()) {
+        if (!$this->isValid($amount)) {
             return 0;
         }
         $discount = 0;
@@ -61,11 +68,11 @@ class Discount extends Model
     {
         return $query->where('status', 'active');
     }
-    public function scopeValid($query)
+    public function scopeValid($query, float $amount = null)
     {
         $now = Carbon::now();
 
-        return $query->where('status', 'active')
+        $query->where('status', 'active')
             ->where(function ($q) use ($now) {
                 $q->whereNull('start_date')
                     ->orWhere('start_date', '<=', $now);
@@ -74,9 +81,15 @@ class Discount extends Model
                 $q->whereNull('end_date')
                     ->orWhere('end_date', '>=', $now);
             });
+
+        if ($amount !== null) {
+            $query->where('min_amount', '<=', $amount);
+        }
+
+        return $query;
     }
 
-       public function scopeNotDeleted($query)
+    public function scopeNotDeleted($query)
     {
         return $query->where('status', '!=', 'deleted');
     }

@@ -123,7 +123,7 @@ class CheckoutController extends Controller
         // Check if discount is applied in session
         if ($request->session()->has('applied_discount')) {
             $discountCode = $request->session()->get('applied_discount');
-            $discount = Discount::where('code', $discountCode)->valid()->first();
+            $discount = Discount::where('code', $discountCode)->valid($subtotalWithTax)->first();
 
             if ($discount) {
                 // Apply discount on subtotal + tax
@@ -211,7 +211,7 @@ class CheckoutController extends Controller
 
         if ($request->session()->has('applied_discount')) {
             $discountCode = $request->session()->get('applied_discount');
-            $discount = Discount::where('code', $discountCode)->valid()->first();
+            $discount = Discount::where('code', $discountCode)->valid($subtotalWithTax)->first();
 
             if ($discount) {
                 // Apply discount on subtotal + tax

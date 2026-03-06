@@ -441,6 +441,40 @@
             background: #f8f9ff;
         }
 
+        .discount-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .discount-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .discount-card.locked {
+            opacity: 0.8;
+            cursor: not-allowed;
+            background: #fdfdfd;
+        }
+
+        .discount-card.locked:hover {
+            border-color: #dee2e6;
+            background: #fdfdfd;
+        }
+
+        .discount-badge {
+            background: #f0f2ff;
+            color: #667eea;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
         @media (max-width: 768px) {
             .cart-item-image {
                 width: 80px;
@@ -469,7 +503,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.discounts.length > 0) {
-                        displayDiscounts(data.discounts);
+                        displayDiscounts(data.discounts, data.subtotalWithTax);
                     } else {
                         document.getElementById('availableDiscounts').innerHTML = `
                             <div class="text-center py-4">
@@ -488,7 +522,7 @@
         }
 
         // Display available discounts
-        function displayDiscounts(discounts) {
+        function displayDiscounts(discounts, subtotalWithTax) {
             let html = '';
 
             discounts.forEach(discount => {
@@ -501,8 +535,23 @@
                         Valid: ${formatDate(discount.start_date)} - ${formatDate(discount.end_date)}
                     </small>` : '';
 
+                const minAmount = parseFloat(discount.min_amount) || 0;
+                const isLocked = subtotalWithTax < minAmount;
+                const difference = minAmount - subtotalWithTax;
+
+                let lockedMessage = '';
+                if (isLocked) {
+                    lockedMessage = `
+                        <div class="mt-2 text-danger small">
+                            <i class="fas fa-lock me-1"></i>
+                            Minimum purchase of ₹${minAmount.toFixed(2)} required to apply this discount.<br>
+                            <strong>Shop for ₹${difference.toFixed(2)} more to unlock.</strong>
+                        </div>
+                    `;
+                }
+
                 html += `
-                    <div class="discount-card" onclick="selectDiscount('${discount.code}')">
+                    <div class="discount-card ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="selectDiscount('${discount.code}')"` : ''}>
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center gap-2 mb-2">
@@ -512,8 +561,9 @@
                                     </span>
                                 </div>
                                 ${validPeriod}
+                                ${lockedMessage}
                             </div>
-                            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); selectDiscount('${discount.code}')">
+                            <button class="btn btn-sm btn-primary" ${isLocked ? 'disabled' : ''} onclick="event.stopPropagation(); selectDiscount('${discount.code}')">
                                 Apply
                             </button>
                         </div>

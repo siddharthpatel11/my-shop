@@ -49,6 +49,7 @@ class DiscountController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:255|unique:discounts,code',
             'value' => 'required|numeric|min:0',
+            'min_amount' => 'required|numeric|min:0',
             'type' => 'required|in:percentage,amount',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -88,6 +89,7 @@ class DiscountController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:255|unique:discounts,code,' . $discount->id,
             'value' => 'required|numeric|min:0',
+            'min_amount' => 'required|numeric|min:0',
             'type' => 'required|in:percentage,amount',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',

@@ -50,6 +50,7 @@
                         <th>Code</th>
                         <th>Type</th>
                         <th>Value</th>
+                        <th>Min Amount</th>
                         <th>Valid Period</th>
                         <th>Status</th>
                         <th width="280">Action</th>
@@ -80,6 +81,11 @@
                                         ₹{{ number_format($discount->value, 2) }}
                                     @endif
                                 </strong>
+                            </td>
+
+                            {{-- MIN AMOUNT --}}
+                            <td>
+                                <strong>₹{{ number_format($discount->min_amount, 2) }}</strong>
                             </td>
 
                             {{-- VALID PERIOD --}}

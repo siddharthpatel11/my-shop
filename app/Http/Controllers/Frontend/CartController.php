@@ -42,7 +42,7 @@ class CartController extends Controller
         // Check if discount is applied in session
         if ($request->session()->has('applied_discount')) {
             $discountCode = $request->session()->get('applied_discount');
-            $discount = Discount::where('code', $discountCode)->valid()->first();
+            $discount = Discount::where('code', $discountCode)->valid($subtotalWithTax)->first();
 
             if ($discount) {
                 // Apply discount on subtotal + tax
@@ -77,11 +77,30 @@ class CartController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        $discounts = Discount::valid()->get();
+        $cartItems = CartItem::where('customer_id', auth('customer')->id())->get();
+        $subtotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+
+        $tax = Tax::active()->first();
+        $taxPercent = $tax ? $tax->rate : 0;
+        $taxAmount = ($subtotal * $taxPercent) / 100;
+        $subtotalWithTax = $subtotal + $taxAmount;
+
+        // Get all active discounts that are within valid date range
+        $discounts = Discount::active()
+            ->where(function ($q) {
+                $now = now();
+                $q->where(function ($sq) use ($now) {
+                    $sq->whereNull('start_date')->orWhere('start_date', '<=', $now);
+                })->where(function ($sq) use ($now) {
+                    $sq->whereNull('end_date')->orWhere('end_date', '>=', $now);
+                });
+            })
+            ->get();
 
         return response()->json([
             'success' => true,
-            'discounts' => $discounts
+            'discounts' => $discounts,
+            'subtotalWithTax' => $subtotalWithTax
         ]);
     }
 
@@ -101,10 +120,28 @@ class CartController extends Controller
 
         $discountCode = strtoupper(trim($request->discount_code));
 
+        // Get subtotal for validation
+        $cartItems = CartItem::where('customer_id', auth('customer')->id())->get();
+        $subtotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+
+        $tax = Tax::active()->first();
+        $taxPercent = $tax ? $tax->rate : 0;
+        $taxAmount = ($subtotal * $taxPercent) / 100;
+        $subtotalWithTax = $subtotal + $taxAmount;
+
         // Find valid discount
-        $discount = Discount::where('code', $discountCode)->valid()->first();
+        $discount = Discount::where('code', $discountCode)->valid($subtotalWithTax)->first();
 
         if (!$discount) {
+            // Check if it's invalid because of min_amount
+            $anyDiscount = Discount::where('code', $discountCode)->first();
+            if ($anyDiscount && $anyDiscount->status === 'active' && $subtotalWithTax < $anyDiscount->min_amount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimum purchase of ₹' . number_format($anyDiscount->min_amount, 2) . ' required to apply this discount.'
+                ], 422);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired discount code'

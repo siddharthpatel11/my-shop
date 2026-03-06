@@ -45,7 +45,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="value" class="form-label">
                                 Discount Value <span class="text-danger">*</span>
                                 <span id="value-unit">(in %)</span>
@@ -58,7 +58,19 @@
                             @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="min_amount" class="form-label">Minimum Amount <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" step="0.01" min="0"
+                                class="form-control @error('min_amount') is-invalid @enderror" id="min_amount"
+                                name="min_amount" value="{{ old('min_amount', 0) }}" required>
+                            <small class="text-muted">Min purchase to apply</small>
+                            @error('min_amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-4 mb-3">
                             <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select @error('status') is-invalid @enderror" id="status" name="status"
                                 required>

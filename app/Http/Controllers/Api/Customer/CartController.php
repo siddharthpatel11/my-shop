@@ -176,11 +176,26 @@ class CartController extends Controller
             'discount_code' => 'required|string',
         ]);
 
+        $customerId = $request->user()->id;
+        $cartItems  = CartItem::where('customer_id', $customerId)->get();
+
+        [$subtotal, $taxPercent, $taxAmount] = $this->calcTotals($cartItems);
+        $subtotalWithTax = $subtotal + $taxAmount;
+
         $discount = Discount::where('code', strtoupper($request->discount_code))
-            ->valid()
+            ->valid($subtotalWithTax)
             ->first();
 
         if (!$discount) {
+            // Check if it's invalid because of min_amount
+            $anyDiscount = Discount::where('code', strtoupper($request->discount_code))->first();
+            if ($anyDiscount && $anyDiscount->status === 'active' && $subtotalWithTax < $anyDiscount->min_amount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimum purchase of ₹' . number_format($anyDiscount->min_amount, 2) . ' required to apply this discount.'
+                ], 422);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired discount code',
