@@ -80,8 +80,12 @@
                                                 <i class="fas fa-envelope text-primary me-2"></i>Email Address
                                             </p>
                                         </div>
-                                        <div class="col-7">
-                                            <p class="fw-semibold mb-0">{{ $customer->email }}</p>
+                                        <div class="col-7 d-flex justify-content-between align-items-center">
+                                            <p class="fw-semibold mb-0" id="current-email">{{ $customer->email }}</p>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal" data-bs-target="#editEmailModal">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -184,7 +188,73 @@
         </div>
     </div>
 
+    <!-- Edit Email Modal -->
+    <div class="modal fade" id="editEmailModal" tabindex="-1" aria-labelledby="editEmailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="editEmailModalLabel">Change Email Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Step 1: Send OTP -->
+                    <div id="step-send-otp">
+                        <p class="text-muted mb-4">Click below to send a verification code to your current email:
+                            <strong>{{ $customer->email }}</strong>
+                        </p>
+                        <button type="button" class="btn btn-primary w-100 py-2 rounded-3" id="btn-send-otp">
+                            <span class="spinner-border spinner-border-sm d-none" id="spinner-send"
+                                role="status"></span>
+                            Send Verification Code
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Verify OTP -->
+                    <div id="step-verify-otp" class="d-none">
+                        <p class="text-muted mb-4">Enter the 6-digit code sent to your email.</p>
+                        <div class="mb-3">
+                            <input type="text" class="form-control form-control-lg text-center letter-spacing-5"
+                                id="otp-input" maxlength="6" placeholder="000000">
+                            <div class="invalid-feedback" id="otp-error"></div>
+                        </div>
+                        <button type="button" class="btn btn-primary w-100 py-2 rounded-3" id="btn-verify-otp">
+                            <span class="spinner-border spinner-border-sm d-none" id="spinner-verify"
+                                role="status"></span>
+                            Verify Code
+                        </button>
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none"
+                                id="btn-resend-otp">Resend Code</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Enter New Email -->
+                    <div id="step-new-email" class="d-none">
+                        <p class="text-muted mb-4">Verification successful! Enter your new email address.</p>
+                        <div class="mb-3">
+                            <label for="new_email" class="form-label">New Email Address</label>
+                            <input type="email" class="form-control" id="new_email" placeholder="name@example.com">
+                            <div class="invalid-feedback" id="email-error"></div>
+                        </div>
+                        <button type="button" class="btn btn-success w-100 py-2 rounded-3" id="btn-update-email">
+                            <span class="spinner-border spinner-border-sm d-none" id="spinner-update"
+                                role="status"></span>
+                            Update Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <style>
+        .letter-spacing-5 {
+            letter-spacing: 5px;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
         .bg-gradient-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
@@ -203,11 +273,153 @@
     </style>
 
     <script>
-        // Update cart count on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Update cart count on page load
             const cart = JSON.parse(localStorage.getItem('shoppingCart') || '[]');
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cartItemsCount').textContent = totalItems;
+            const cartCounter = document.getElementById('cartItemsCount');
+            if (cartCounter) cartCounter.textContent = totalItems;
+
+            // Email Change Logic
+            const btnSendOtp = document.getElementById('btn-send-otp');
+            const btnVerifyOtp = document.getElementById('btn-verify-otp');
+            const btnResendOtp = document.getElementById('btn-resend-otp');
+            const btnUpdateEmail = document.getElementById('btn-update-email');
+
+            const step1 = document.getElementById('step-send-otp');
+            const step2 = document.getElementById('step-verify-otp');
+            const step3 = document.getElementById('step-new-email');
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // Send OTP
+            btnSendOtp.addEventListener('click', function() {
+                sendOtp();
+            });
+
+            btnResendOtp.addEventListener('click', function() {
+                sendOtp();
+            });
+
+            function sendOtp() {
+                btnSendOtp.disabled = true;
+                btnResendOtp.disabled = true;
+                document.getElementById('spinner-send').classList.remove('d-none');
+
+                fetch('{{ route('customer.email-change.send-otp') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            step1.classList.add('d-none');
+                            step2.classList.remove('d-none');
+                        } else {
+                            alert(data.message || 'Error sending OTP');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    })
+                    .finally(() => {
+                        btnSendOtp.disabled = false;
+                        btnResendOtp.disabled = false;
+                        document.getElementById('spinner-send').classList.add('d-none');
+                    });
+            }
+
+            // Verify OTP
+            btnVerifyOtp.addEventListener('click', function() {
+                const otp = document.getElementById('otp-input').value;
+                if (!otp || otp.length !== 6) {
+                    document.getElementById('otp-input').classList.add('is-invalid');
+                    document.getElementById('otp-error').textContent = 'Please enter a 6-digit code.';
+                    return;
+                }
+
+                btnVerifyOtp.disabled = true;
+                document.getElementById('spinner-verify').classList.remove('d-none');
+                document.getElementById('otp-input').classList.remove('is-invalid');
+
+                fetch('{{ route('customer.email-change.verify-otp') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            otp: otp
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            step2.classList.add('d-none');
+                            step3.classList.remove('d-none');
+                        } else {
+                            document.getElementById('otp-input').classList.add('is-invalid');
+                            document.getElementById('otp-error').textContent = data.message ||
+                                'Invalid OTP';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    })
+                    .finally(() => {
+                        btnVerifyOtp.disabled = false;
+                        document.getElementById('spinner-verify').classList.add('d-none');
+                    });
+            });
+
+            // Update Email
+            btnUpdateEmail.addEventListener('click', function() {
+                const newEmail = document.getElementById('new_email').value;
+                if (!newEmail) {
+                    document.getElementById('new_email').classList.add('is-invalid');
+                    document.getElementById('email-error').textContent =
+                        'Please enter a new email address.';
+                    return;
+                }
+
+                btnUpdateEmail.disabled = true;
+                document.getElementById('spinner-update').classList.remove('d-none');
+                document.getElementById('new_email').classList.remove('is-invalid');
+
+                fetch('{{ route('customer.email-change.update') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            new_email: newEmail
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            document.getElementById('new_email').classList.add('is-invalid');
+                            document.getElementById('email-error').textContent = data.message ||
+                                'Error updating email';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    })
+                    .finally(() => {
+                        btnUpdateEmail.disabled = false;
+                        document.getElementById('spinner-update').classList.add('d-none');
+                    });
+            });
         });
     </script>
 @endsection

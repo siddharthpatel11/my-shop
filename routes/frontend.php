@@ -112,6 +112,14 @@ Route::middleware('customer.auth')->group(function () {
     Route::get('/customer/profile', [CustomerAuthController::class, 'profile'])
         ->name('customer.profile');
 
+    // Email Change Routes
+    Route::post('/customer/email-change/send-otp', [CustomerAuthController::class, 'sendEmailChangeOTP'])
+        ->name('customer.email-change.send-otp');
+    Route::post('/customer/email-change/verify-otp', [CustomerAuthController::class, 'verifyEmailChangeOTP'])
+        ->name('customer.email-change.verify-otp');
+    Route::post('/customer/email-change/update', [CustomerAuthController::class, 'updateEmail'])
+        ->name('customer.email-change.update');
+
     // Checkout and Orders
     Route::post('/checkout/address/store', [CheckoutController::class, 'storeAddress'])
         ->name('checkout.address.store');

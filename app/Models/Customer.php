@@ -28,6 +28,8 @@ class Customer extends Authenticatable
         'twitter_id',
         'avatar',
         'social_provider',
+        'email_otp',
+        'email_otp_expires_at',
     ];
 
     protected $hidden = [

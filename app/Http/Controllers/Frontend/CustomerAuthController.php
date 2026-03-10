@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Customer;
 use Closure;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailChangeOTPMail;
+use Carbon\Carbon;
 
 class CustomerAuthController extends Controller
 {
@@ -125,5 +128,69 @@ class CustomerAuthController extends Controller
         }
 
         return $next($request);
+    }
+
+    /* ================= EMAIL CHANGE ================= */
+    public function sendEmailChangeOTP(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        // Generate 6-digit OTP
+        $otp = rand(100000, 999999);
+
+        // Save OTP to customer record
+        $customer->update([
+            'email_otp' => $otp,
+            'email_otp_expires_at' => Carbon::now()->addMinutes(10),
+        ]);
+
+        // Send OTP via email
+        try {
+            Mail::to($customer->email)->send(new EmailChangeOTPMail($otp));
+            return response()->json(['success' => true, 'message' => 'OTP sent successfully to your current email.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to send OTP. Please try again. ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function verifyEmailChangeOTP(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|digits:6',
+        ]);
+
+        $customer = Auth::guard('customer')->user();
+
+        if ($customer->email_otp === $request->otp && Carbon::now()->isBefore($customer->email_otp_expires_at)) {
+            // OTP is correct and not expired
+            // We can mark the OTP as verified in session to allow the next step
+            session()->put('email_otp_verified', true);
+            return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid or expired OTP.'], 422);
+    }
+
+    public function updateEmail(Request $request)
+    {
+        $request->validate([
+            'new_email' => 'required|email|unique:customers,email',
+        ]);
+
+        if (!session()->get('email_otp_verified')) {
+            return response()->json(['success' => false, 'message' => 'Please verify your current email first.'], 403);
+        }
+
+        $customer = Auth::guard('customer')->user();
+
+        $customer->update([
+            'email' => $request->new_email,
+            'email_otp' => null,
+            'email_otp_expires_at' => null,
+        ]);
+
+        session()->forget('email_otp_verified');
+
+        return response()->json(['success' => true, 'message' => 'Email updated successfully.']);
     }
 }
