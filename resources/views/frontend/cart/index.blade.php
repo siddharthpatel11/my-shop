@@ -33,13 +33,24 @@
                         <div class="card border-0 shadow-sm mb-3 cart-item-card" data-cart-id="{{ $item->id }}">
                             <div class="card-body">
                                 <div class="row align-items-center">
-                                    <div class="col-md-2 col-3 mb-3 mb-md-0">
-                                        <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
-                                            class="cart-item-image" alt="{{ $item->product->name }}">
+                                    <div class="col-md-2 col-3 mb-3 mb-md-0 text-center">
+                                        <a href="{{ route('frontend.products.show', $item->product->id) }}">
+                                            <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
+                                                class="cart-item-image" alt="{{ $item->product->name }}">
+                                        </a>
                                     </div>
 
                                     <div class="col-md-4 col-9 mb-3 mb-md-0">
-                                        <h6 class="fw-bold mb-2">{{ $item->product->name }}</h6>
+                                        <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                            class="text-decoration-none">
+                                            <h6 class="fw-bold mb-1 text-dark">{{ $item->product->name }}</h6>
+                                        </a>
+                                        <div class="mb-2">
+                                            <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                                class="text-primary small text-decoration-none">
+                                                <i class="fas fa-eye me-1"></i> View Details
+                                            </a>
+                                        </div>
                                         <p class="text-muted small mb-2">
                                             {{ $item->product->category->name ?? '' }}
                                         </p>
@@ -88,16 +99,22 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-2 col-12">
+                                    <div class="col-md-2 col-12 text-md-center">
                                         <div class="text-md-center">
                                             <small class="text-muted d-block">Subtotal</small>
                                             <div class="fw-bold text-primary mb-2">
                                                 ₹{{ number_format($item->price * $item->quantity, 2) }}
                                             </div>
-                                            <button class="btn btn-sm btn-outline-danger"
-                                                onclick="removeItem({{ $item->id }})">
-                                                <i class="fas fa-trash-alt me-1"></i> Remove
-                                            </button>
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                    onclick="removeItem({{ $item->id }})">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                                <button class="btn btn-sm btn-primary"
+                                                    onclick="checkoutSingleItem({{ $item->id }})">
+                                                    <i class="fas fa-bolt me-1"></i> Buy This
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -198,8 +215,8 @@
                             </span>
                         </div>
 
-                        <button class="btn btn-primary w-100 mb-3" id="checkoutBtn" data-bs-toggle="modal"
-                            data-bs-target="#addressModal" {{ $cartItems->count() == 0 ? 'disabled' : '' }}>
+                        <button class="btn btn-primary w-100 mb-3" id="checkoutBtn" onclick="checkoutAllItems()"
+                            {{ $cartItems->count() == 0 ? 'disabled' : '' }}>
                             <i class="fas fa-lock me-2"></i> Proceed to Checkout
                         </button>
 
@@ -486,6 +503,7 @@
     {{-- Scripts --}}
     <script>
         let selectedAddressId = null;
+        let singleItemCheckoutId = null;
 
         // Load saved addresses when modal opens
         document.getElementById('addressModal').addEventListener('show.bs.modal', function() {
@@ -748,6 +766,30 @@
             if (radio) radio.checked = true;
         }
 
+        // Auto-trigger checkout if parameter is present
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const buyItemId = urlParams.get('buy_item_id');
+
+            if (buyItemId) {
+                checkoutSingleItem(buyItemId);
+            } else if (urlParams.get('checkout') === '1') {
+                checkoutAllItems();
+            }
+        });
+
+        function checkoutAllItems() {
+            singleItemCheckoutId = null;
+            const addressModal = new bootstrap.Modal(document.getElementById('addressModal'));
+            addressModal.show();
+        }
+
+        function checkoutSingleItem(id) {
+            singleItemCheckoutId = id;
+            const addressModal = new bootstrap.Modal(document.getElementById('addressModal'));
+            addressModal.show();
+        }
+
         // Show new address form
         function showNewAddressForm() {
             document.getElementById('savedAddresses').style.display = 'none';
@@ -769,7 +811,11 @@
 
             // Existing address selected
             if (selectedAddressId) {
-                window.location.href = `/checkout/review/${selectedAddressId}`;
+                let url = `/checkout/review/${selectedAddressId}`;
+                if (typeof singleItemCheckoutId !== 'undefined' && singleItemCheckoutId) {
+                    url += `?cart_item_id=${singleItemCheckoutId}`;
+                }
+                window.location.href = url;
                 return;
             }
 
@@ -794,7 +840,11 @@
                 .then(res => res.json())
                 .then(res => {
                     if (res.success) {
-                        window.location.href = `/checkout/review/${res.address.id}`;
+                        let url = `/checkout/review/${res.address.id}`;
+                        if (typeof singleItemCheckoutId !== 'undefined' && singleItemCheckoutId) {
+                            url += `?cart_item_id=${singleItemCheckoutId}`;
+                        }
+                        window.location.href = url;
                     }
                 });
         }

@@ -12,12 +12,14 @@ use App\Models\CustomerAddress;
 use App\Models\Discount;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\Tax;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Razorpay\Api\Api;
 
 class OrderController extends Controller
@@ -103,13 +105,28 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'address_id'     => 'required|exists:customer_addresses,id',
             'payment_method' => 'nullable|in:cod,razorpay',
             'discount_code'  => 'nullable|string',
+            'cart_item_id'   => 'nullable|exists:cart_items,id',
+            // Direct Buy fields
+            'product_id'     => 'nullable|exists:products,id',
+            'quantity'       => 'required_with:product_id|integer|min:1|max:10',
+            'color_id'       => 'required_with:product_id|exists:colors,id',
+            'size_id'        => 'required_with:product_id|exists:sizes,id',
+            'customer_id'    => 'nullable|exists:users,id',
         ]);
 
-        $customerId    = $request->user()->id;
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $customerId    = $request->customer_id ?? $request->user()->id;
         $paymentMethod = $request->payment_method ?? 'cod';
 
         // Verify address belongs to customer
@@ -121,17 +138,61 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid address'], 400);
         }
 
-        // Cart check
-        $cartItems = CartItem::with(['product', 'color', 'size'])
-            ->where('customer_id', $customerId)
-            ->get();
+        $itemsToOrder = collect();
 
-        if ($cartItems->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Your cart is empty'], 400);
+        if ($request->filled('product_id')) {
+            // Direct Buy Flow
+            $product = Product::where('id', $request->product_id)
+                ->where('status', 'active')
+                ->first();
+
+            if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Product not found or unavailable'], 404);
+            }
+
+            // Variant Validation (Extra safety)
+            if (!$request->color_id || !in_array($request->color_id, $product->colorIds())) {
+                return response()->json(['success' => false, 'message' => 'Invalid color selected'], 422);
+            }
+            if (!$request->size_id || !in_array($request->size_id, $product->sizeIds())) {
+                return response()->json(['success' => false, 'message' => 'Invalid size selected'], 422);
+            }
+
+            $itemsToOrder->push((object)[
+                'product_id' => $product->id,
+                'color_id'   => $request->color_id,
+                'size_id'    => $request->size_id,
+                'quantity'   => $request->quantity ?? 1,
+                'price'      => $product->sale_price ?? $product->price,
+            ]);
+        } else {
+            // Cart-based Flow (Standard)
+            $query = CartItem::with(['product', 'color', 'size'])
+                ->where('customer_id', $customerId);
+
+            if ($request->filled('cart_item_id')) {
+                $query->where('id', $request->cart_item_id);
+            }
+
+            $cartItems = $query->get();
+
+            if ($cartItems->isEmpty()) {
+                return response()->json(['success' => false, 'message' => $request->filled('cart_item_id') ? 'Selected item not found in cart' : 'Your cart is empty'], 400);
+            }
+
+            foreach ($cartItems as $item) {
+                $itemsToOrder->push((object)[
+                    'product_id' => $item->product_id,
+                    'color_id'   => $item->color_id,
+                    'size_id'    => $item->size_id,
+                    'quantity'   => $item->quantity,
+                    'price'      => $item->price,
+                ]);
+            }
         }
 
         // ── Totals ───────────────────────────────────────────────────────────
-        $subtotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+        $subtotal = $itemsToOrder->sum(fn($item) => $item->price * $item->quantity);
 
         $taxRow     = Tax::active()->first();
         $taxId      = $taxRow ? $taxRow->id : null;
@@ -222,21 +283,32 @@ class OrderController extends Controller
                 'status'            => 'active',
             ]);
 
-            foreach ($cartItems as $cartItem) {
+            foreach ($itemsToOrder as $item) {
                 OrderItem::create([
                     'order_id'    => $order->id,
-                    'product_id'  => $cartItem->product_id,
-                    'color_id'    => $cartItem->color_id,
-                    'size_id'     => $cartItem->size_id,
-                    'quantity'    => $cartItem->quantity,
-                    'price'       => $cartItem->price,
-                    'subtotal'    => $cartItem->price * $cartItem->quantity,
+                    'product_id'  => $item->product_id,
+                    'color_id'    => $item->color_id,
+                    'size_id'     => $item->size_id,
+                    'quantity'    => $item->quantity,
+                    'price'       => $item->price,
+                    'subtotal'    => $item->price * $item->quantity,
                     'item_status' => 'pending',
                     'status'      => 'active',
                 ]);
             }
 
-            CartItem::where('customer_id', $customerId)->delete();
+            if ($request->filled('product_id')) {
+                // If it was a direct buy, also remove from cart if it existed there
+                CartItem::where('customer_id', $customerId)
+                    ->where('product_id', $request->product_id)
+                    ->where('color_id', $request->color_id)
+                    ->where('size_id', $request->size_id)
+                    ->delete();
+            } else if ($request->filled('cart_item_id')) {
+                CartItem::where('id', $request->cart_item_id)->delete();
+            } else {
+                CartItem::where('customer_id', $customerId)->delete();
+            }
 
             DB::commit();
 
@@ -442,6 +514,90 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order cancelled successfully',
+        ]);
+    }
+
+    /**
+     * Get checkout review summary (items, subtotal, tax, discount, total)
+     */
+    public function checkoutReview(Request $request, $addressId)
+    {
+        $customerId = $request->user()->id;
+
+        // Verify address
+        $address = CustomerAddress::where('id', $addressId)
+            ->where('customer_id', $customerId)
+            ->first();
+
+        if (!$address) {
+            return response()->json(['success' => false, 'message' => 'Invalid address'], 404);
+        }
+
+        // Get cart items
+        $query = CartItem::with(['product', 'color', 'size'])
+            ->where('customer_id', $customerId);
+
+        if ($request->filled('cart_item_id')) {
+            $query->where('id', $request->cart_item_id);
+        }
+
+        $cartItems = $query->get();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['success' => false, 'message' => $request->filled('cart_item_id') ? 'Selected item not found in cart' : 'Your cart is empty'], 400);
+        }
+
+        // Calculate totals
+        $subtotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+
+        $taxRow = Tax::active()->first();
+        $taxPercent = $taxRow ? $taxRow->rate : 0;
+        $taxAmount = ($subtotal * $taxPercent) / 100;
+        $subtotalWithTax = $subtotal + $taxAmount;
+
+        // Discount
+        $discountAmount = 0;
+        $appliedDiscount = null;
+
+        if ($request->filled('discount_code')) {
+            $discount = Discount::where('code', strtoupper($request->discount_code))
+                ->valid($subtotalWithTax)
+                ->first();
+
+            if ($discount) {
+                $discountAmount = $discount->calculateDiscount($subtotalWithTax);
+                $appliedDiscount = $discount;
+            } else {
+                // Check if it's invalid because of min_amount
+                $anyDiscount = Discount::where('code', strtoupper($request->discount_code))->first();
+                if ($anyDiscount && $anyDiscount->status === 'active' && $subtotalWithTax < $anyDiscount->min_amount) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Minimum purchase of ₹' . number_format($anyDiscount->min_amount, 2) . ' required to apply this discount.'
+                    ], 422);
+                }
+            }
+        }
+
+        $shipping = 0;
+        $total = $subtotalWithTax - $discountAmount + $shipping;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'address' => new \App\Http\Resources\Api\Customer\AddressResource($address),
+                'items' => \App\Http\Resources\Api\Customer\CartItemResource::collection($cartItems),
+                'pricing' => [
+                    'subtotal' => (float) $subtotal,
+                    'tax_percent' => (float) $taxPercent,
+                    'tax_amount' => (float) $taxAmount,
+                    'subtotal_with_tax' => (float) $subtotalWithTax,
+                    'discount_amount' => (float) $discountAmount,
+                    'discount_code' => $appliedDiscount ? $appliedDiscount->code : null,
+                    'shipping' => (float) $shipping,
+                    'total' => (float) $total,
+                ]
+            ]
         ]);
     }
 }

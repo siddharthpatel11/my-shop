@@ -17,6 +17,7 @@ class OrderDetailResource extends JsonResource
         // return parent::toArray($request);
         return [
             'id'                   => $this->id,
+            'customer_id'          => $this->customer_id,
             'order_number'         => $this->order_number,
             'order_status'         => $this->order_status,
             'order_status_badge'   => $this->order_status_badge_color,

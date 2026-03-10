@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Size;
 use App\Models\Color;
 use App\Models\Wishlist;
+use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -26,13 +27,19 @@ class ProductController extends Controller
         $categories = Category::where('status', 'active')->get();
 
         $wishlistProductIds = [];
+        $cartProductIds = [];
         if (Auth::guard('customer')->check()) {
-            $wishlistProductIds = Wishlist::where('customer_id', Auth::guard('customer')->id())
+            $customerId = Auth::guard('customer')->id();
+            $wishlistProductIds = Wishlist::where('customer_id', $customerId)
                 ->pluck('product_id')
+                ->toArray();
+            $cartProductIds = CartItem::where('customer_id', $customerId)
+                ->pluck('product_id')
+                ->unique()
                 ->toArray();
         }
 
-        return view('frontend.products.index', compact('products', 'sizes', 'colors', 'categories', 'wishlistProductIds'));
+        return view('frontend.products.index', compact('products', 'sizes', 'colors', 'categories', 'wishlistProductIds', 'cartProductIds'));
     }
 
     public function show(Product $product): View
@@ -50,13 +57,20 @@ class ProductController extends Controller
 
         $inWishlist = false;
         $wishlistProductIds = [];
+        $cartProductIds = [];
         if (Auth::guard('customer')->check()) {
-            $wishlistProductIds = Wishlist::where('customer_id', Auth::guard('customer')->id())
+            $customerId = Auth::guard('customer')->id();
+            $wishlistProductIds = Wishlist::where('customer_id', $customerId)
                 ->pluck('product_id')
                 ->toArray();
             $inWishlist = in_array($product->id, $wishlistProductIds);
+
+            $cartProductIds = CartItem::where('customer_id', $customerId)
+                ->pluck('product_id')
+                ->unique()
+                ->toArray();
         }
 
-        return view('frontend.products.show', compact('product', 'relatedProducts', 'sizes', 'colors', 'inWishlist', 'wishlistProductIds'));
+        return view('frontend.products.show', compact('product', 'relatedProducts', 'sizes', 'colors', 'inWishlist', 'wishlistProductIds', 'cartProductIds'));
     }
 }

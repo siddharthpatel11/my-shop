@@ -77,6 +77,7 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{id}', [CartController::class, 'destroy'])->name('destroy');
                 Route::delete('/', [CartController::class, 'clear'])->name('clear');
                 Route::post('/apply-discount', [CartController::class, 'applyDiscount'])->name('apply-discount');
+                Route::post('/buy-now', [CartController::class, 'buyNow'])->name('buy-now');
             });
 
             // ── Addresses ─────────────────────────────────────
@@ -89,6 +90,9 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/destroy', [AddressController::class, 'destroy'])->name('destroy');
                 Route::post('/{id}/set-default', [AddressController::class, 'setDefault'])->name('set-default');
             });
+
+            // ── Checkout Review ──────────────────────────────
+            Route::get('checkout/review/{address_id}', [OrderController::class, 'checkoutReview'])->name('checkout-review');
 
             // ── Orders ────────────────────────────────────────
             Route::prefix('orders')->name('orders.')->group(function () {

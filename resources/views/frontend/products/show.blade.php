@@ -145,10 +145,19 @@
                     </div>
 
                     {{-- Action Buttons --}}
-                    <div class="d-flex gap-3 mb-4">
+                    <div class="d-flex gap-3 mb-4" id="main-product-actions">
                         @auth('customer')
-                            <button class="btn btn-primary btn-lg flex-fill" onclick="addToCart()">
-                                <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+                            @if (in_array($product->id, $cartProductIds ?? []))
+                                <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
+                                    <i class="fas fa-arrow-right me-2"></i> Go to Cart
+                                </a>
+                            @else
+                                <button class="btn btn-primary btn-lg flex-fill" id="addToCartBtn" onclick="addToCart()">
+                                    <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+                                </button>
+                            @endif
+                            <button class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
+                                <i class="fas fa-bolt me-2"></i> Buy Now
                             </button>
                             <button class="btn {{ $inWishlist ? 'btn-danger' : 'btn-outline-danger' }} btn-lg"
                                 onclick="toggleWishlist()">
@@ -453,7 +462,7 @@
         }
 
         // Add to cart
-        function addToCart() {
+        function addToCart(mode = 'increment', callback = null) {
             const quantity = parseInt(document.getElementById('quantity').value);
 
             // Get selected color and size details
@@ -484,57 +493,62 @@
                 return;
             }
 
-            // Get product image
-            const mainImage = document.getElementById('mainImage').src;
+            // Server-side add to cart
+            fetch("{{ route('cart.add') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product_id: {{ $product->id }},
+                        quantity: quantity,
+                        price: {{ $product->price }},
+                        color_id: selectedColor,
+                        size_id: selectedSize,
+                        mode: mode
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (callback) {
+                            callback(data);
+                        } else {
+                            showNotification('Product added to cart!', 'success');
+                            // Dynamic button switch
+                            const addToCartBtn = document.getElementById('addToCartBtn');
+                            if (addToCartBtn) {
+                                const goCartHtml = `
+                                <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
+                                    <i class="fas fa-arrow-right me-2"></i> Go to Cart
+                                </a>
+                            `;
+                                addToCartBtn.outerHTML = goCartHtml;
+                            }
+                        }
+                    } else {
+                        showNotification(data.message || 'Error adding to cart', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error connecting to server', 'error');
+                });
+        }
 
-            // Create cart item
-            const cartItem = {
-                productId: {{ $product->id }},
-                name: "{{ $product->name }}",
-                category: "{{ $product->category ? $product->category->name : '' }}",
-                price: {{ $product->price }},
-                quantity: quantity,
-                image: mainImage,
-                colorId: selectedColor,
-                color: selectedColorElement ? selectedColorElement.dataset.colorName : null,
-                colorHex: selectedColorElement ? selectedColorElement.querySelector('.color-swatch').style
-                    .backgroundColor : null,
-                sizeId: selectedSize,
-                size: selectedSizeElement ? selectedSizeElement.dataset.sizeName : null,
-                timestamp: new Date().getTime()
-            };
-
-            // Get existing cart from localStorage
-            let cart = JSON.parse(localStorage.getItem('shoppingCart') || '[]');
-
-            // Check if item already exists in cart (same product, color, size)
-            const existingItemIndex = cart.findIndex(item =>
-                item.productId === cartItem.productId &&
-                item.colorId === cartItem.colorId &&
-                item.sizeId === cartItem.sizeId
-            );
-
-            if (existingItemIndex > -1) {
-                // Update quantity of existing item
-                cart[existingItemIndex].quantity += quantity;
-                if (cart[existingItemIndex].quantity > 10) {
-                    cart[existingItemIndex].quantity = 10;
+        // Buy Now function
+        function buyNow() {
+            addToCart('replace', function(data) {
+                if (data && data.cart_item_id) {
+                    // Redirect to cart with specific item ID
+                    window.location.href = "{{ route('frontend.cart') }}?buy_item_id=" + data.cart_item_id;
+                } else {
+                    // Fallback to general checkout if ID is missing
+                    window.location.href = "{{ route('frontend.cart') }}?checkout=1";
                 }
-            } else {
-                // Add new item to cart
-                cart.push(cartItem);
-            }
-
-            // Save to localStorage
-            localStorage.setItem('shoppingCart', JSON.stringify(cart));
-
-            // Show success notification
-            showNotification('Product added to cart successfully!', 'success');
-
-            // Optional: Redirect to cart page after short delay
-            setTimeout(() => {
-                window.location.href = "{{ route('frontend.cart') }}?added=true";
-            }, 1000);
+            });
         }
 
         // Show notification function

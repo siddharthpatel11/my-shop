@@ -156,35 +156,32 @@
                                     </select>
                                 </div>
                             @endif
-                            {{--
-@php
-    dump(session()->all());
-@endphp  --}}
+
                             @if (session()->has('customer_id'))
-                                <button class="btn btn-primary w-100" data-product-id="{{ $product->id }}"
-                                    data-product-price="{{ $product->price }}" onclick="addToCart(this)">
-                                    Add to Cart
-                                </button>
+                                <div class="d-flex gap-2" id="product-actions-{{ $product->id }}">
+                                    @if (in_array($product->id, $cartProductIds ?? []))
+                                        <a href="{{ route('frontend.cart') }}"
+                                            class="btn btn-outline-warning btn-sm flex-fill">
+                                            <i class="fas fa-arrow-right"></i> Go to Cart
+                                        </a>
+                                    @else
+                                        <button class="btn btn-outline-primary btn-sm flex-fill add-to-cart-btn"
+                                            data-product-id="{{ $product->id }}"
+                                            data-product-price="{{ $product->price }}" onclick="addToCart(this)">
+                                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                                        </button>
+                                    @endif
+                                    <button class="btn btn-outline-success btn-sm flex-fill"
+                                        data-product-id="{{ $product->id }}" data-product-price="{{ $product->price }}"
+                                        onclick="buyNow(this)">
+                                        <i class="fas fa-bolt"></i> Buy at ₹{{ number_format($product->price) }}
+                                    </button>
+                                </div>
                             @else
-                                <a href="{{ route('customer.login') }}" class="btn btn-primary">
-                                    Login to Add to Cart
+                                <a href="{{ route('customer.login') }}" class="btn btn-primary w-100">
+                                    Login to Buy
                                 </a>
                             @endif
-
-
-
-
-                            {{--  Action Buttons --}}
-                            {{--  <div class="mt-auto">
-                                <a href="{{ route('frontend.products.show', $product->id) }}"
-                                    class="btn btn-primary w-100 add-to-cart-btn" data-product-id="{{ $product->id }}"
-                                    data-product-name="{{ $product->name }}" data-product-price="{{ $product->price }}"
-                                    data-product-image="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
-                                    data-product-category="{{ $product->category ? $product->category->name : '' }}"
-                                    onclick="handleAddToCart(event, {{ $product->id }})">
-                                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                                </a>
-                            </div>  --}}
                         </div>
                     </div>
                 </div>
@@ -400,8 +397,7 @@
         }
 
         // Handle Add to Cart with selected options
-
-        function addToCart(button) {
+        function addToCart(button, mode = 'increment', callback = null) {
 
             const productId = button.dataset.productId;
             const price = button.dataset.productPrice;
@@ -444,7 +440,8 @@
                         quantity: 1,
                         price: price,
                         color_id: colorId,
-                        size_id: sizeId
+                        size_id: sizeId,
+                        mode: mode
                     })
                 })
                 .then(async response => {
@@ -464,7 +461,24 @@
                     }
 
                     if (data.success) {
-                        window.location.href = "{{ route('frontend.cart') }}";
+                        if (callback) {
+                            callback(data);
+                        } else {
+                            showNotification('Product added to cart!', 'success');
+                            // Dynamic button switch
+                            const actionContainer = document.getElementById(`product-actions-${productId}`);
+                            if (actionContainer) {
+                                const addToCartBtn = actionContainer.querySelector('.add-to-cart-btn');
+                                if (addToCartBtn) {
+                                    const goCartHtml = `
+                                        <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-sm flex-fill">
+                                            <i class="fas fa-arrow-right"></i> Go to Cart
+                                        </a>
+                                    `;
+                                    addToCartBtn.outerHTML = goCartHtml;
+                                }
+                            }
+                        }
                     }
                 })
                 .catch(error => {
@@ -474,6 +488,20 @@
                         text: 'Something went wrong'
                     });
                 });
+        }
+
+        // Buy Now function for listing page
+
+        function buyNow(button) {
+            addToCart(button, 'replace', function(data) {
+                if (data && data.cart_item_id) {
+                    // Redirect to cart with specific item ID
+                    window.location.href = "{{ route('frontend.cart') }}?buy_item_id=" + data.cart_item_id;
+                } else {
+                    // Fallback to general checkout if ID is missing
+                    window.location.href = "{{ route('frontend.cart') }}?checkout=1";
+                }
+            });
         }
 
 

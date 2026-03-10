@@ -57,6 +57,11 @@ class CartController extends Controller
         // Final total (Subtotal + Tax - Discount)
         $total = $subtotalWithTax - $discountAmount;
 
+        // Default Address
+        $defaultAddress = \App\Models\CustomerAddress::where('customer_id', auth('customer')->id())
+            ->where('is_default', 1)
+            ->first();
+
         return view('frontend.cart.index', compact(
             'cartItems',
             'subtotal',
@@ -64,7 +69,8 @@ class CartController extends Controller
             'appliedDiscount',
             'taxPercent',
             'taxAmount',
-            'total'
+            'total',
+            'defaultAddress'
         ));
     }
 
@@ -187,9 +193,11 @@ class CartController extends Controller
             'price'      => 'required|numeric',
             'color_id'   => 'nullable|exists:colors,id',
             'size_id'    => 'nullable|exists:sizes,id',
+            'mode'       => 'nullable|string|in:increment,replace',
         ]);
 
         $customerId = auth('customer')->id();
+        $mode = $request->input('mode', 'increment');
 
         $item = CartItem::where([
             'customer_id' => $customerId,
@@ -199,22 +207,27 @@ class CartController extends Controller
         ])->first();
 
         if ($item) {
-            $item->quantity = min(10, $item->quantity + 1);
+            if ($mode === 'replace') {
+                $item->quantity = $request->quantity;
+            } else {
+                $item->quantity = min(10, $item->quantity + $request->quantity);
+            }
             $item->save();
         } else {
-            CartItem::create([
+            $item = CartItem::create([
                 'customer_id' => $customerId,
                 'product_id'  => $request->product_id,
                 'color_id'    => $request->color_id,
                 'size_id'     => $request->size_id,
-                'quantity'    => 1,
+                'quantity'    => $request->quantity,
                 'price'       => $request->price,
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Product added to cart'
+            'message' => 'Product added to cart',
+            'cart_item_id' => $item->id,
         ]);
     }
 

@@ -97,9 +97,14 @@ class CheckoutController extends Controller
             abort(403);
         }
 
-        $cartItems = CartItem::with(['product', 'color', 'size'])
-            ->where('customer_id', $customer->id)
-            ->get();
+        $cartItemsQuery = CartItem::with(['product', 'color', 'size'])
+            ->where('customer_id', $customer->id);
+
+        if ($request->has('cart_item_id')) {
+            $cartItemsQuery->where('id', $request->cart_item_id);
+        }
+
+        $cartItems = $cartItemsQuery->get();
 
         if ($cartItems->isEmpty()) {
             return redirect()->route('frontend.cart');
@@ -165,6 +170,7 @@ class CheckoutController extends Controller
         $request->validate([
             'address_id' => 'required|exists:customer_addresses,id',
             'payment_method' => 'nullable|string',
+            'cart_item_id' => 'nullable|exists:cart_items,id',
         ]);
 
         $customerId = auth('customer')->id();
@@ -182,9 +188,14 @@ class CheckoutController extends Controller
         }
 
         // Get cart items
-        $cartItems = CartItem::with(['product', 'color', 'size'])
-            ->where('customer_id', $customerId)
-            ->get();
+        $cartItemsQuery = CartItem::with(['product', 'color', 'size'])
+            ->where('customer_id', $customerId);
+
+        if ($request->cart_item_id) {
+            $cartItemsQuery->where('id', $request->cart_item_id);
+        }
+
+        $cartItems = $cartItemsQuery->get();
 
         if ($cartItems->isEmpty()) {
             return response()->json([
@@ -287,7 +298,11 @@ class CheckoutController extends Controller
             }
 
             // Clear cart and discount session
-            CartItem::where('customer_id', $customerId)->delete();
+            if ($request->cart_item_id) {
+                CartItem::where('id', $request->cart_item_id)->where('customer_id', $customerId)->delete();
+            } else {
+                CartItem::where('customer_id', $customerId)->delete();
+            }
             $request->session()->forget('applied_discount');
 
             DB::commit();

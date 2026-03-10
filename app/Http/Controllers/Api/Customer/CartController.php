@@ -50,6 +50,7 @@ class CartController extends Controller
             'color_id'   => 'nullable|exists:colors,id',
             'size_id'    => 'nullable|exists:sizes,id',
             'quantity'   => 'required|integer|min:1|max:10',
+            'mode'       => 'nullable|string|in:increment,replace',
         ]);
 
         $customerId = $request->user()->id;
@@ -65,7 +66,15 @@ class CartController extends Controller
             ], 404);
         }
 
-        $price = $product->sle_price ?? $product->price;
+        // Validate variants
+        if ($request->color_id && !in_array($request->color_id, $product->colorIds())) {
+            return response()->json(['success' => false, 'message' => 'Invalid color selected'], 422);
+        }
+        if ($request->size_id && !in_array($request->size_id, $product->sizeIds())) {
+            return response()->json(['success' => false, 'message' => 'Invalid size selected'], 422);
+        }
+
+        $price = $product->sale_price ?? $product->price;
 
         $cartItem = CartItem::where('customer_id', $customerId)
             ->where('product_id', $request->product_id)
@@ -73,8 +82,14 @@ class CartController extends Controller
             ->where('size_id', $request->size_id)
             ->first();
 
+        $mode = $request->input('mode', 'increment');
+
         if ($cartItem) {
-            $newQty = $cartItem->quantity + $request->quantity;
+            if ($mode === 'replace') {
+                $newQty = $request->quantity;
+            } else {
+                $newQty = $cartItem->quantity + $request->quantity;
+            }
 
             if ($newQty > 10) {
                 return response()->json([
@@ -103,6 +118,78 @@ class CartController extends Controller
             'message'   => $message,
             'cart_item' => new CartItemResource($cartItem),
         ], 201);
+    }
+
+    /**
+     * Buy Now - Add to cart and return checkout info
+     */
+    public function buyNow(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'color_id'   => 'nullable|exists:colors,id',
+            'size_id'    => 'nullable|exists:sizes,id',
+            'quantity'   => 'required|integer|min:1|max:10',
+        ]);
+
+        $customerId = $request->user()->id;
+        $product = Product::where('id', $request->product_id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found or unavailable',
+            ], 404);
+        }
+
+        // Validate variants
+        if ($request->color_id && !in_array($request->color_id, $product->colorIds())) {
+            return response()->json(['success' => false, 'message' => 'Invalid color selected'], 422);
+        }
+        if ($request->size_id && !in_array($request->size_id, $product->sizeIds())) {
+            return response()->json(['success' => false, 'message' => 'Invalid size selected'], 422);
+        }
+
+        $price = $product->sale_price ?? $product->price;
+
+        // Add or update cart item
+        $cartItem = CartItem::where('customer_id', $customerId)
+            ->where('product_id', $request->product_id)
+            ->where('color_id', $request->color_id)
+            ->where('size_id', $request->size_id)
+            ->first();
+
+        if ($cartItem) {
+            $newQty = $request->quantity; // Replace instead of increment for Buy Now
+            $cartItem->update(['quantity' => min(10, $newQty)]);
+        } else {
+            $cartItem = CartItem::create([
+                'customer_id' => $customerId,
+                'product_id'  => $request->product_id,
+                'color_id'    => $request->color_id,
+                'size_id'     => $request->size_id,
+                'quantity'    => $request->quantity,
+                'price'       => $price,
+            ]);
+        }
+
+        // Check for default address
+        $defaultAddress = \App\Models\CustomerAddress::where('customer_id', $customerId)
+            ->where('is_default', true)
+            ->first() ?? \App\Models\CustomerAddress::where('customer_id', $customerId)->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product added to cart for quick purchase',
+            'data' => [
+                'cart_item_id'       => $cartItem->id,
+                'redirect_to_review' => $defaultAddress ? true : false,
+                'address_id'         => $defaultAddress ? $defaultAddress->id : null,
+                'address'            => $defaultAddress ? new \App\Http\Resources\Api\Customer\AddressResource($defaultAddress) : null,
+            ]
+        ]);
     }
 
     /**

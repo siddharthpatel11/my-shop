@@ -88,21 +88,48 @@
                                 {{-- Product Image --}}
                                 <div class="bg-light rounded overflow-hidden"
                                     style="width: 80px; height: 80px; flex-shrink: 0;">
-                                    @if ($firstImage)
-                                        <img src="{{ asset('images/products/' . $firstImage) }}"
-                                            alt="{{ $item->product->name }}" class="img-fluid"
-                                            style="width: 80px; height: 80px; object-fit: cover;">
-                                    @else
-                                        <div class="d-flex align-items-center justify-content-center h-100 text-muted">
-                                            <i class="bi bi-image fs-3"></i>
-                                        </div>
-                                    @endif
+                                    <a href="{{ route('frontend.products.show', $item->product->id) }}">
+                                        @if ($firstImage)
+                                            <img src="{{ asset('images/products/' . $firstImage) }}"
+                                                alt="{{ $item->product->name }}" class="img-fluid"
+                                                style="width: 80px; height: 80px; object-fit: cover;">
+                                        @else
+                                            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                                                <i class="bi bi-image fs-3"></i>
+                                            </div>
+                                        @endif
+                                    </a>
                                 </div>
 
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-1">{{ $item->product->name }}</h6>
+                                    <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                        class="text-decoration-none">
+                                        <h6 class="mb-1 text-dark fw-bold">{{ $item->product->name }}</h6>
+                                    </a>
                                     <p class="text-muted small mb-2">
-                                        Quantity: <span class="fw-semibold">{{ $item->quantity }}</span>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="text-muted small">Quantity:</span>
+                                        <div class="input-group input-group-sm rounded shadow-sm overflow-hidden"
+                                            style="width: 100px;">
+                                            <button
+                                                class="btn btn-primary d-flex align-items-center justify-content-center p-0"
+                                                type="button" style="width: 32px; height: 32px;"
+                                                onclick="updateReviewQuantity({{ $item->id }}, {{ $item->quantity }}, -1)"
+                                                {{ $item->quantity <= 1 ? 'disabled' : '' }}>
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="text" class="form-control text-center bg-white border-0 fw-bold"
+                                                value="{{ $item->quantity }}" readonly
+                                                style="padding: 0; font-size: 0.9rem;">
+                                            <button
+                                                class="btn btn-primary d-flex align-items-center justify-content-center p-0"
+                                                type="button" style="width: 32px; height: 32px;"
+                                                onclick="updateReviewQuantity({{ $item->id }}, {{ $item->quantity }}, 1)"
+                                                {{ $item->quantity >= 10 ? 'disabled' : '' }}>
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     </p>
 
                                     {{-- Color and Size --}}
@@ -188,16 +215,27 @@
                                             {{ $appliedDiscount->type === 'percentage' ? $appliedDiscount->value . '% OFF' : '₹' . number_format($appliedDiscount->value, 2) . ' OFF' }}
                                         </small>
                                     </div>
-                                    <a href="{{ route('frontend.cart') }}" class="btn btn-sm btn-link text-danger p-0"
-                                        title="Change discount in cart">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-link text-primary p-0" data-bs-toggle="modal"
+                                            data-bs-target="#discountModal" title="Change discount">
+                                            <i class="bi bi-pencil-square fs-5"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-link text-danger p-0" onclick="removeDiscount()"
+                                            title="Remove discount">
+                                            <i class="bi bi-x-circle fs-5"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3 text-success">
                                 <span>Discount Savings</span>
                                 <span class="fw-semibold">- ₹{{ number_format($discountAmount, 2) }}</span>
                             </div>
+                        @else
+                            <button class="btn btn-outline-primary w-100 mb-3" data-bs-toggle="modal"
+                                data-bs-target="#discountModal" {{ $cartItems->count() == 0 ? 'disabled' : '' }}>
+                                <i class="bi bi-tag-fill me-2"></i> Apply Discount Code
+                            </button>
                         @endif
 
                         <hr>
@@ -359,6 +397,50 @@
         </div>
     </div>
 
+    {{-- Discount Modal --}}
+    <div class="modal fade" id="discountModal" tabindex="-1" aria-labelledby="discountModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="discountModalLabel">
+                        <i class="bi bi-tag-fill me-2"></i> Apply Discount
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Manual Code Entry --}}
+                    <div class="mb-4">
+                        <label for="discountCodeInput" class="form-label fw-bold">Enter Discount Code</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="discountCodeInput"
+                                placeholder="Enter discount code" style="text-transform: uppercase;">
+                            <button class="btn btn-primary" type="button" onclick="applyDiscountCode()">
+                                Apply
+                            </button>
+                        </div>
+                        <div id="discountError" class="text-danger small mt-2" style="display: none;"></div>
+                    </div>
+
+                    <hr>
+
+                    {{-- Available Discounts --}}
+                    <div>
+                        <h6 class="fw-bold mb-3">Available Discounts</h6>
+                        <div id="availableDiscounts">
+                            <div class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted small mt-2">Loading discounts...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Order Confirmation Modal --}}
     <div class="modal fade" id="orderConfirmationModal" tabindex="-1" aria-labelledby="orderConfirmationLabel"
         aria-hidden="true">
@@ -396,6 +478,7 @@
     <script>
         let selectedAddressId = {{ $address->id }};
         let currentAddresses = [];
+        const cartItemId = new URLSearchParams(window.location.search).get('cart_item_id');
 
         // Load addresses when modal opens
         document.getElementById('addressModal').addEventListener('show.bs.modal', function() {
@@ -519,6 +602,54 @@
                 });
         }
 
+        // --- Quantity Update Functions ---
+
+        function updateReviewQuantity(itemId, currentQty, change) {
+            const newQty = currentQty + change;
+            if (newQty < 1 || newQty > 10) return;
+
+            // Show loading overlay
+            Swal.fire({
+                title: 'Updating quantity...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch("{{ route('cart.update') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id: itemId,
+                        quantity: newQty
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload the page to refresh all totals and discounts
+                        window.location.reload();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            text: data.message || 'Failed to update quantity'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Error connecting to server'
+                    });
+                });
+        }
+
         // Change to selected address
         function changeToSelectedAddress() {
             if (!selectedAddressId) {
@@ -530,7 +661,11 @@
 
         // Redirect to review page with new address
         function redirectToReview(addressId) {
-            window.location.href = `/checkout/review/${addressId}`;
+            let url = `/checkout/review/${addressId}`;
+            if (cartItemId) {
+                url += `?cart_item_id=${cartItemId}`;
+            }
+            window.location.href = url;
         }
 
         // Place order
@@ -552,6 +687,14 @@
                     btn.disabled = true;
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
+                    const processData = {
+                        address_id: selectedAddressId,
+                        payment_method: paymentMethod
+                    };
+                    if (cartItemId) {
+                        processData.cart_item_id = cartItemId;
+                    }
+
                     fetch("{{ route('checkout.process') }}", {
                             method: "POST",
                             headers: {
@@ -559,10 +702,7 @@
                                 "Accept": "application/json",
                                 "Content-Type": "application/json"
                             },
-                            body: JSON.stringify({
-                                address_id: {{ $address->id }},
-                                payment_method: paymentMethod
-                            })
+                            body: JSON.stringify(processData)
                         })
                         .then(response => response.json())
                         .then(data => {
@@ -683,6 +823,196 @@
                 position: 'top-end'
             });
         }
+
+        // --- Discount Functions ---
+
+        // Load valid discounts when modal opens
+        document.getElementById('discountModal').addEventListener('show.bs.modal', function() {
+            loadValidDiscounts();
+        });
+
+        // Load available discounts
+        function loadValidDiscounts() {
+            fetch("{{ route('cart.discounts') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.discounts.length > 0) {
+                        displayDiscounts(data.discounts, data.subtotalWithTax);
+                    } else {
+                        document.getElementById('availableDiscounts').innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="bi bi-tag fs-1 text-muted mb-3"></i>
+                                <p class="text-muted">No active discounts available at the moment.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('availableDiscounts').innerHTML = `
+                        <div class="alert alert-danger">Error loading discounts</div>
+                    `;
+                });
+        }
+
+        // Display available discounts
+        function displayDiscounts(discounts, subtotalWithTax) {
+            let html = '';
+
+            discounts.forEach(discount => {
+                const discountValue = discount.type === 'percentage' ?
+                    `${discount.value}% OFF` :
+                    `₹${parseFloat(discount.value).toFixed(2)} OFF`;
+
+                const validPeriod = discount.start_date || discount.end_date ?
+                    `<small class="text-muted d-block mt-1">
+                        Valid: ${formatDate(discount.start_date)} - ${formatDate(discount.end_date)}
+                    </small>` : '';
+
+                const minAmount = parseFloat(discount.min_amount) || 0;
+                const isLocked = subtotalWithTax < minAmount;
+                const difference = minAmount - subtotalWithTax;
+
+                let lockedMessage = '';
+                if (isLocked) {
+                    lockedMessage = `
+                        <div class="mt-2 text-danger small">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            Minimum purchase of ₹${minAmount.toFixed(2)} required to apply this discount.<br>
+                            <strong>Shop for ₹${difference.toFixed(2)} more to unlock.</strong>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="discount-card ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="selectDiscount('${discount.code}')"` : ''}>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="discount-badge">${discount.code}</span>
+                                    <span class="badge bg-${discount.type === 'percentage' ? 'info' : 'success'}">
+                                        ${discountValue}
+                                    </span>
+                                </div>
+                                ${validPeriod}
+                                ${lockedMessage}
+                            </div>
+                            <button class="btn btn-sm btn-primary" ${isLocked ? 'disabled' : ''} onclick="event.stopPropagation(); selectDiscount('${discount.code}')">
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('availableDiscounts').innerHTML = html;
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Anytime';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        // Select and apply discount
+        function selectDiscount(code) {
+            document.getElementById('discountCodeInput').value = code;
+            applyDiscountCode();
+        }
+
+        // Apply discount code
+        function applyDiscountCode() {
+            const code = document.getElementById('discountCodeInput').value.trim();
+
+            if (!code) {
+                showDiscountError('Please enter a discount code');
+                return;
+            }
+
+            fetch("{{ route('cart.apply-discount') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        discount_code: code
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal and reload page
+                        const modalEl = document.getElementById('discountModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                        showNotification('Discount applied successfully!', 'success');
+                        setTimeout(() => location.reload(), 500);
+                    } else {
+                        showDiscountError(data.message || 'Invalid discount code');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showDiscountError('Error applying discount');
+                });
+        }
+
+        // Remove discount
+        function removeDiscount() {
+            Swal.fire({
+                title: 'Remove Discount?',
+                text: "Are you sure you want to remove the discount?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, remove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{{ route('cart.remove-discount') }}", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'info',
+                                    text: 'Discount removed',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            });
+        }
+
+        // Show discount error
+        function showDiscountError(message) {
+            Swal.fire({
+                icon: 'error',
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        }
     </script>
     <style>
         .address-card:hover,
@@ -698,6 +1028,40 @@
         .payment-option.active {
             border-color: #667eea !important;
             background-color: #f8f9ff;
+        }
+
+        .discount-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .discount-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .discount-card.locked {
+            opacity: 0.8;
+            cursor: not-allowed;
+            background: #fdfdfd;
+        }
+
+        .discount-card.locked:hover {
+            border-color: #dee2e6;
+            background: #fdfdfd;
+        }
+
+        .discount-badge {
+            background: #f0f2ff;
+            color: #667eea;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
         }
     </style>
 
