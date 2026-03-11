@@ -27,7 +27,7 @@ class AddressController extends Controller
     {
         $customerId = $request->header('customer_id') ?? $request->user()->id;
 
-        $query = CustomerAddress::where('customer_id', $customerId);
+        $query = CustomerAddress::active()->where('customer_id', $customerId);
 
         // Filter by ID
         if ($request->id) {
@@ -191,9 +191,18 @@ class AddressController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Address not found'
-            ]);
+            ], 404);
         }
 
+        if ($address->is_default) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete default address'
+            ], 400);
+        }
+
+        // Set status to deleted and soft delete
+        $address->update(['status' => 'deleted']);
         $address->delete();
 
         return response()->json([

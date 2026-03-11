@@ -106,7 +106,8 @@ class CustomerAuthController extends Controller
         $orderCount = \App\Models\Order::where('customer_id', $customer->id)->count();
         $wishlistCount = \App\Models\Wishlist::where('customer_id', $customer->id)->count();
         
-        $addresses = \App\Models\CustomerAddress::where('customer_id', $customer->id)
+        $addresses = \App\Models\CustomerAddress::active()
+            ->where('customer_id', $customer->id)
             ->orderByDesc('is_default')
             ->orderByDesc('id')
             ->get();

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomerAddress extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
      protected $table = 'customer_addresses';
 
@@ -22,6 +23,7 @@ class CustomerAddress extends Model
         'pincode',
         'full_address',
         'is_default',
+        'status',
     ];
 
     protected $casts = [
@@ -31,6 +33,14 @@ class CustomerAddress extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Scope a query to only include active addresses.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
     }
     protected $appends = ['formatted_address'];
 

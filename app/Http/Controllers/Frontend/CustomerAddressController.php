@@ -42,6 +42,7 @@ class CustomerAddressController extends Controller
             'pincode' => $request->pincode,
             'full_address' => $request->full_address,
             'is_default' => $isDefault,
+            'status' => 'active',
         ]);
 
         return response()->json([
@@ -99,6 +100,8 @@ class CustomerAddressController extends Controller
             ], 400);
         }
 
+        // Set status to deleted and soft delete
+        $address->update(['status' => 'deleted']);
         $address->delete();
 
         return response()->json([
