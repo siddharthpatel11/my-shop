@@ -8,9 +8,44 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailChangeOTPMail;
+use Carbon\Carbon;
+use App\Services\SmsService;
+use Illuminate\Support\Facades\Cache;
 
 class CustomerAuthController extends Controller
 {
+    /**
+     * Customer Registration
+     */
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|email|unique:customers,email',
+            'phone_number' => 'required|digits_between:10,15|unique:customers,phone_number',
+            'password'     => 'required|min:6|confirmed',
+        ]);
+
+        $customer = Customer::create([
+            'name'         => $request->name,
+            'email'        => $request->email,
+            'phone_number' => $request->phone_number,
+            'password'     => Hash::make($request->password),
+            'status'       => 'active',
+        ]);
+
+        $token = $customer->createToken('customer-api-token')->plainTextToken;
+
+        return response()->json([
+            'success'  => true,
+            'message'  => 'Registration successful',
+            'token'    => $token,
+            'customer' => new CustomerResource($customer),
+        ], 201);
+    }
+
     /**
      * Customer Login - returns Sanctum token
      */
@@ -38,6 +73,7 @@ class CustomerAuthController extends Controller
             'customer' => new CustomerResource($customer),
         ]);
     }
+
     /**
      * Customer Logout
      */
@@ -50,6 +86,7 @@ class CustomerAuthController extends Controller
             'message' => 'Logged out successfully',
         ]);
     }
+
     /**
      * Get authenticated customer profile
      */
@@ -59,5 +96,174 @@ class CustomerAuthController extends Controller
             'success'  => true,
             'customer' => new CustomerResource($request->user()),
         ]);
+    }
+
+    /**
+     * Update basic profile info (Name only)
+     */
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $customer = $request->user();
+        $customer->update([
+            'name' => $request->name,
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'message'  => 'Profile updated successfully',
+            'customer' => new CustomerResource($customer),
+        ]);
+    }
+
+    /* ================= EMAIL CHANGE ================= */
+    public function sendEmailChangeOTP(Request $request)
+    {
+        $customer = $request->user();
+
+        // Generate 6-digit OTP
+        $otp = rand(100000, 999999);
+
+        // Save OTP to customer record
+        $customer->update([
+            'email_otp' => $otp,
+            'email_otp_expires_at' => Carbon::now()->addMinutes(10),
+        ]);
+
+        // Send OTP via email
+        try {
+            Mail::to($customer->email)->send(new EmailChangeOTPMail($otp));
+            return response()->json(['success' => true, 'message' => 'OTP sent successfully to your current email.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to send OTP. Please try again.'], 500);
+        }
+    }
+
+    public function verifyEmailChangeOTP(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|digits:6',
+        ]);
+
+        $customer = $request->user();
+
+        if ($customer->email_otp === $request->otp && Carbon::now()->isBefore($customer->email_otp_expires_at)) {
+            // Store verification in Cache (stateless)
+            Cache::put('email_otp_verified_' . $customer->id, true, now()->addMinutes(10));
+            return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid or expired OTP.'], 422);
+    }
+
+    public function updateEmail(Request $request)
+    {
+        $request->validate([
+            'new_email' => 'required|email',
+        ]);
+
+        $customer = $request->user();
+
+        // Check verification in Cache
+        if (!Cache::get('email_otp_verified_' . $customer->id)) {
+            return response()->json(['success' => false, 'message' => 'Please verify your current email first.'], 403);
+        }
+
+        // Check if email already exists
+        $existing = Customer::where('email', $request->new_email)->where('id', '!=', $customer->id)->exists();
+        if ($existing) {
+            return response()->json(['success' => false, 'message' => 'This email address is already registered with another account.'], 422);
+        }
+
+        $customer->update([
+            'email' => $request->new_email,
+            'email_otp' => null,
+            'email_otp_expires_at' => null,
+        ]);
+
+        Cache::forget('email_otp_verified_' . $customer->id);
+
+        return response()->json(['success' => true, 'message' => 'Email updated successfully.']);
+    }
+
+    /* ================= PHONE CHANGE ================= */
+    public function sendPhoneChangeOTP(Request $request)
+    {
+        $customer = $request->user();
+
+        // Generate 6-digit OTP
+        $otp = rand(100000, 999999);
+
+        // Save OTP to customer record
+        $customer->update([
+            'phone_otp' => $otp,
+            'phone_otp_expires_at' => Carbon::now()->addMinutes(10),
+        ]);
+
+        // Send OTP via SMS
+        try {
+            $smsService = new SmsService();
+            $messageTemplate = config('services.twilio.otp_message', 'Your verification code for phone change is: [OTP]');
+            $message = str_replace('[OTP]', $otp, $messageTemplate);
+            $smsSent = $smsService->sendSms($customer->phone_number, $message);
+
+            if ($smsSent) {
+                return response()->json(['success' => true, 'message' => 'OTP sent successfully to your current phone number.']);
+            } else {
+                return response()->json(['success' => false, 'message' => 'Failed to send OTP via SMS. Please check your SMS provider configuration.']);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to send OTP. Please try again.'], 500);
+        }
+    }
+
+    public function verifyPhoneChangeOTP(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|digits:6',
+        ]);
+
+        $customer = $request->user();
+
+        if ($customer->phone_otp === $request->otp && Carbon::now()->isBefore($customer->phone_otp_expires_at)) {
+            // Store verification in Cache (stateless)
+            Cache::put('phone_otp_verified_' . $customer->id, true, now()->addMinutes(10));
+            return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid or expired OTP.'], 422);
+    }
+
+    public function updatePhone(Request $request)
+    {
+        $request->validate([
+            'new_phone' => 'required|digits_between:10,15',
+        ]);
+
+        $customer = $request->user();
+
+        // Check verification in Cache
+        if (!Cache::get('phone_otp_verified_' . $customer->id)) {
+            return response()->json(['success' => false, 'message' => 'Please verify your current phone number first.'], 403);
+        }
+
+        // Check if phone already exists
+        $existing = Customer::where('phone_number', $request->new_phone)->where('id', '!=', $customer->id)->exists();
+        if ($existing) {
+            return response()->json(['success' => false, 'message' => 'This phone number is already registered with another account.'], 422);
+        }
+
+        $customer->update([
+            'phone_number' => $request->new_phone,
+            'phone_otp' => null,
+            'phone_otp_expires_at' => null,
+        ]);
+
+        Cache::forget('phone_otp_verified_' . $customer->id);
+
+        return response()->json(['success' => true, 'message' => 'Phone number updated successfully.']);
     }
 }

@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('customer')->name('api.customer.')->group(function () {
 
         // ── Auth (Public) ─────────────────────────────────────
+        Route::post('register', [CustomerAuthController::class, 'register'])->name('register');
         Route::post('login', [CustomerAuthController::class, 'login'])->name('login');
 
         // ── Protected Customer Routes ─────────────────────────
@@ -68,6 +69,21 @@ Route::prefix('v1')->group(function () {
             // Auth
             Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
             Route::get('profile', [CustomerAuthController::class, 'profile'])->name('profile');
+            Route::post('profile/update', [CustomerAuthController::class, 'updateProfile'])->name('profile.update');
+
+            // ── Email Change ──────────────────────────────────
+            Route::prefix('email-change')->group(function () {
+                Route::post('send-otp', [CustomerAuthController::class, 'sendEmailChangeOTP']);
+                Route::post('verify-otp', [CustomerAuthController::class, 'verifyEmailChangeOTP']);
+                Route::post('update', [CustomerAuthController::class, 'updateEmail']);
+            });
+
+            // ── Phone Change ──────────────────────────────────
+            Route::prefix('phone-change')->group(function () {
+                Route::post('send-otp', [CustomerAuthController::class, 'sendPhoneChangeOTP']);
+                Route::post('verify-otp', [CustomerAuthController::class, 'verifyPhoneChangeOTP']);
+                Route::post('update', [CustomerAuthController::class, 'updatePhone']);
+            });
 
             // ── Cart ──────────────────────────────────────────
             Route::prefix('cart')->name('cart.')->group(function () {

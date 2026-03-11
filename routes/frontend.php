@@ -11,16 +11,14 @@ use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\WishlistController;
 use App\Http\Controllers\Frontend\MyPanelController;
 use App\Http\Controllers\Frontend\SocialAuthController;
-use App\Http\Controllers\TaxController as ControllersTaxController;
+use App\Http\Controllers\Frontend\HomeController;
 
 /* =====================================================
    PUBLIC ROUTES (No Authentication Required)
 ===================================================== */
 
 // Home Page
-Route::get('/', function () {
-    return view('frontend.home');
-})->name('frontend.home');
+Route::get('/', [HomeController::class, 'index'])->name('frontend.home');
 
 // Contact and Gallery Pages
 Route::get('/contact', [PageController::class, 'show'])->defaults('slug', 'contact')->name('contact');
@@ -119,6 +117,14 @@ Route::middleware('customer.auth')->group(function () {
         ->name('customer.email-change.verify-otp');
     Route::post('/customer/email-change/update', [CustomerAuthController::class, 'updateEmail'])
         ->name('customer.email-change.update');
+
+    // Phone Change Routes
+    Route::post('/customer/phone-change/send-otp', [CustomerAuthController::class, 'sendPhoneChangeOTP'])
+        ->name('customer.phone-change.send-otp');
+    Route::post('/customer/phone-change/verify-otp', [CustomerAuthController::class, 'verifyPhoneChangeOTP'])
+        ->name('customer.phone-change.verify-otp');
+    Route::post('/customer/phone-change/update', [CustomerAuthController::class, 'updatePhone'])
+        ->name('customer.phone-change.update');
 
     // Checkout and Orders
     Route::post('/checkout/address/store', [CheckoutController::class, 'storeAddress'])

@@ -14,14 +14,18 @@ class CustomerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // return parent::toArray($request);
         return [
-            'id'         => $this->id,
-            'name'       => $this->name,
-            'email'      => $this->email,
-            'phone'      => $this->phone ?? null,
-            'updated_at' => $this->updated_at,
-            'deleted_at' => $this->deleted_at,
+            'id'             => $this->id,
+            'name'           => $this->name,
+            'email'          => $this->email,
+            'phone_number'   => $this->phone_number,
+            'status'         => $this->status,
+            'avatar'         => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'cart_count'     => $this->cartItems()->sum('quantity'),
+            'order_count'    => $this->orders()->count(),
+            'wishlist_count' => $this->wishlist()->count(),
+            'created_at'     => $this->created_at,
+            'updated_at'     => $this->updated_at,
         ];
     }
 }

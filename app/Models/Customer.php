@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -30,6 +29,8 @@ class Customer extends Authenticatable
         'social_provider',
         'email_otp',
         'email_otp_expires_at',
+        'phone_otp',
+        'phone_otp_expires_at',
     ];
 
     protected $hidden = [
@@ -44,6 +45,11 @@ class Customer extends Authenticatable
     public function addresses()
     {
         return $this->hasMany(CustomerAddress::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'customer_id');
     }
 
     /**

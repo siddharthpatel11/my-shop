@@ -61,4 +61,17 @@ return [
         'client_secret' => env('TWITTER_CLIENT_SECRET'),
         'redirect'      => env('TWITTER_REDIRECT_URI', '/customer/auth/twitter/callback'),
     ],
+
+    'sms' => [
+        'provider'    => env('SMS_PROVIDER', 'msg91'),
+        'api_key'     => env('SMS_API_KEY'),
+        'template_id' => env('SMS_TEMPLATE_ID'),
+    ],
+
+    'twilio' => [
+        'sid'   => env('TWILIO_SID'),
+        'token' => env('TWILIO_TOKEN'),
+        'from'  => env('TWILIO_FROM'),
+        'otp_message' => env('TWILIO_OTP_MESSAGE', 'Your verification code for phone change is: [OTP]'),
+    ],
 ];
