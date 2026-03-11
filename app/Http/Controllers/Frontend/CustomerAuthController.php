@@ -105,8 +105,13 @@ class CustomerAuthController extends Controller
         $cartCount = \App\Models\CartItem::where('customer_id', $customer->id)->sum('quantity');
         $orderCount = \App\Models\Order::where('customer_id', $customer->id)->count();
         $wishlistCount = \App\Models\Wishlist::where('customer_id', $customer->id)->count();
+        
+        $addresses = \App\Models\CustomerAddress::where('customer_id', $customer->id)
+            ->orderByDesc('is_default')
+            ->orderByDesc('id')
+            ->get();
 
-        return view('frontend.auth.profile', compact('customer', 'cartCount', 'orderCount', 'wishlistCount'));
+        return view('frontend.auth.profile', compact('customer', 'cartCount', 'orderCount', 'wishlistCount', 'addresses'));
     }
 
     /* ================= LOGOUT ================= */

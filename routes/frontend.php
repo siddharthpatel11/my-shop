@@ -12,6 +12,7 @@ use App\Http\Controllers\Frontend\WishlistController;
 use App\Http\Controllers\Frontend\MyPanelController;
 use App\Http\Controllers\Frontend\SocialAuthController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\CustomerAddressController;
 
 /* =====================================================
    PUBLIC ROUTES (No Authentication Required)
@@ -125,6 +126,14 @@ Route::middleware('customer.auth')->group(function () {
         ->name('customer.phone-change.verify-otp');
     Route::post('/customer/phone-change/update', [CustomerAuthController::class, 'updatePhone'])
         ->name('customer.phone-change.update');
+
+    // Address Management Routes
+    Route::prefix('customer/addresses')->name('customer.addresses.')->group(function () {
+        Route::post('/store', [CustomerAddressController::class, 'store'])->name('store');
+        Route::post('/update/{id}', [CustomerAddressController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [CustomerAddressController::class, 'destroy'])->name('destroy');
+        Route::post('/set-default/{id}', [CustomerAddressController::class, 'setDefault'])->name('set-default');
+    });
 
     // Checkout and Orders
     Route::post('/checkout/address/store', [CheckoutController::class, 'storeAddress'])

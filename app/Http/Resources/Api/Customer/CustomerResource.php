@@ -24,6 +24,7 @@ class CustomerResource extends JsonResource
             'cart_count'     => $this->cartItems()->sum('quantity'),
             'order_count'    => $this->orders()->count(),
             'wishlist_count' => $this->wishlist()->count(),
+            'addresses'      => AddressResource::collection($this->addresses),
             'created_at'     => $this->created_at,
             'updated_at'     => $this->updated_at,
         ];

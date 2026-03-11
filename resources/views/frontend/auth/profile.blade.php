@@ -146,6 +146,67 @@
 
                 </div>
 
+                {{-- Addresses Section --}}
+                <div class="row g-4 mt-2">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm rounded-4">
+                            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>My Addresses
+                                </h5>
+                                <button type="button" class="btn btn-primary btn-sm rounded-3" data-bs-toggle="modal"
+                                    data-bs-target="#addAddressModal">
+                                    <i class="fas fa-plus me-1"></i>Add New Address
+                                </button>
+                            </div>
+                            <div class="card-body p-4 pt-0">
+                                @if ($addresses->isEmpty())
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-address-book fa-3x text-light mb-3"></i>
+                                        <p class="text-muted">No addresses saved yet.</p>
+                                    </div>
+                                @else
+                                    <div class="row g-3">
+                                        @foreach ($addresses as $address)
+                                            <div class="col-md-6">
+                                                <div class="card border rounded-4 p-3 h-100 position-relative">
+                                                    @if ($address->is_default)
+                                                        <span class="badge bg-primary position-absolute top-0 end-0 m-3">
+                                                            Default
+                                                        </span>
+                                                    @endif
+                                                    <p class="fw-bold mb-1">{{ $address->city }}, {{ $address->state }}</p>
+                                                    <p class="text-muted small mb-3">
+                                                        {{ $address->full_address }}<br>
+                                                        {{ $address->district }}, {{ $address->pincode }}<br>
+                                                        {{ $address->country }}
+                                                    </p>
+                                                    <div class="d-flex gap-2 mt-auto">
+                                                        <button class="btn btn-sm btn-outline-secondary btn-edit-address"
+                                                            data-address="{{ json_encode($address) }}">
+                                                            <i class="fas fa-edit me-1"></i>Edit
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger btn-delete-address"
+                                                            data-id="{{ $address->id }}">
+                                                            <i class="fas fa-trash me-1"></i>Delete
+                                                        </button>
+                                                        @if (!$address->is_default)
+                                                            <button class="btn btn-sm btn-link text-decoration-none ms-auto btn-set-default"
+                                                                data-id="{{ $address->id }}">
+                                                                Set as Default
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Action Buttons --}}
                 <div class="row g-3 mt-4">
                     <div class="col-md-6">
@@ -310,6 +371,103 @@
                             Update Phone Number
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Address Modal -->
+    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="addAddressModalLabel">Add New Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="add-address-form">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Country</label>
+                                <input type="text" name="country" class="form-control" required placeholder="India">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">State</label>
+                                <input type="text" name="state" class="form-control" required placeholder="Gujarat">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">District</label>
+                                <input type="text" name="district" class="form-control" required placeholder="Rajkot">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control" required placeholder="Rajkot">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Pincode</label>
+                                <input type="text" name="pincode" class="form-control" required placeholder="360001">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Full Address</label>
+                                <textarea name="full_address" class="form-control" rows="3" required placeholder="House No, Street Name, Landmark..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_default" id="is_default">
+                                    <label class="form-check-label" for="is_default">Set as Default Address</label>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 mt-4" id="btn-save-address">
+                            Save Address
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Address Modal -->
+    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="editAddressModalLabel">Edit Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="edit-address-form">
+                        <input type="hidden" name="address_id" id="edit-address-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Country</label>
+                                <input type="text" name="country" id="edit-country" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">State</label>
+                                <input type="text" name="state" id="edit-state" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">District</label>
+                                <input type="text" name="district" id="edit-district" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" id="edit-city" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Pincode</label>
+                                <input type="text" name="pincode" id="edit-pincode" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Full Address</label>
+                                <textarea name="full_address" id="edit-full-address" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 mt-4" id="btn-update-address">
+                            Update Address
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -685,6 +843,136 @@
                         });
                 });
             }
+
+            // Address Management Logic
+            const addAddressForm = document.getElementById('add-address-form');
+            if (addAddressForm) {
+                addAddressForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    const btn = document.getElementById('btn-save-address');
+                    btn.disabled = true;
+
+                    fetch('{{ route('customer.addresses.store') }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({ icon: 'success', title: 'Success', text: data.message });
+                                window.location.reload();
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                            }
+                        })
+                        .catch(error => console.error('Error:', error))
+                        .finally(() => btn.disabled = false);
+                });
+            }
+
+            document.querySelectorAll('.btn-edit-address').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const address = JSON.parse(this.dataset.address);
+                    document.getElementById('edit-address-id').value = address.id;
+                    document.getElementById('edit-country').value = address.country;
+                    document.getElementById('edit-state').value = address.state;
+                    document.getElementById('edit-district').value = address.district;
+                    document.getElementById('edit-city').value = address.city;
+                    document.getElementById('edit-pincode').value = address.pincode;
+                    document.getElementById('edit-full-address').value = address.full_address;
+                    
+                    new bootstrap.Modal(document.getElementById('editAddressModal')).show();
+                });
+            });
+
+            const editAddressForm = document.getElementById('edit-address-form');
+            if (editAddressForm) {
+                editAddressForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const id = document.getElementById('edit-address-id').value;
+                    const formData = new FormData(this);
+                    const btn = document.getElementById('btn-update-address');
+                    btn.disabled = true;
+
+                    fetch(`{{ url('customer/addresses/update') }}/${id}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({ icon: 'success', title: 'Success', text: data.message });
+                                window.location.reload();
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                            }
+                        })
+                        .catch(error => console.error('Error:', error))
+                        .finally(() => btn.disabled = false);
+                });
+            }
+
+            document.querySelectorAll('.btn-delete-address').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(`{{ url('customer/addresses/destroy') }}/${id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrfToken,
+                                        'Accept': 'application/json'
+                                    }
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Deleted!', data.message, 'success');
+                                        window.location.reload();
+                                    } else {
+                                        Swal.fire('Error!', data.message, 'error');
+                                    }
+                                });
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll('.btn-set-default').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    fetch(`{{ url('customer/addresses/set-default') }}/${id}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            }
+                        });
+                });
+            });
         });
     </script>
 @endsection

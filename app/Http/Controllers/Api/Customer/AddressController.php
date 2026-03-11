@@ -22,7 +22,7 @@ class AddressController extends Controller
     //         'addresses' => AddressResource::collection($addresses),
     //     ]);
     // }
-    
+
     public function index(Request $request)
     {
         $customerId = $request->header('customer_id') ?? $request->user()->id;

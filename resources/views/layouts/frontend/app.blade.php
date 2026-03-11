@@ -25,51 +25,24 @@
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    {{-- Google Fonts --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- jQuery --}}
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #fcfcfd;
-            color: #1a1a1a;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        .navbar-brand-text {
-            font-family: 'Outfit', sans-serif;
-        }
-
         .cart-badge {
             position: absolute;
-            top: -5px;
-            right: -10px;
-            background: #6366f1;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
             color: white;
-            font-size: 0.7rem;
-            min-width: 18px;
-            height: 18px;
-            border-radius: 50%;
+            font-size: 0.75rem;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            border: 2px solid white;
+            font-weight: bold;
         }
 
         .cart-icon-wrapper {
@@ -103,50 +76,36 @@
 
         .nav-link {
             font-weight: 500;
-            color: #4b5563 !important;
-            padding: 0.5rem 1rem !important;
-            transition: all 0.3s ease;
-            position: relative;
+            transition: color 0.3s;
         }
 
         .nav-link:hover {
-            color: #6366f1 !important;
-        }
-
-        .nav-link.active {
-            color: #6366f1 !important;
-        }
-
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 1rem;
-            right: 1rem;
-            height: 2px;
-            background: #6366f1;
-            border-radius: 2px;
+            color: #667eea !important;
         }
 
         .navbar {
-            padding: 1rem 0;
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: {{ $layoutSettings->title_bg_color ?? '#ffffff' }} !important;
         }
 
-        .btn-primary {
-            background-color: #6366f1;
-            border-color: #6366f1;
-            padding: 0.6rem 1.5rem;
-            font-weight: 600;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
+        .navbar .nav-link,
+        .navbar-brand-text {
+            color: {{ $layoutSettings->title_text_color ?? '#212529' }} !important;
         }
 
-        .btn-primary:hover {
-            background-color: #4f46e5;
-            border-color: #4f46e5;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        footer {
+            background-color: {{ $layoutSettings->footer_bg_color ?? '#f8f9fa' }} !important;
+            color: {{ $layoutSettings->footer_text_color ?? '#6c757d' }} !important;
+        }
+
+        footer .text-muted,
+        footer a.text-muted {
+            color: {{ $layoutSettings->footer_text_color ?? '#6c757d' }} !important;
+        }
+
+        .nav-link.active {
+            color: #667eea !important;
+            border-bottom: 2px solid #667eea;
         }
 
         /* Footer Improvements */
@@ -874,58 +833,6 @@
 
     @stack('scripts')
 
-    <script>
-        function addToWishlist(productId) {
-            $.ajax({
-                url: "{{ route('wishlist.add') }}",
-                method: 'POST',
-                data: {
-                    product_id: productId,
-                    _token: "{{ csrf_token() }}"
-                },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Wishlist Updated!',
-                            text: response.message || 'Product added to your wishlist.',
-                            showConfirmButton: false,
-                            timer: 2000
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Wishlist',
-                            text: response.message
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.status === 401) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Login Required',
-                            text: 'Please login to add items to your wishlist.',
-                            showConfirmButton: true,
-                            confirmButtonText: 'Login Now'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = "{{ route('customer.login') }}";
-                            }
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: xhr.responseJSON?.message || 'Something went wrong!'
-                        });
-                    }
-                }
-            });
-        }
-    </script>
 </body>
 
 </html>
