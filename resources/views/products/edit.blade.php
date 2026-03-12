@@ -272,6 +272,46 @@
                 }
             });
 
+            /* ================= REAL-TIME NAME VALIDATION ================= */
+
+            let timeout = null;
+            $('#inputName').on('keyup input', function() {
+                clearTimeout(timeout);
+                let name = $(this).val();
+                let input = $(this);
+                let btn = $('button[type="submit"]');
+
+                if (name.length < 1) {
+                    input.removeClass('is-invalid');
+                    input.next('.form-text.text-danger').remove();
+                    btn.prop('disabled', false);
+                    return;
+                }
+
+                timeout = setTimeout(function() {
+                    $.ajax({
+                        url: "{{ route('products.check-name') }}",
+                        method: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            name: name,
+                            id: "{{ $product->id }}"
+                        },
+                        success: function(response) {
+                            input.next('.form-text.text-danger').remove();
+                            if (response.exists) {
+                                input.addClass('is-invalid');
+                                input.after(`<div class="form-text text-danger">${response.message}</div>`);
+                                btn.prop('disabled', true);
+                            } else {
+                                input.removeClass('is-invalid');
+                                btn.prop('disabled', false);
+                            }
+                        }
+                    });
+                }, 500);
+            });
+
         });
     </script>
 @endpush

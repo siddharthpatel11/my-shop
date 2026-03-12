@@ -46,6 +46,7 @@ Route::middleware(['auth', 'prevent-back', '2fa'])->group(function () {
     Route::get('products/import/template', [ProductImportExportController::class, 'template'])->name('products.import.template');
 
     Route::resource('products', ProductController::class);
+    Route::post('products/check-name', [ProductController::class, 'checkName'])->name('products.check-name');
     Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
 
     // Category Routes

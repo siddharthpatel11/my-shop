@@ -22,7 +22,7 @@ class ProductUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:products,name,' . $this->product->id,
             'detail' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'status' => 'required|in:active,inactive,deleted',
@@ -34,6 +34,18 @@ class ProductUpdateRequest extends FormRequest
             'color_id'    => 'nullable|array',
             'color_id.*'  => 'exists:colors,id',
             'price' => 'required|numeric|min:0',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages(): array
+    {
+        return [
+            'name.unique' => 'A product with this name already exists. Please choose a different name.',
         ];
     }
 }

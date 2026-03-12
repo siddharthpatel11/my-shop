@@ -77,7 +77,7 @@ class ProductApiController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:products,name',
                 'detail' => 'required|string',
                 'category_id' => 'required|exists:categories,id',
                 'price' => 'required|numeric|min:0',
@@ -87,6 +87,8 @@ class ProductApiController extends Controller
                 'color_id.*' => 'exists:colors,id',
                 'images' => 'nullable|array',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            ], [
+                'name.unique' => 'A product with this name already exists. Please choose a different name.',
             ]);
 
             // Convert arrays to comma-separated strings
@@ -145,7 +147,7 @@ class ProductApiController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:products,name,' . $product->id,
                 'detail' => 'required|string',
                 'category_id' => 'required|exists:categories,id',
                 'price' => 'required|numeric|min:0',
@@ -157,6 +159,8 @@ class ProductApiController extends Controller
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
                 'remove_images' => 'nullable|array',
                 'remove_images.*' => 'string',
+            ], [
+                'name.unique' => 'A product with this name already exists. Please choose a different name.',
             ]);
 
             // Convert arrays to comma-separated strings

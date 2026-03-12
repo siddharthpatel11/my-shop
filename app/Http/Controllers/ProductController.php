@@ -199,4 +199,24 @@ class ProductController extends Controller
         return redirect()->route('products.index')
             ->with('success', 'Product status updated successfully.');
     }
+
+    /**
+     * Check if product name exists (for AJAX validation)
+     */
+    public function checkName(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $name = $request->name;
+        $id = $request->id;
+
+        $exists = Product::where('name', $name)
+            ->when($id, function ($query) use ($id) {
+                return $query->where('id', '!=', $id);
+            })
+            ->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'A product with this name already exists. Please choose a different name.' : ''
+        ]);
+    }
 }
