@@ -62,6 +62,7 @@ Route::prefix('v1')->group(function () {
         // ── Auth (Public) ─────────────────────────────────────
         Route::post('register', [CustomerAuthController::class, 'register'])->name('register');
         Route::post('login', [CustomerAuthController::class, 'login'])->name('login');
+        Route::post('verify-2fa', [CustomerAuthController::class, 'verify2FA'])->name('verify-2fa');
 
         // ── Protected Customer Routes ─────────────────────────
         Route::middleware('auth:customer-api')->group(function () {
@@ -70,6 +71,13 @@ Route::prefix('v1')->group(function () {
             Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
             Route::get('profile', [CustomerAuthController::class, 'profile'])->name('profile');
             Route::post('profile/update', [CustomerAuthController::class, 'updateProfile'])->name('profile.update');
+
+            // ── Google 2FA Management ────────────────────────
+            Route::prefix('2fa')->group(function () {
+                Route::get('setup', [CustomerAuthController::class, 'setup2FA']);
+                Route::post('enable', [CustomerAuthController::class, 'enable2FA']);
+                Route::post('disable', [CustomerAuthController::class, 'disable2FA']);
+            });
 
             // ── Email Change ──────────────────────────────────
             Route::prefix('email-change')->group(function () {

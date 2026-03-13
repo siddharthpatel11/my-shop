@@ -127,6 +127,7 @@ return [
 
     'aliases' => [
         'Str' => Illuminate\Support\Str::class,
+        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
     ],
 
 

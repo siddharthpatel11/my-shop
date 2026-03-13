@@ -13,6 +13,7 @@ use App\Http\Controllers\Frontend\MyPanelController;
 use App\Http\Controllers\Frontend\SocialAuthController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\CustomerAddressController;
+use App\Http\Controllers\Frontend\CustomerTwoFactorController;
 
 /* =====================================================
    PUBLIC ROUTES (No Authentication Required)
@@ -72,7 +73,16 @@ Route::get('/frontend/products/{product}', [ProductController::class, 'show'])
     ->name('frontend.products.show');
 
 // Cart routes - some require authentication
-Route::middleware('customer.auth')->group(function () {
+// [GOOGLE 2FA] ADD 'customer.2fa' to the middleware array below to enable 2FA for customers.
+// Remove it or comment it out to disable 2FA.
+Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
+
+    // ── Customer 2FA Routes ────────────────────────────────
+    Route::get('/customer/2fa/verify', [CustomerTwoFactorController::class, 'showVerifyForm'])->name('customer.2fa.verify');
+    Route::post('/customer/2fa/verify', [CustomerTwoFactorController::class, 'verify'])->name('customer.2fa.post-verify');
+    Route::get('/customer/2fa/setup', [CustomerTwoFactorController::class, 'showSetupForm'])->name('customer.2fa.setup');
+    Route::post('/customer/2fa/enable', [CustomerTwoFactorController::class, 'enable'])->name('customer.2fa.enable');
+    Route::post('/customer/2fa/disable', [CustomerTwoFactorController::class, 'disable'])->name('customer.2fa.disable');
 
     // Customer profile
     Route::get('/customer/profile', [CustomerAuthController::class, 'profile'])

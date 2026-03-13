@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
+            'customer.2fa' => \App\Http\Middleware\Customer2FAMiddleware::class,
             'prevent-back' => \App\Http\Middleware\PreventBackHistory::class,
             '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);

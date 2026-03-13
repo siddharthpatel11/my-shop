@@ -86,7 +86,7 @@ class CustomerAuthController extends Controller
                 'customer_email' => $customer->email,
                 'login_time'     => now(),
             ]);
-            return redirect()->route('frontend.products.index')
+            return redirect()->intended(route('frontend.products.index'))
                 ->with('success', 'Welcome back, ' . $customer->name . '!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()
@@ -117,9 +117,12 @@ class CustomerAuthController extends Controller
 
     /* ================= LOGOUT ================= */
 
-    public function logout()
+    public function logout(Request $request)
     {
         Auth::guard('customer')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()
             ->route('customer.login')

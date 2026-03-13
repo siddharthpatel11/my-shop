@@ -31,11 +31,14 @@ class Customer extends Authenticatable
         'email_otp_expires_at',
         'phone_otp',
         'phone_otp_expires_at',
+        'google2fa_secret',
+        'google2fa_enabled',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret',
     ];
     protected $casts = [
         'email_verified_at' => 'datetime',

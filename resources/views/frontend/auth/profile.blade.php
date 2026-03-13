@@ -146,6 +146,52 @@
 
                 </div>
 
+                {{-- Security & 2FA Section --}}
+                <div class="row g-4 mt-2">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm rounded-4">
+                            <div class="card-header bg-white border-0 p-4">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="fas fa-user-shield text-primary me-2"></i>Account Security
+                                </h5>
+                            </div>
+                            <div class="card-body p-4 pt-0">
+                                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-4">
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 mb-2 mb-sm-0">
+                                            <i class="fas fa-key text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Google Authenticator (2FA)</h6>
+                                            <p class="text-muted small mb-0">
+                                                @if($customer->google2fa_enabled)
+                                                    <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Enabled</span> - Protection is active.
+                                                @else
+                                                    <span class="text-secondary fw-bold">Disabled</span> - We recommend enabling this for extra security.
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 mt-sm-0">
+                                        @if($customer->google2fa_enabled)
+                                            <form action="{{ route('customer.2fa.disable') }}" method="POST" onsubmit="return confirm('Are you sure you want to disable 2FA? This will make your account less secure.');">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-4">
+                                                    Disable 2FA
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('customer.2fa.setup') }}" class="btn btn-primary btn-sm rounded-pill px-4">
+                                                Setup 2FA
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Addresses Section --}}
                 <div class="row g-4 mt-2">
                     <div class="col-12">

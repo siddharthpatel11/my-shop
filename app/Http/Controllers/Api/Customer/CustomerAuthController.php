@@ -13,6 +13,7 @@ use App\Mail\EmailChangeOTPMail;
 use Carbon\Carbon;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class CustomerAuthController extends Controller
 {
@@ -66,12 +67,65 @@ class CustomerAuthController extends Controller
 
         $token = $customer->createToken('customer-api-token')->plainTextToken;
 
+        // If 2FA is enabled, don't return the token yet, or mark it as unverified
+        if ($customer->google2fa_enabled) {
+            return response()->json([
+                'success'  => true,
+                'message'  => '2FA verification required',
+                '2fa_required' => true,
+                'customer' => new CustomerResource($customer),
+            ]);
+        }
+
         return response()->json([
             'success'  => true,
             'message'  => 'Login successful',
             'token'    => $token,
             'customer' => new CustomerResource($customer),
         ]);
+    }
+
+    /**
+     * Verify 2FA OTP for API login
+     */
+    public function verify2FA(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'one_time_password' => 'required|digits:6',
+        ]);
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        if (!$customer || !Hash::check($request->password, $customer->password)) {
+            return response()->json(['success' => false, 'message' => 'Invalid credentials'], 401);
+        }
+
+        $google2fa = app('pragmarx.google2fa');
+
+        Log::info('2FA Verify Attempt (Login)', [
+            'customer_id' => $customer->id,
+            'secret' => $customer->google2fa_secret,
+            'otp' => $request->one_time_password,
+            'window' => 4
+        ]);
+
+        // Increase window to 4 (allows 2 minutes drift) for better user experience
+        if ($google2fa->verifyKey($customer->google2fa_secret, $request->one_time_password, 4)) {
+            $token = $customer->createToken('customer-api-token')->plainTextToken;
+            return response()->json([
+                'success'  => true,
+                'message'  => '2FA verification successful',
+                'token'    => $token,
+                'customer' => new CustomerResource($customer),
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid 2FA code',
+        ], 422);
     }
 
     /**
@@ -95,6 +149,86 @@ class CustomerAuthController extends Controller
         return response()->json([
             'success'  => true,
             'customer' => new CustomerResource($request->user()),
+        ]);
+    }
+
+    /**
+     * Get 2FA Setup Data (QR Code URL and Secret)
+     */
+    public function setup2FA(Request $request)
+    {
+        $customer = $request->user();
+        $google2fa = app('pragmarx.google2fa');
+
+        if (!$customer->google2fa_secret) {
+            $customer->google2fa_secret = $google2fa->generateSecretKey();
+            $customer->save();
+        }
+
+        $qrCodeUrl = $google2fa->getQRCodeUrl(
+            config('app.name') . ' (Customer API)',
+            $customer->email,
+            $customer->google2fa_secret
+        );
+
+        return response()->json([
+            'success' => true,
+            'qr_code_url' => $qrCodeUrl,
+            'secret' => $customer->google2fa_secret,
+            'is_enabled' => (bool)$customer->google2fa_enabled
+        ]);
+    }
+
+    /**
+     * Enable 2FA for the authenticated customer
+     */
+    public function enable2FA(Request $request)
+    {
+        $request->validate([
+            'one_time_password' => 'required|digits:6',
+        ]);
+
+        $customer = $request->user();
+        $google2fa = app('pragmarx.google2fa');
+
+        Log::info('2FA Enable Attempt', [
+            'customer_id' => $customer->id,
+            'secret' => $customer->google2fa_secret,
+            'otp' => $request->one_time_password,
+            'window' => 4
+        ]);
+
+        // Increase window to 4
+        if ($google2fa->verifyKey($customer->google2fa_secret, $request->one_time_password, 4)) {
+            $customer->google2fa_enabled = true;
+            $customer->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Google Authenticator enabled successfully.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid OTP code.',
+        ], 422);
+    }
+
+    /**
+     * Disable 2FA for the authenticated customer
+     */
+    public function disable2FA(Request $request)
+    {
+        $customer = $request->user();
+        $customer->update([
+            'google2fa_enabled' => false,
+            'google2fa_secret' => null
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Google Authenticator disabled successfully.',
         ]);
     }
 
