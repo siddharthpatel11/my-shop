@@ -7,15 +7,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @php
-        $appName = $layoutSettings->admin_app_name ?? config('app.name', 'Laravel CRUD');
-        $adminIcon = $layoutSettings->admin_icon ?? 'fas fa-shield-halved';
+        $layoutSettings = \App\Models\LayoutSetting::getActive();
+        $appName = $layoutSettings->admin_app_name ?: config('app.name', 'Laravel CRUD');
+        $adminIcon = $layoutSettings->admin_icon ?: 'fas fa-shield-halved';
     @endphp
 
-    <title>@yield('title', $appName)</title>
+    <title>@hasSection('title')@yield('title') | {{ $appName }}@else{{ $appName }}@endif</title>
 
     <!-- Favicon -->
-    @if (isset($layoutSettings) && $layoutSettings->admin_favicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $layoutSettings->admin_favicon) }}">
+    @if (isset($layoutSettings) && $layoutSettings->admin_favicon_url)
+        <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->admin_favicon_url }}">
+    @else
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22 fill=%22%2364bcef%22><path d=%22M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zM256 462.4V46.1l-187.1 79c-5.9 2.5-10.5 8.1-10.6 14.8c-.4 89.6 35.1 247.9 187.9 318.5c3.2 1.5 6.6 2.4 9.8 4z%22/></svg>">
     @endif
 
     {{-- Bootstrap --}}
@@ -404,7 +407,7 @@
                 const notificationTitle = payload.notification.title;
                 const notificationOptions = {
                     body: payload.notification.body,
-                    icon: '/images/logo.png'
+                    icon: '{{ isset($layoutSettings) && $layoutSettings->admin_favicon_url ? $layoutSettings->admin_favicon_url : "" }}'
                 };
 
                 // Use SweetAlert2 for foreground notifications if available

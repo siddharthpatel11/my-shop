@@ -350,7 +350,9 @@ class OrderController extends Controller
                 $customerPhone = $order->customer->phone_number;
                 if ($customerPhone) {
                     $message = $order->getWhatsAppOrderSummary();
-                    $smsService->sendWhatsApp($customerPhone, $message);
+                    // User provided SEO image
+                    $imageUrl = "https://www.excelsiortechnologies.com/assets/admin/images/seo_manage/c7e4966af6c89544c961b65d21597f9c.png";
+                    $smsService->sendWhatsApp($customerPhone, $message, $imageUrl);
                 }
             } catch (\Exception $e) {
                 Log::error('Failed to send WhatsApp notification: ' . $e->getMessage());

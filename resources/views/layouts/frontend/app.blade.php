@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
 
     @php
-        $layoutSettings = $layoutSettings ?? new \App\Models\LayoutSetting();
-        $appName = $layoutSettings->frontend_app_name ?? config('app.name', 'MyShop');
+        $layoutSettings = $layoutSettings ?? \App\Models\LayoutSetting::getActive();
+        $appName = $layoutSettings->frontend_app_name ?: config('app.name', 'MyShop');
     @endphp
 
-    <title>@yield('title', $appName)</title>
+    <title>@hasSection('title')@yield('title') | {{ $appName }}@else{{ $appName }}@endif</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -17,6 +17,8 @@
     <!-- Favicon -->
     @if (isset($layoutSettings) && $layoutSettings->frontend_favicon_url)
         <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->frontend_favicon_url }}">
+    @else
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 640 512%22 fill=%22%23667eea%22><path d=%22M36.8 192H603.2c20.3 0 36.8-16.5 36.8-36.8c0-7.3-2.2-14.4-6.2-20.4L558.2 21.4C549.3 8 534.4 0 518.3 0H121.7c-16 0-31 8-39.9 21.4L6.2 134.7c-4 6.1-6.2 13.2-6.2 20.4C0 175.5 16.5 192 36.8 192zM64 224V464c0 26.5 21.5 48 48 48H528c26.5 0 48-21.5 48-48V224H64zM288 312v112c0 13.3-10.7 24-24 24H168c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24zm208 112c0 13.3-10.7 24-24 24H376c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24v112z%22/></svg>">
     @endif
 
     {{-- Bootstrap --}}

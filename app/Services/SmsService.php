@@ -124,7 +124,7 @@ class SmsService
      * @param string $message
      * @return bool
      */
-    public function sendWhatsApp($to, $message)
+    public function sendWhatsApp($to, $message, $imageUrl = null)
     {
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
@@ -166,13 +166,22 @@ class SmsService
             'From' => $from
         ]);
 
+        $data = [
+            'To'   => $normalizedTo,
+            'From' => $from,
+            'Body' => $message,
+        ];
+
+        // Add Image if available
+        if (!empty($imageUrl)) {
+            $data['MediaUrl'] = $imageUrl;
+        }
+
+        Log::info("Sending payload via Twilio:", $data);
+
         $response = Http::withBasicAuth($sid, $token)
             ->asForm()
-            ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
-                'To'   => $normalizedTo,
-                'From' => $from,
-                'Body' => $message,
-            ]);
+            ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", $data);
 
         if (!$response->successful()) {
             Log::error("Twilio WhatsApp Error: " . $response->body());
