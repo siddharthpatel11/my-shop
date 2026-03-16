@@ -316,4 +316,55 @@ class Order extends Model
             default => 'question-circle',
         };
     }
+
+    /**
+     * Get WhatsApp order summary message
+     */
+    public function getWhatsAppOrderSummary()
+    {
+        $message = "🛍️ *Order Placed Successfully!*\n\n";
+        $message .= "Hello *" . $this->customer->name . "*,\n";
+        $message .= "Your order *#" . $this->order_number . "* has been received.\n\n";
+
+        $message .= "*Shipping Address:*\n";
+        $message .= $this->address->formatted_address . "\n\n";
+
+        $message .= "*Order Details:*\n";
+        foreach ($this->items as $item) {
+            $message .= "- " . $item->product->name . " (Qty: " . $item->quantity . ")\n";
+            $itemDetails = [];
+            if ($item->product->category) {
+                $itemDetails[] = "Cat: " . $item->product->category->name;
+            }
+            if ($item->size) {
+                $itemDetails[] = "Size: " . $item->size->name;
+            }
+            if ($item->color) {
+                $itemDetails[] = "Color: " . $item->color->name;
+            }
+            
+            if (!empty($itemDetails)) {
+                $message .= "  (" . implode(', ', $itemDetails) . ")\n";
+            }
+            $message .= "  Price: ₹" . number_format($item->subtotal, 2) . "\n";
+        }
+
+        $message .= "\n*Pricing:*\n";
+        $message .= "- Subtotal: ₹" . number_format($this->subtotal, 2) . "\n";
+
+        if ($this->tax_amount > 0) {
+            $message .= "- Tax: ₹" . number_format($this->tax_amount, 2) . "\n";
+        }
+
+        if ($this->discount > 0) {
+            $message .= "- Discount (" . ($this->discount_code ?? 'N/A') . "): -₹" . number_format($this->discount, 2) . "\n";
+        }
+
+
+        $message .= "*Total Amount:* ₹" . number_format($this->total, 2) . "\n";
+        $message .= "*Payment:* " . $this->payment_method_name . "\n\n";
+        $message .= "Thank you for shopping with us! 🙏";
+
+        return $message;
+    }
 }

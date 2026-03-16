@@ -72,6 +72,7 @@ return [
         'sid'   => env('TWILIO_SID'),
         'token' => env('TWILIO_TOKEN'),
         'from'  => env('TWILIO_FROM'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_NUMBER'),
         'otp_message' => env('TWILIO_OTP_MESSAGE', 'Your verification code for phone change is: [OTP]'),
     ],
 ];

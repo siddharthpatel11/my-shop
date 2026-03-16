@@ -311,7 +311,7 @@ class CheckoutController extends Controller
             $order->load([
                 'customer',
                 'address',
-                'items.product',
+                'items.product.category',
                 'items.color',
                 'items.size',
                 'tax'
@@ -348,6 +348,18 @@ class CheckoutController extends Controller
                 }
             } catch (\Exception $e) {
                 Log::error('Failed to send FCM notification: ' . $e->getMessage());
+            }
+
+            // Send WhatsApp Notification to Customer
+            try {
+                $smsService = new \App\Services\SmsService();
+                $customerPhone = $order->customer->phone_number;
+                if ($customerPhone) {
+                    $message = $order->getWhatsAppOrderSummary();
+                    $smsService->sendWhatsApp($customerPhone, $message);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send WhatsApp notification: ' . $e->getMessage());
             }
 
 

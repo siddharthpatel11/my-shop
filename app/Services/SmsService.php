@@ -116,4 +116,68 @@ class SmsService
 
         return $response->successful();
     }
+
+    /**
+     * Send WhatsApp message via Twilio
+     *
+     * @param string $to
+     * @param string $message
+     * @return bool
+     */
+    public function sendWhatsApp($to, $message)
+    {
+        $sid = config('services.twilio.sid');
+        $token = config('services.twilio.token');
+        $from = config('services.twilio.whatsapp_from');
+
+        if (empty($sid) || empty($token) || empty($from)) {
+            Log::warning("Twilio WhatsApp credentials missing in .env");
+            return false;
+        }
+
+        // Normalize recipient phone number
+        $normalizedTo = $to;
+
+        // Remove 'whatsapp:' if already present to clean the number first
+        if (str_starts_with($normalizedTo, 'whatsapp:')) {
+            $normalizedTo = substr($normalizedTo, 9);
+        }
+
+        $cleanNumber = preg_replace('/[^0-9]/', '', $normalizedTo);
+        if (strlen($cleanNumber) === 10) {
+            $normalizedTo = '+91' . $cleanNumber;
+        } elseif (!str_starts_with($normalizedTo, '+')) {
+            $normalizedTo = '+' . $cleanNumber;
+        } else {
+            // It already has +, just clean digits after +
+            $normalizedTo = '+' . $cleanNumber;
+        }
+
+        // Ensure both numbers starts with whatsapp:
+        if (!str_starts_with($normalizedTo, 'whatsapp:')) {
+            $normalizedTo = 'whatsapp:' . $normalizedTo;
+        }
+        if (!str_starts_with($from, 'whatsapp:')) {
+            $from = 'whatsapp:' . $from;
+        }
+
+        Log::info("Attempting to send WhatsApp message via Twilio", [
+            'To'   => $normalizedTo,
+            'From' => $from
+        ]);
+
+        $response = Http::withBasicAuth($sid, $token)
+            ->asForm()
+            ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
+                'To'   => $normalizedTo,
+                'From' => $from,
+                'Body' => $message,
+            ]);
+
+        if (!$response->successful()) {
+            Log::error("Twilio WhatsApp Error: " . $response->body());
+        }
+
+        return $response->successful();
+    }
 }

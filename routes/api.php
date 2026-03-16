@@ -119,7 +119,7 @@ Route::prefix('v1')->group(function () {
             Route::get('checkout/review/{address_id}', [OrderController::class, 'checkoutReview'])->name('checkout-review');
 
             // ── Orders ────────────────────────────────────────
-            Route::prefix('orders')->name('orders.')->group(function () {
+            Route::prefix('order')->name('orders.')->group(function () {
                 Route::get('/', [OrderController::class, 'index'])->name('index');
                 Route::post('/', [OrderController::class, 'store'])->name('store');
                 Route::get('/{id}', [OrderController::class, 'show'])->name('show');

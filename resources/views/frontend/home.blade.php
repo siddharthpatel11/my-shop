@@ -381,7 +381,7 @@
             font-size: 1.8rem;
             color: var(--p);
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
 
@@ -450,8 +450,15 @@
             z-index: 10;
         }
 
-        .b-new { background: var(--p); color: #fff; }
-        .b-hot { background: var(--acc); color: var(--dk); }
+        .b-new {
+            background: var(--p);
+            color: #fff;
+        }
+
+        .b-hot {
+            background: var(--acc);
+            color: var(--dk);
+        }
 
         .pc-body {
             padding: 1.5rem;
@@ -527,7 +534,7 @@
 
         .feat-item:hover {
             background: var(--white);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             transform: translateY(-5px);
         }
 
@@ -541,7 +548,7 @@
             font-size: 1.5rem;
             margin-bottom: 1.5rem;
             background: var(--white);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             color: var(--p);
         }
 
@@ -560,12 +567,32 @@
         }
 
         /* ── REVEAL ANIMATIONS ── */
-        .rv { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .rv.on { opacity: 1; transform: translateY(0); }
-        .d1 { transition-delay: 0.1s; }
-        .d2 { transition-delay: 0.2s; }
-        .d3 { transition-delay: 0.3s; }
-        .d4 { transition-delay: 0.4s; }
+        .rv {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .rv.on {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .d1 {
+            transition-delay: 0.1s;
+        }
+
+        .d2 {
+            transition-delay: 0.2s;
+        }
+
+        .d3 {
+            transition-delay: 0.3s;
+        }
+
+        .d4 {
+            transition-delay: 0.4s;
+        }
 
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
     </style>
@@ -591,10 +618,11 @@
                         </div>
                         <h1 class="hero-h1">
                             Elevate Your <br>
-                            <span>Lifestyle</span> with Us
+                            <span>Lifestyle</span> with India
                         </h1>
                         <p class="hero-p">
-                            Discover a curated collection of premium products designed to enhance your everyday life. Quality meets elegance in every detail.
+                            Discover a curated collection of premium products designed to enhance your everyday life.
+                            Quality meets elegance in every detail.
                         </p>
                         <div class="d-flex flex-wrap gap-3">
                             <a href="{{ route('frontend.products.index') }}" class="btn-premium btn-p-solid">
@@ -755,13 +783,16 @@
             <div class="rv d1">
                 <span class="sh-eyebrow" style="color:rgba(255,255,255,0.6)">Exclusive Offer</span>
                 <h2 class="cta-h text-white">Join the <span>Premium</span> Club</h2>
-                <p class="cta-p" style="color:rgba(255,255,255,0.6)">Sign up today and get 15% off your first luxury purchase.</p>
+                <p class="cta-p" style="color:rgba(255,255,255,0.6)">Sign up today and get 15% off your first luxury
+                    purchase.</p>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
-                    <a href="{{ route('frontend.products.index') }}" class="btn-premium btn-p-solid" style="background:var(--white); color:var(--dk);">
+                    <a href="{{ route('frontend.products.index') }}" class="btn-premium btn-p-solid"
+                        style="background:var(--white); color:var(--dk);">
                         Start Shopping <i class="fas fa-shopping-bag ms-2"></i>
                     </a>
                     @guest('customer')
-                        <a href="{{ route('customer.login') }}" class="btn-premium btn-p-outline" style="border-color:var(--white); color:var(--white);">
+                        <a href="{{ route('customer.login') }}" class="btn-premium btn-p-outline"
+                            style="border-color:var(--white); color:var(--white);">
                             Create Account
                         </a>
                     @endguest
