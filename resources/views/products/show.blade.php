@@ -6,6 +6,39 @@
     $images = $product->image ? explode(',', $product->image) : [];
 @endphp
 
+@section('meta')
+    @if($product->seo_meta_title)
+        <meta name="title" content="{{ $product->seo_meta_title }}">
+    @endif
+    @if($product->seo_meta_description)
+        <meta name="description" content="{{ $product->seo_meta_description }}">
+    @endif
+    @if($product->seo_meta_key)
+        <meta name="keywords" content="{{ $product->seo_meta_key }}">
+    @endif
+    @if($product->seo_canonical)
+        <link rel="canonical" href="{{ $product->seo_canonical }}">
+    @endif
+    @if($product->seo_meta_image)
+        <meta name="image" content="{{ asset('images/products/' . $product->seo_meta_image) }}">
+    @endif
+
+    @if($product->og_meta_title)
+        <meta property="og:title" content="{{ $product->og_meta_title }}">
+    @endif
+    @if($product->og_meta_description)
+        <meta property="og:description" content="{{ $product->og_meta_description }}">
+    @endif
+    @if($product->og_meta_image)
+        <meta property="og:image" content="{{ asset('images/products/' . $product->og_meta_image) }}">
+    @endif
+    @if($product->og_meta_key)
+        <meta property="og:keywords" content="{{ $product->og_meta_key }}">
+    @endif
+    <meta property="og:url" content="{{ request()->url() }}">
+    <meta property="og:type" content="product">
+@endsection
+
 @section('content')
     <div class="card mt-5">
         <h2 class="card-header">Show Product</h2>
@@ -109,6 +142,58 @@
                     <strong>Details:</strong>
                     <p class="text-muted">{{ $product->detail }}</p>
                 </div>
+                <hr>
+
+                <div class="col-12 mt-4 mb-3">
+                    <h5 class="border-bottom pb-2">SEO Meta Data</h5>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>SEO Title:</strong>
+                    <p class="text-muted">{{ $product->seo_meta_title ?? 'N/A' }}</p>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>SEO Keywords:</strong>
+                    <p class="text-muted">{{ $product->seo_meta_key ?? 'N/A' }}</p>
+                </div>
+                <div class="col-12 mb-2">
+                    <strong>SEO Description:</strong>
+                    <p class="text-muted">{{ $product->seo_meta_description ?? 'N/A' }}</p>
+                </div>
+                <div class="col-12 mb-2">
+                    <strong>SEO Canonical URL:</strong>
+                    <p class="text-muted">{{ $product->seo_canonical ?? 'N/A' }}</p>
+                </div>
+                @if ($product->seo_meta_image)
+                    <div class="col-12 mb-3">
+                        <strong>SEO Image:</strong><br>
+                        <img src="{{ asset('images/products/' . $product->seo_meta_image) }}" alt="SEO Image"
+                            class="mt-2" style="max-height:150px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                @endif
+
+                <hr>
+                <div class="col-12 mt-3 mb-3">
+                    <h5 class="border-bottom pb-2">Open Graph (OG) Meta Data</h5>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>OG Title:</strong>
+                    <p class="text-muted">{{ $product->og_meta_title ?? 'N/A' }}</p>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>OG Keywords:</strong>
+                    <p class="text-muted">{{ $product->og_meta_key ?? 'N/A' }}</p>
+                </div>
+                <div class="col-12 mb-2">
+                    <strong>OG Description:</strong>
+                    <p class="text-muted">{{ $product->og_meta_description ?? 'N/A' }}</p>
+                </div>
+                @if ($product->og_meta_image)
+                    <div class="col-12 mb-3">
+                        <strong>OG Image:</strong><br>
+                        <img src="{{ asset('images/products/' . $product->og_meta_image) }}" alt="OG Image" class="mt-2"
+                            style="max-height:150px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                @endif
 
                 {{-- CREATED --}}
                 {{--  <div class="col-md-6 mb-2">

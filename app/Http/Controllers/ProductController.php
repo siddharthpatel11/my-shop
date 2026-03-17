@@ -105,6 +105,18 @@ class ProductController extends Controller
 
         $data['image'] = implode(',', $images);
 
+        if ($request->hasFile('seo_meta_image')) {
+            $name = 'seo_' . time() . '_' . uniqid() . '.' . $request->seo_meta_image->extension();
+            $request->seo_meta_image->move(public_path('images/products'), $name);
+            $data['seo_meta_image'] = $name;
+        }
+
+        if ($request->hasFile('og_meta_image')) {
+            $name = 'og_' . time() . '_' . uniqid() . '.' . $request->og_meta_image->extension();
+            $request->og_meta_image->move(public_path('images/products'), $name);
+            $data['og_meta_image'] = $name;
+        }
+
         Product::create($data);
 
         return redirect()->route('products.index')
@@ -165,6 +177,38 @@ class ProductController extends Controller
 
         $data['image'] = implode(',', $existingImages);
 
+        if ($request->remove_seo_image) {
+            if ($product->seo_meta_image && file_exists(public_path('images/products/' . $product->seo_meta_image))) {
+                unlink(public_path('images/products/' . $product->seo_meta_image));
+            }
+            $data['seo_meta_image'] = null;
+        }
+
+        if ($request->hasFile('seo_meta_image')) {
+            if ($product->seo_meta_image && file_exists(public_path('images/products/' . $product->seo_meta_image))) {
+                unlink(public_path('images/products/' . $product->seo_meta_image));
+            }
+            $name = 'seo_' . time() . '_' . uniqid() . '.' . $request->seo_meta_image->extension();
+            $request->seo_meta_image->move(public_path('images/products'), $name);
+            $data['seo_meta_image'] = $name;
+        }
+
+        if ($request->remove_og_image) {
+            if ($product->og_meta_image && file_exists(public_path('images/products/' . $product->og_meta_image))) {
+                unlink(public_path('images/products/' . $product->og_meta_image));
+            }
+            $data['og_meta_image'] = null;
+        }
+
+        if ($request->hasFile('og_meta_image')) {
+            if ($product->og_meta_image && file_exists(public_path('images/products/' . $product->og_meta_image))) {
+                unlink(public_path('images/products/' . $product->og_meta_image));
+            }
+            $name = 'og_' . time() . '_' . uniqid() . '.' . $request->og_meta_image->extension();
+            $request->og_meta_image->move(public_path('images/products'), $name);
+            $data['og_meta_image'] = $name;
+        }
+
         $product->update($data);
 
         return redirect()->route('products.index')
@@ -180,6 +224,14 @@ class ProductController extends Controller
                     unlink(public_path('images/products/' . $img));
                 }
             }
+        }
+
+        if ($product->seo_meta_image && file_exists(public_path('images/products/' . $product->seo_meta_image))) {
+            unlink(public_path('images/products/' . $product->seo_meta_image));
+        }
+
+        if ($product->og_meta_image && file_exists(public_path('images/products/' . $product->og_meta_image))) {
+            unlink(public_path('images/products/' . $product->og_meta_image));
         }
 
         $product->update(['status' => 'deleted']);

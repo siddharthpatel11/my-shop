@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @yield('title_and_meta')
+    @yield('meta')
+
     @php
         $layoutSettings = \App\Models\LayoutSetting::getActive();
         $appName = $layoutSettings->admin_app_name ?: config('app.name', 'Laravel CRUD');

@@ -1,6 +1,39 @@
 @extends('layouts.frontend.app')
 
-@section('title', $product->name)
+@section('title', $product->seo_meta_title ?? $product->name)
+
+@section('meta')
+    @if($product->seo_meta_title)
+        <meta name="title" content="{{ $product->seo_meta_title }}">
+    @endif
+    @if($product->seo_meta_description)
+        <meta name="description" content="{{ $product->seo_meta_description }}">
+    @endif
+    @if($product->seo_meta_key)
+        <meta name="keywords" content="{{ $product->seo_meta_key }}">
+    @endif
+    @if($product->seo_canonical)
+        <link rel="canonical" href="{{ $product->seo_canonical }}">
+    @endif
+    @if($product->seo_meta_image)
+        <meta name="image" content="{{ asset('images/products/' . $product->seo_meta_image) }}">
+    @endif
+
+    @if($product->og_meta_title)
+        <meta property="og:title" content="{{ $product->og_meta_title }}">
+    @endif
+    @if($product->og_meta_description)
+        <meta property="og:description" content="{{ $product->og_meta_description }}">
+    @endif
+    @if($product->og_meta_image)
+        <meta property="og:image" content="{{ asset('images/products/' . $product->og_meta_image) }}">
+    @endif
+    @if($product->og_meta_key)
+        <meta property="og:keywords" content="{{ $product->og_meta_key }}">
+    @endif
+    <meta property="og:url" content="{{ request()->url() }}">
+    <meta property="og:type" content="product">
+@endsection
 
 @section('content')
     <div class="container my-5">

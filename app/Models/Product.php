@@ -10,7 +10,6 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes;
     public $timestamps = true;
-
     protected $table = "products";
 
     protected $fillable = [
@@ -22,6 +21,15 @@ class Product extends Model
         'color_id',
         'price',
         'status',
+        'seo_meta_title',
+        'seo_meta_description',
+        'seo_meta_key',
+        'seo_meta_image',
+        'seo_canonical',
+        'og_meta_title',
+        'og_meta_description',
+        'og_meta_key',
+        'og_meta_image',
     ];
 
     protected $casts = [

@@ -14,6 +14,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @yield('title_and_meta')
+    @yield('meta')
+
     <!-- Favicon -->
     @if (isset($layoutSettings) && $layoutSettings->frontend_favicon_url)
         <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->frontend_favicon_url }}">

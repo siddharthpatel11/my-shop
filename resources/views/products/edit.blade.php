@@ -168,6 +168,114 @@
                     </button>
                 </div>
 
+                <hr>
+                <h4 class="mb-3 mt-4">SEO Meta Information</h4>
+                <div class="mb-3">
+                    <label for="inputSeoTitle" class="form-label"><strong>SEO Title:</strong></label>
+                    <input type="text" name="seo_meta_title"
+                        value="{{ old('seo_meta_title', $product->seo_meta_title) }}"
+                        class="form-control @error('seo_meta_title') is-invalid @enderror" id="inputSeoTitle"
+                        placeholder="SEO Title">
+                </div>
+                <div class="mb-3">
+                    <label for="inputSeoDescription" class="form-label"><strong>SEO Description:</strong></label>
+                    <textarea class="form-control @error('seo_meta_description') is-invalid @enderror" style="height:100px"
+                        name="seo_meta_description" id="inputSeoDescription" placeholder="SEO Description">{{ old('seo_meta_description', $product->seo_meta_description) }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="inputSeoKey" class="form-label"><strong>SEO Keywords:</strong></label>
+                    <input type="text" name="seo_meta_key" value="{{ old('seo_meta_key', $product->seo_meta_key) }}"
+                        class="form-control @error('seo_meta_key') is-invalid @enderror" id="inputSeoKey"
+                        placeholder="SEO Keywords">
+                </div>
+                <div class="mb-3">
+                    <label for="inputSeoCanonical" class="form-label"><strong>SEO Canonical URL:</strong></label>
+                    <input type="text" name="seo_canonical"
+                        value="{{ old('seo_canonical', $product->seo_canonical) }}"
+                        class="form-control @error('seo_canonical') is-invalid @enderror" id="inputSeoCanonical"
+                        placeholder="Canonical URL">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>SEO Image:</strong></label>
+                    <div class="row mb-2 seo-image-row">
+                        <div class="col-md-5">
+                            <input type="file" name="seo_meta_image"
+                                class="form-control seo-image-input @error('seo_meta_image') is-invalid @enderror" accept="image/*">
+                            @if ($product->seo_meta_image)
+                                <div class="mt-2 text-center" style="width:max-content;">
+                                    <img src="{{ asset('images/products/' . $product->seo_meta_image) }}" alt="SEO Image"
+                                        style="width:80px;height:80px;object-fit:cover; border-radius:5px; border:1px solid #ddd;">
+                                    <div class="form-check mt-1 text-start">
+                                        <input type="checkbox" name="remove_seo_image" value="1"
+                                            class="form-check-input" id="removeExistingSeoImage">
+                                        <label class="form-check-label" for="removeExistingSeoImage">Remove Existing</label>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="col-md-5">
+                            <img class="seo-img-preview d-none"
+                                style="width:80px;height:80px;object-fit:cover; border:1px solid #ddd;border-radius:5px;">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger remove-seo-image d-none">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <h4 class="mb-3 mt-4">Open Graph (OG) Meta Information</h4>
+                <div class="mb-3">
+                    <label for="inputOgTitle" class="form-label"><strong>OG Title:</strong></label>
+                    <input type="text" name="og_meta_title"
+                        value="{{ old('og_meta_title', $product->og_meta_title) }}"
+                        class="form-control @error('og_meta_title') is-invalid @enderror" id="inputOgTitle"
+                        placeholder="OG Title">
+                </div>
+                <div class="mb-3">
+                    <label for="inputOgDescription" class="form-label"><strong>OG Description:</strong></label>
+                    <textarea class="form-control @error('og_meta_description') is-invalid @enderror" style="height:100px"
+                        name="og_meta_description" id="inputOgDescription" placeholder="OG Description">{{ old('og_meta_description', $product->og_meta_description) }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="inputOgKey" class="form-label"><strong>OG Keywords:</strong></label>
+                    <input type="text" name="og_meta_key" value="{{ old('og_meta_key', $product->og_meta_key) }}"
+                        class="form-control @error('og_meta_key') is-invalid @enderror" id="inputOgKey"
+                        placeholder="OG Keywords">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>OG Image:</strong></label>
+                    <div class="row mb-2 og-image-row">
+                        <div class="col-md-5">
+                            <input type="file" name="og_meta_image"
+                                class="form-control og-image-input @error('og_meta_image') is-invalid @enderror" accept="image/*">
+                            @if ($product->og_meta_image)
+                                <div class="mt-2 text-center" style="width:max-content;">
+                                    <img src="{{ asset('images/products/' . $product->og_meta_image) }}" alt="OG Image"
+                                        style="width:80px;height:80px;object-fit:cover; border-radius:5px; border:1px solid #ddd;">
+                                    <div class="form-check mt-1 text-start">
+                                        <input type="checkbox" name="remove_og_image" value="1"
+                                            class="form-check-input" id="removeExistingOgImage">
+                                        <label class="form-check-label" for="removeExistingOgImage">Remove Existing</label>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="col-md-5">
+                            <img class="og-img-preview d-none"
+                                style="width:80px;height:80px;object-fit:cover; border:1px solid #ddd;border-radius:5px;">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger remove-og-image d-none">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <hr class="mb-4">
+
                 <input type="hidden" name="status" value="{{ old('status', $product->status) }}">
 
                 <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i> Update</button>
@@ -301,7 +409,9 @@
                             input.next('.form-text.text-danger').remove();
                             if (response.exists) {
                                 input.addClass('is-invalid');
-                                input.after(`<div class="form-text text-danger">${response.message}</div>`);
+                                input.after(
+                                    `<div class="form-text text-danger">${response.message}</div>`
+                                    );
                                 btn.prop('disabled', true);
                             } else {
                                 input.removeClass('is-invalid');
@@ -310,6 +420,55 @@
                         }
                     });
                 }, 500);
+            });
+
+            /* ================= SEO AND OG IMAGE PREVIEW ================= */
+            $(document).on('change', '.seo-image-input', function() {
+                let preview = $(this).closest('.seo-image-row').find('.seo-img-preview');
+                let removeBtn = $(this).closest('.seo-image-row').find('.remove-seo-image');
+
+                if (this.files && this.files[0]) {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.attr('src', e.target.result).removeClass('d-none');
+                        removeBtn.removeClass('d-none');
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    preview.addClass('d-none').attr('src', '');
+                    removeBtn.addClass('d-none');
+                }
+            });
+
+            $(document).on('click', '.remove-seo-image', function() {
+                let row = $(this).closest('.seo-image-row');
+                row.find('.seo-image-input').val('');
+                row.find('.seo-img-preview').addClass('d-none').attr('src', '');
+                $(this).addClass('d-none');
+            });
+
+            $(document).on('change', '.og-image-input', function() {
+                let preview = $(this).closest('.og-image-row').find('.og-img-preview');
+                let removeBtn = $(this).closest('.og-image-row').find('.remove-og-image');
+
+                if (this.files && this.files[0]) {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.attr('src', e.target.result).removeClass('d-none');
+                        removeBtn.removeClass('d-none');
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    preview.addClass('d-none').attr('src', '');
+                    removeBtn.addClass('d-none');
+                }
+            });
+
+            $(document).on('click', '.remove-og-image', function() {
+                let row = $(this).closest('.og-image-row');
+                row.find('.og-image-input').val('');
+                row.find('.og-img-preview').addClass('d-none').attr('src', '');
+                $(this).addClass('d-none');
             });
 
         });
