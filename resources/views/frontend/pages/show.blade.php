@@ -4,13 +4,13 @@
 
 @section('content')
     {{-- Page Header --}}
-    <div class="bg-primary text-white py-5 mb-5 shadow-sm">
+    <div class="bg-primary text-white py-3 mb-3 shadow-sm">
         <div class="container text-center">
             <h1 class="display-4 fw-bold mb-0">{{ $page->title }}</h1>
         </div>
     </div>
 
-    {{-- Page Content --}}  
+    {{-- Page Content --}}
     <div class="container mb-5">
         <div class="row justify-content-center">
             <div class="col-lg-10">

@@ -15,13 +15,18 @@
         $adminIcon = $layoutSettings->admin_icon ?: 'fas fa-shield-halved';
     @endphp
 
-    <title>@hasSection('title')@yield('title') | {{ $appName }}@else{{ $appName }}@endif</title>
+    <title>
+        @hasSection('title')
+            @yield('title') | {{ $appName }}@else{{ $appName }}
+        @endif
+    </title>
 
     <!-- Favicon -->
     @if (isset($layoutSettings) && $layoutSettings->admin_favicon_url)
         <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->admin_favicon_url }}">
     @else
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22 fill=%22%2364bcef%22><path d=%22M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zM256 462.4V46.1l-187.1 79c-5.9 2.5-10.5 8.1-10.6 14.8c-.4 89.6 35.1 247.9 187.9 318.5c3.2 1.5 6.6 2.4 9.8 4z%22/></svg>">
+        <link rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22 fill=%22%2364bcef%22><path d=%22M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zM256 462.4V46.1l-187.1 79c-5.9 2.5-10.5 8.1-10.6 14.8c-.4 89.6 35.1 247.9 187.9 318.5c3.2 1.5 6.6 2.4 9.8 4z%22/></svg>">
     @endif
 
     {{-- Bootstrap --}}
@@ -218,82 +223,171 @@
                 @endphp
 
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    @if(!$is2faPending)
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
-                            href="{{ route('dashboard') }}">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}"
-                            href="{{ route('products.index') }}">
-                            <i class="fas fa-box"></i>
-                            <span>Products</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}"
-                            href="{{ route('categories.index') }}">
-                            <i class="fas fa-tags"></i>
-                            <span>Categories</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('sizes.*') ? 'active' : '' }}"
-                            href="{{ route('sizes.index') }}">
-                            <i class="fas fa-ruler"></i>
-                            <span>Sizes</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('colors.*') ? 'active' : '' }}"
-                            href="{{ route('colors.index') }}">
-                            <i class="fas fa-palette"></i>
-                            <span>Colors</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('taxes.*') ? 'active' : '' }}"
-                            href="{{ route('taxes.index') }}">
-                            <i class="fas fa-percentage"></i>
-                            <span>Taxes</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('discounts.*') ? 'active' : '' }}"
-                            href="{{ route('discounts.index') }}">
-                            <i class="fas fa-tag"></i>
-                            <span>Discounts</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}"
-                            href="{{ route('admin.orders.index') }}">
-                            <i class="fas fa-shopping-bag"></i>
-                            <span>Orders</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('pages.*') ? 'active' : '' }}"
-                            href="{{ route('pages.index') }}">
-                            <i class="fas fa-file-alt me-1"></i> Pages
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}"
-                            href="{{ route('admin.contacts.index') }}">
-                            <i class="fas fa-envelope me-1"></i> Contact-us
-                        </a>
-                    </li>
+                    @if (!$is2faPending)
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                                href="{{ route('dashboard') }}">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}"
+                                href="{{ route('products.index') }}">
+                                <i class="fas fa-box"></i>
+                                <span>Products</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('categories.*') || request()->routeIs('sizes.*') || request()->routeIs('colors.*') ? 'active' : '' }}"
+                                href="#" id="attributesDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fas fa-layer-group"></i>
+                                <span>Attributes</span>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="attributesDropdown">
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('categories.*') ? 'active' : '' }}"
+                                        href="{{ route('categories.index') }}">
+                                        <i class="fas fa-tags me-2"></i>
+                                        <span>Categories</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('sizes.*') ? 'active' : '' }}"
+                                        href="{{ route('sizes.index') }}">
+                                        <i class="fas fa-ruler me-2"></i>
+                                        <span>Sizes</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('colors.*') ? 'active' : '' }}"
+                                        href="{{ route('colors.index') }}">
+                                        <i class="fas fa-palette me-2"></i>
+                                        <span>Colors</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {{-- <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}"
+                                href="{{ route('categories.index') }}">
+                                <i class="fas fa-tags"></i>
+                                <span>Categories</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('sizes.*') ? 'active' : '' }}"
+                                href="{{ route('sizes.index') }}">
+                                <i class="fas fa-ruler"></i>
+                                <span>Sizes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('colors.*') ? 'active' : '' }}"
+                                href="{{ route('colors.index') }}">
+                                <i class="fas fa-palette"></i>
+                                <span>Colors</span>
+                            </a>
+                        </li> --}}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('taxes.*') || request()->routeIs('discounts.*') ? 'active' : '' }}"
+                                href="#" id="pricingDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fas fa-coins"></i>
+                                <span>Pricing</span>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="pricingDropdown">
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('taxes.*') ? 'active' : '' }}"
+                                        href="{{ route('taxes.index') }}">
+                                        <i class="fas fa-percentage me-2"></i>
+                                        <span>Taxes</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('discounts.*') ? 'active' : '' }}"
+                                        href="{{ route('discounts.index') }}">
+                                        <i class="fas fa-tag me-2"></i>
+                                        <span>Discounts</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {{-- <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('taxes.*') ? 'active' : '' }}"
+                                href="{{ route('taxes.index') }}">
+                                <i class="fas fa-percentage"></i>
+                                <span>Taxes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('discounts.*') ? 'active' : '' }}"
+                                href="{{ route('discounts.index') }}">
+                                <i class="fas fa-tag"></i>
+                                <span>Discounts</span>
+                            </a>
+                        </li> --}}
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}"
+                                href="{{ route('admin.orders.index') }}">
+                                <i class="fas fa-shopping-bag"></i>
+                                <span>Orders</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('pages.*') || request()->routeIs('admin.meta-tags.*') || request()->routeIs('admin.contacts.*') ? 'active' : '' }}"
+                                href="#" id="cmsDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i>
+                                <span>CMS</span>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="cmsDropdown">
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('admin.meta-tags.*') ? 'active' : '' }}"
+                                        href="{{ route('admin.meta-tags.index') }}">
+                                        <i class="fas fa-tags me-2"></i> Meta Tags
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('pages.*') ? 'active' : '' }}"
+                                        href="{{ route('pages.index') }}">
+                                        <i class="fas fa-file-alt me-2"></i> Pages
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}"
+                                        href="{{ route('admin.contacts.index') }}">
+                                        <i class="fas fa-envelope me-2"></i> Contact-us
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {{-- <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('pages.*') ? 'active' : '' }}"
+                                href="{{ route('pages.index') }}">
+                                <i class="fas fa-file-alt me-1"></i> Pages
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.meta-tags.*') ? 'active' : '' }}"
+                                href="{{ route('admin.meta-tags.index') }}">
+                                <i class="fas fa-tags me-1"></i> Meta Tags
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}"
+                                href="{{ route('admin.contacts.index') }}">
+                                <i class="fas fa-envelope me-1"></i> Contact-us
+                            </a>
+                        </li> --}}
                     @else
-                    <li class="nav-item">
-                        <span class="nav-link text-white-50">
-                            <i class="fas fa-lock"></i>
-                            <span>2FA Verification Required</span>
-                        </span>
-                    </li>
+                        <li class="nav-item">
+                            <span class="nav-link text-white-50">
+                                <i class="fas fa-lock"></i>
+                                <span>2FA Verification Required</span>
+                            </span>
+                        </li>
                     @endif
                 </ul>
 
@@ -348,7 +442,7 @@
 
     <!-- Main Content Area -->
     <main class="main-content">
-        @if(isset($slot))
+        @if (isset($slot))
             {{ $slot }}
         @endif
         @yield('content')
@@ -410,7 +504,7 @@
                 const notificationTitle = payload.notification.title;
                 const notificationOptions = {
                     body: payload.notification.body,
-                    icon: '{{ isset($layoutSettings) && $layoutSettings->admin_favicon_url ? $layoutSettings->admin_favicon_url : "" }}'
+                    icon: '{{ isset($layoutSettings) && $layoutSettings->admin_favicon_url ? $layoutSettings->admin_favicon_url : '' }}'
                 };
 
                 // Use SweetAlert2 for foreground notifications if available

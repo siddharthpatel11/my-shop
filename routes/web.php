@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminContactController;
 use App\Http\Controllers\ImportExport\ProductImportExportController;
 use App\Http\Controllers\ImportExport\OrderImportExportController;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,7 @@ use App\Http\Controllers\SizeController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\LayoutSettingController;  // ← ADD THIS
 use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\MetaTagController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Admin\NotificationController;
 
@@ -126,9 +128,14 @@ Route::middleware(['auth', 'prevent-back', '2fa'])->prefix('admin')->name('admin
     Route::post('/fcm-token', [NotificationController::class, 'storeToken'])->name('fcm-token.store');
 
     // Contact Messages
-    Route::get('/contacts', [\App\Http\Controllers\Admin\AdminContactController::class, 'index'])->name('contacts.index');
-    Route::get('/contacts/{id}', [\App\Http\Controllers\Admin\AdminContactController::class, 'show'])->name('contacts.show');
-    Route::delete('/contacts/{id}', [\App\Http\Controllers\Admin\AdminContactController::class, 'destroy'])->name('contacts.destroy');
+    Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{id}', [AdminContactController::class, 'show'])->name('contacts.show');
+    Route::delete('/contacts/{id}', [AdminContactController::class, 'destroy'])->name('contacts.destroy');
+
+    // Global Meta Tags Management
+    Route::get('/meta-tags', [MetaTagController::class, 'index'])->name('meta-tags.index');
+    Route::get('/meta-tags/{identifier}/edit', [MetaTagController::class, 'edit'])->name('meta-tags.edit');
+    Route::put('/meta-tags/{identifier}', [MetaTagController::class, 'update'])->name('meta-tags.update');
 });
 
 require __DIR__ . '/auth.php';

@@ -9,13 +9,46 @@
         $appName = $layoutSettings->frontend_app_name ?: config('app.name', 'MyShop');
     @endphp
 
-    <title>@hasSection('title')@yield('title') | {{ $appName }}@else{{ $appName }}@endif</title>
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @yield('title_and_meta')
-    @yield('meta')
+    @if(isset($globalMetaTag) && $globalMetaTag)
+        {{-- Display Global SEO/OG Tags --}}
+        <title>{{ $globalMetaTag->seo_title ?: ($globalMetaTag->og_title ?: $appName) }} | {{ $appName }}</title>
+        
+        @if($globalMetaTag->seo_description)
+            <meta name="description" content="{{ $globalMetaTag->seo_description }}">
+        @endif
+        @if($globalMetaTag->seo_key)
+            <meta name="keywords" content="{{ $globalMetaTag->seo_key }}">
+        @endif
+        @if($globalMetaTag->seo_canonical)
+            <link rel="canonical" href="{{ $globalMetaTag->seo_canonical }}">
+        @endif
+        @if($globalMetaTag->seo_image)
+            <meta name="image" content="{{ asset('images/seo/' . $globalMetaTag->seo_image) }}">
+        @endif
+
+        {{-- Open Graph --}}
+        @if($globalMetaTag->og_title)
+            <meta property="og:title" content="{{ $globalMetaTag->og_title }}">
+        @endif
+        @if($globalMetaTag->og_description)
+            <meta property="og:description" content="{{ $globalMetaTag->og_description }}">
+        @endif
+        @if($globalMetaTag->og_image)
+            <meta property="og:image" content="{{ asset('images/seo/' . $globalMetaTag->og_image) }}">
+        @endif
+        @if($globalMetaTag->og_key)
+            <meta property="og:keywords" content="{{ $globalMetaTag->og_key }}">
+        @endif
+        <meta property="og:url" content="{{ request()->url() }}">
+        <meta property="og:type" content="website">
+    @else
+        <title>@hasSection('title')@yield('title') | {{ $appName }}@else{{ $appName }}@endif</title>
+        @yield('title_and_meta')
+        @yield('meta')
+    @endif
 
     <!-- Favicon -->
     @if (isset($layoutSettings) && $layoutSettings->frontend_favicon_url)
