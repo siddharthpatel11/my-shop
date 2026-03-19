@@ -140,6 +140,67 @@
                 </div>
             </div>
         </div>
+
+        {{-- Admin Replies Section --}}
+        @if ($repliedEnquiries->count() > 0)
+        @php
+            $appName = \App\Models\LayoutSetting::getActive()->frontend_app_name ?: config('app.name', 'MyShop');
+        @endphp
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3 d-flex align-items-center">
+                        <h5 class="fw-bold text-success mb-0"><i class="fas fa-reply-all me-2"></i> {{ $appName }} Replies To Your Enquiries</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach ($repliedEnquiries as $enquiry)
+                                <div class="list-group-item px-4 py-4 border-0 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                    <div class="row g-4">
+                                        {{-- My Message --}}
+                                        <div class="col-md-6 border-end-md">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2 text-primary" style="width: 30px; height: 30px;">
+                                                    <i class="fas fa-user small"></i>
+                                                </div>
+                                                <h6 class="mb-0 fw-bold">My Message</h6>
+                                                <span class="ms-auto text-muted small"><i class="far fa-clock me-1"></i> {{ $enquiry->created_at->format('M d, Y') }}</span>
+                                            </div>
+                                            <div class="bg-light p-3 rounded text-muted small">
+                                                {{ Str::limit($enquiry->message, 150) }}
+                                            </div>
+                                        </div>
+
+                                        {{-- Admin Reply --}}
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2 text-success" style="width: 30px; height: 30px;">
+                                                    <i class="fas fa-headset small"></i>
+                                                </div>
+                                                <h6 class="mb-0 fw-bold text-success">{{ $appName }} Reply</h6>
+                                                <span class="ms-auto text-muted small"><i class="far fa-clock me-1"></i> {{ $enquiry->replied_at->format('M d, Y') }}</span>
+                                            </div>
+                                            <div class="bg-success bg-opacity-10 border border-success border-opacity-25 p-3 rounded small">
+                                                {{ $enquiry->reply_message }}
+                                                
+                                                @if($enquiry->reply_image)
+                                                    <div class="mt-3">
+                                                        <a href="{{ asset('images/contacts/' . $enquiry->reply_image) }}" target="_blank" class="text-decoration-none">
+                                                            <img src="{{ asset('images/contacts/' . $enquiry->reply_image) }}" alt="Reply Attachment" class="img-fluid rounded border border-success border-opacity-25 shadow-sm" style="max-height: 100px;">
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 
     <style>

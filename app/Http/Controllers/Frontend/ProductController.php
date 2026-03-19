@@ -15,12 +15,19 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $products = Product::with(['category'])
-            ->where('status', 'active')
-            ->orderBy('created_at', 'asc')
-            ->paginate(12);
+        $query = Product::with(['category'])
+            ->where('status', 'active');
+
+        // Apply Category Filter if present
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        $products = $query->orderBy('created_at', 'asc')
+            ->paginate(12)
+            ->withQueryString();
 
         $sizes = Size::all();
         $colors = Color::all();

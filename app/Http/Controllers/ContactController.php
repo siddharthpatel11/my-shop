@@ -22,6 +22,11 @@ class ContactController extends Controller
         ]);
 
         try {
+            // Attach customer ID if logged in
+            if (auth('customer')->check()) {
+                $validated['customer_id'] = auth('customer')->id();
+            }
+
             // Save to database
             $contact = Contact::create($validated);
 

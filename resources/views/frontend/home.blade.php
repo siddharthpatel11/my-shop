@@ -746,8 +746,10 @@
             <div class="row g-4">
                 @foreach ($latestProducts as $i => $product)
                     @php
-                        $imageUrl = $product->image
-                            ? asset('uploads/products/' . $product->image)
+                        $images = $product->image ? explode(',', $product->image) : [];
+                        $firstImage = $images[0] ?? null;
+                        $imageUrl = $firstImage
+                            ? asset('images/products/' . $firstImage)
                             : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80';
                     @endphp
                     <div class="col-6 col-md-4 col-lg-3 rv" style="transition-delay:{{ ($i % 4) * 0.08 }}s;">

@@ -27,12 +27,19 @@ class MyPanelController extends Controller
             ->take(5)
             ->get();
 
+        // Get replied enquiries (messages that admin has replied to)
+        $repliedEnquiries = \App\Models\Contact::where('customer_id', $customer->id)
+            ->whereNotNull('replied_at')
+            ->latest('replied_at')
+            ->get();
+
         $totalOrders = Order::where('customer_id', $customer->id)->count();
         $totalWishlist = Wishlist::where('customer_id', $customer->id)->count();
 
         return view('frontend.my_panel.index', compact(
             'recentOrders',
             'wishlistItems',
+            'repliedEnquiries',
             'totalOrders',
             'totalWishlist'
         ));

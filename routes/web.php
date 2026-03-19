@@ -130,6 +130,8 @@ Route::middleware(['auth', 'prevent-back', '2fa'])->prefix('admin')->name('admin
     // Contact Messages
     Route::get('/contacts', [AdminContactController::class, 'index'])->name('contacts.index');
     Route::get('/contacts/{id}', [AdminContactController::class, 'show'])->name('contacts.show');
+    Route::post('/contacts/{id}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
+    Route::post('/contacts/{id}/clear-reply', [AdminContactController::class, 'clearReply'])->name('contacts.clear-reply');
     Route::delete('/contacts/{id}', [AdminContactController::class, 'destroy'])->name('contacts.destroy');
 
     // Global Meta Tags Management
