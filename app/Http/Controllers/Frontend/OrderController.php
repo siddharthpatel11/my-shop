@@ -69,4 +69,20 @@ class OrderController extends Controller
             'message' => 'Order cancelled successfully'
         ]);
     }
+
+    /**
+     * Show order invoice
+     */
+    public function invoice($id)
+    {
+        if (!auth('customer')->check()) {
+            return redirect()->route('customer.login');
+        }
+
+        $order = Order::with(['items.product', 'items.color', 'items.size', 'address', 'customer'])
+            ->where('customer_id', auth('customer')->id())
+            ->findOrFail($id);
+
+        return view('frontend.orders.invoice', compact('order'));
+    }
 }

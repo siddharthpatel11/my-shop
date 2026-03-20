@@ -102,10 +102,16 @@
 
                             {{-- Actions --}}
                             <div class="col-lg-2 col-12 text-lg-end">
-                                <a href="{{ route('frontend.order.show', $order->id) }}"
-                                    class="btn btn-sm btn-primary w-100 w-lg-auto">
-                                    <i class="bi bi-eye me-1"></i> View Details
-                                </a>
+                                <div class="d-flex flex-column gap-2 mt-2 mt-lg-0">
+                                    <a href="{{ route('frontend.order.show', $order->id) }}"
+                                        class="btn btn-sm btn-primary w-100 w-lg-auto">
+                                        <i class="bi bi-eye me-1"></i> View Details
+                                    </a>
+                                    <a href="{{ route('frontend.order.invoice', $order->id) }}"
+                                        class="btn btn-sm btn-outline-success w-100 w-lg-auto" target="_blank">
+                                        <i class="bi bi-receipt me-1"></i> Invoice
+                                    </a>
+                                </div>
                             </div>
                         </div>
 

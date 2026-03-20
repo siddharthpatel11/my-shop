@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\CustomerResetPasswordNotification;
 
 class Customer extends Authenticatable
 {
@@ -70,5 +71,16 @@ class Customer extends Authenticatable
     public function wishlist()
     {
         return $this->hasMany(Wishlist::class, 'customer_id');
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomerResetPasswordNotification($token));
     }
 }

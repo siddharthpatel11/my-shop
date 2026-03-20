@@ -54,6 +54,19 @@ Route::get('/customer/register', [CustomerAuthController::class, 'showRegister']
 Route::post('/customer/register', [CustomerAuthController::class, 'register'])
     ->name('customer.register.post');
 
+// Password Reset Routes
+Route::get('/customer/forgot-password', [CustomerAuthController::class, 'showForgotPasswordForm'])
+    ->name('customer.forgot-password');
+
+Route::post('/customer/forgot-password', [CustomerAuthController::class, 'sendResetLinkEmail'])
+    ->name('customer.forgot-password.post');
+
+Route::get('/customer/reset-password/{token}', [CustomerAuthController::class, 'showResetPasswordForm'])
+    ->name('customer.password.reset');
+
+Route::post('/customer/reset-password', [CustomerAuthController::class, 'resetPassword'])
+    ->name('customer.password.update');
+
 // Logout Route
 Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])
     ->name('customer.logout')
@@ -129,6 +142,10 @@ Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
     Route::post('/customer/email-change/update', [CustomerAuthController::class, 'updateEmail'])
         ->name('customer.email-change.update');
 
+    // Authenticated Password Reset
+    Route::post('/customer/authenticated-reset-password', [CustomerAuthController::class, 'sendAuthenticatedResetLink'])
+        ->name('customer.authenticated.reset-password');
+
     // Phone Change Routes
     Route::post('/customer/phone-change/send-otp', [CustomerAuthController::class, 'sendPhoneChangeOTP'])
         ->name('customer.phone-change.send-otp');
@@ -163,6 +180,8 @@ Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
         ->name('frontend.order.show');
     Route::post('/order/{id}/cancel', [OrderController::class, 'cancel'])
         ->name('frontend.order.cancel');
+    Route::get('/order/{id}/invoice', [OrderController::class, 'invoice'])
+        ->name('frontend.order.invoice');
 
     // Wishlist Routes
     Route::get('/wishlist', [WishlistController::class, 'index'])

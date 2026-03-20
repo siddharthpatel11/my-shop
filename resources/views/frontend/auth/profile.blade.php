@@ -3,7 +3,7 @@
 @section('title', 'My Profile')
 
 @section('content')
-    <div class="bg-gradient-primary py-5">
+    <div class="bg-gradient-primary py-2">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-12 text-center">
@@ -18,13 +18,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
 
-                {{-- Success Message --}}
-                @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
+                {{-- Redirect to products if no customer in session --}}
 
                 <div class="row g-4">
 
@@ -156,6 +150,27 @@
                                 </h5>
                             </div>
                             <div class="card-body p-4 pt-0">
+                                {{-- Password Change Option --}}
+                                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-4 mb-3">
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 mb-2 mb-sm-0">
+                                            <i class="fas fa-lock text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Password</h6>
+                                            <p class="text-muted small mb-0">Update your account password regularly to stay secure.</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 mt-sm-0">
+                                        <form id="reset-password-form" action="{{ route('customer.authenticated.reset-password') }}" method="POST">
+                                            @csrf
+                                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4" id="btn-reset-password">
+                                                Reset Password
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
                                 <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-4">
                                     <div class="d-flex align-items-center flex-wrap">
                                         <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 mb-2 mb-sm-0">
@@ -164,24 +179,28 @@
                                         <div>
                                             <h6 class="fw-bold mb-1">Google Authenticator (2FA)</h6>
                                             <p class="text-muted small mb-0">
-                                                @if($customer->google2fa_enabled)
-                                                    <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Enabled</span> - Protection is active.
+                                                @if ($customer->google2fa_enabled)
+                                                    <span class="text-success fw-bold"><i
+                                                            class="fas fa-check-circle me-1"></i>Enabled</span> - Protection
+                                                    is active.
                                                 @else
-                                                    <span class="text-secondary fw-bold">Disabled</span> - We recommend enabling this for extra security.
+                                                    <span class="text-secondary fw-bold">Disabled</span> - We recommend
+                                                    enabling this for extra security.
                                                 @endif
                                             </p>
                                         </div>
                                     </div>
                                     <div class="mt-2 mt-sm-0">
-                                        @if($customer->google2fa_enabled)
-                                            <form action="{{ route('customer.2fa.disable') }}" method="POST" onsubmit="return confirm('Are you sure you want to disable 2FA? This will make your account less secure.');">
+                                        @if ($customer->google2fa_enabled)
+                                            <form id="disable-2fa-form" action="{{ route('customer.2fa.disable') }}" method="POST">
                                                 @csrf
-                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-4">
+                                                <button type="button" id="btn-disable-2fa" class="btn btn-outline-danger btn-sm rounded-pill px-4">
                                                     Disable 2FA
                                                 </button>
                                             </form>
                                         @else
-                                            <a href="{{ route('customer.2fa.setup') }}" class="btn btn-primary btn-sm rounded-pill px-4">
+                                            <a href="{{ route('customer.2fa.setup') }}"
+                                                class="btn btn-primary btn-sm rounded-pill px-4">
                                                 Setup 2FA
                                             </a>
                                         @endif
@@ -196,7 +215,8 @@
                 <div class="row g-4 mt-2">
                     <div class="col-12">
                         <div class="card border-0 shadow-sm rounded-4">
-                            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                            <div
+                                class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
                                 <h5 class="fw-bold mb-0">
                                     <i class="fas fa-map-marker-alt text-primary me-2"></i>My Addresses
                                 </h5>
@@ -221,7 +241,8 @@
                                                             Default
                                                         </span>
                                                     @endif
-                                                    <p class="fw-bold mb-1">{{ $address->city }}, {{ $address->state }}</p>
+                                                    <p class="fw-bold mb-1">{{ $address->city }}, {{ $address->state }}
+                                                    </p>
                                                     <p class="text-muted small mb-3">
                                                         {{ $address->full_address }}<br>
                                                         {{ $address->district }}, {{ $address->pincode }}<br>
@@ -237,7 +258,8 @@
                                                             <i class="fas fa-trash me-1"></i>Delete
                                                         </button>
                                                         @if (!$address->is_default)
-                                                            <button class="btn btn-sm btn-link text-decoration-none ms-auto btn-set-default"
+                                                            <button
+                                                                class="btn btn-sm btn-link text-decoration-none ms-auto btn-set-default"
                                                                 data-id="{{ $address->id }}">
                                                                 Set as Default
                                                             </button>
@@ -423,7 +445,8 @@
     </div>
 
     <!-- Add Address Modal -->
-    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg rounded-4">
                 <div class="modal-header border-0 pb-0">
@@ -439,11 +462,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">State</label>
-                                <input type="text" name="state" class="form-control" required placeholder="Gujarat">
+                                <input type="text" name="state" class="form-control" required
+                                    placeholder="Gujarat">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">District</label>
-                                <input type="text" name="district" class="form-control" required placeholder="Rajkot">
+                                <input type="text" name="district" class="form-control" required
+                                    placeholder="Rajkot">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">City</label>
@@ -455,7 +480,8 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Full Address</label>
-                                <textarea name="full_address" class="form-control" rows="3" required placeholder="House No, Street Name, Landmark..."></textarea>
+                                <textarea name="full_address" class="form-control" rows="3" required
+                                    placeholder="House No, Street Name, Landmark..."></textarea>
                             </div>
                             <div class="col-12">
                                 <div class="form-check">
@@ -474,7 +500,8 @@
     </div>
 
     <!-- Edit Address Modal -->
-    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg rounded-4">
                 <div class="modal-header border-0 pb-0">
@@ -910,10 +937,18 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                Swal.fire({ icon: 'success', title: 'Success', text: data.message });
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: data.message
+                                });
                                 window.location.reload();
                             } else {
-                                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message
+                                });
                             }
                         })
                         .catch(error => console.error('Error:', error))
@@ -931,7 +966,7 @@
                     document.getElementById('edit-city').value = address.city;
                     document.getElementById('edit-pincode').value = address.pincode;
                     document.getElementById('edit-full-address').value = address.full_address;
-                    
+
                     new bootstrap.Modal(document.getElementById('editAddressModal')).show();
                 });
             });
@@ -956,10 +991,18 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                Swal.fire({ icon: 'success', title: 'Success', text: data.message });
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: data.message
+                                });
                                 window.location.reload();
                             } else {
-                                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message
+                                });
                             }
                         })
                         .catch(error => console.error('Error:', error))
@@ -1019,6 +1062,67 @@
                         });
                 });
             });
+
+            // Reset Password Confirmation
+            const btnResetPassword = document.getElementById('btn-reset-password');
+            if (btnResetPassword) {
+                btnResetPassword.addEventListener('click', function() {
+                    Swal.fire({
+                        title: 'Reset Password?',
+                        text: "Are you sure you want to send a password reset link to your email?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, send it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('reset-password-form').submit();
+                        }
+                    });
+                });
+            }
+
+            // Disable 2FA Confirmation
+            const btnDisable2fa = document.getElementById('btn-disable-2fa');
+            if (btnDisable2fa) {
+                btnDisable2fa.addEventListener('click', function() {
+                    Swal.fire({
+                        title: 'Disable 2FA?',
+                        text: "Are you sure you want to disable 2FA? This will make your account less secure.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, disable it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('disable-2fa-form').submit();
+                        }
+                    });
+                });
+            }
+
+            {{-- Session Notifications --}}
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: "{{ session('success') }}",
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: "{{ session('error') }}",
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            @endif
         });
     </script>
 @endsection

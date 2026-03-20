@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailChangeOTPMail;
 use Carbon\Carbon;
 use App\Services\SmsService;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Lang;
 
 class CustomerAuthController extends Controller
 {
@@ -297,5 +301,99 @@ class CustomerAuthController extends Controller
         session()->forget('phone_otp_verified');
 
         return response()->json(['success' => true, 'message' => 'Phone number updated successfully.']);
+    }
+
+    /* ================= FORGOT PASSWORD ================= */
+
+    public function showForgotPasswordForm()
+    {
+        return view('frontend.auth.forgot-password');
+    }
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        // Check if customer exists
+        $customer = Customer::where('email', $request->email)->first();
+        if (!$customer) {
+            return back()->with('error', 'We could not find a customer with that email address.');
+        }
+
+        // We use the password broker to send the reset link
+        $status = $this->broker()->sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('success', Lang::get($status))
+            : back()->withErrors(['email' => Lang::get($status)]);
+    }
+
+    public function showResetPasswordForm(Request $request, $token = null)
+    {
+        return view('frontend.auth.reset-password')->with(
+            ['token' => $token, 'email' => $request->email]
+        );
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:6',
+        ]);
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        // Check if new password is same as old password
+        if ($customer && Hash::check($request->password, $customer->password)) {
+            return back()->withInput($request->only('email', 'token'))
+                ->withErrors(['password' => 'New password cannot be same as old password. Please choose a different password.']);
+        }
+
+        $status = $this->broker()->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? redirect()->route('customer.login')->with('success', Lang::get($status))
+            : back()->withErrors(['email' => [Lang::get($status)]]);
+    }
+
+    public function sendAuthenticatedResetLink(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        if (!$customer) {
+            return redirect()->route('customer.login');
+        }
+
+        // We use the password broker to send the reset link to the logged-in customer's email
+        $status = $this->broker()->sendResetLink(['email' => $customer->email]);
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('success', Lang::get($status))
+            : back()->with('error', Lang::get($status));
+    }
+
+    /**
+     * Get the broker to be used during password reset.
+     *
+     * @return \Illuminate\Contracts\Auth\PasswordBroker
+     */
+    public function broker()
+    {
+        return Password::broker('customers');
     }
 }

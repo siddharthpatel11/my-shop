@@ -83,8 +83,12 @@
                                                 </td>
                                                 <td class="text-end pe-4">
                                                     <a href="{{ route('frontend.order.show', $order->id) }}"
-                                                        class="btn btn-sm btn-light rounded-pill">
+                                                        class="btn btn-sm btn-light rounded-pill" title="View Details">
                                                         <i class="fas fa-eye text-primary"></i>
+                                                    </a>
+                                                    <a href="{{ route('frontend.order.invoice', $order->id) }}"
+                                                        class="btn btn-sm btn-light rounded-pill ms-1" target="_blank" title="Invoice">
+                                                        <i class="fas fa-file-invoice text-success"></i>
                                                     </a>
                                                 </td>
                                             </tr>

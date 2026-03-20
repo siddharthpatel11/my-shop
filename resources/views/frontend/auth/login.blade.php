@@ -59,18 +59,22 @@
                                     <div class="input-group">
                                         <input type="password" name="password" id="password"
                                             class="form-control form-control-lg" placeholder="Enter your password" required>
-                                        <button class="btn btn-outline-secondary" type="button">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
                                             <i class="fas fa-eye" id="toggleIcon"></i>
                                         </button>
                                     </div>
                                 </div>
 
-                                {{-- Remember Me --}}
-                                <div class="form-check mb-4">
-                                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                                    <label class="form-check-label" for="remember">
-                                        Remember me
-                                    </label>
+                                {{-- Remember Me & Forgot Password --}}
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                        <label class="form-check-label" for="remember">
+                                            Remember me
+                                        </label>
+                                    </div>
+                                    <a href="{{ route('customer.forgot-password') }}"
+                                        class="text-decoration-none small">Forgot password?</a>
                                 </div>
 
                                 {{-- Login Button --}}
@@ -381,6 +385,20 @@
                     '</svg>';
             });
         });
+
+        function togglePassword() {
+            const password = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            if (password.type === 'password') {
+                password.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                password.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
     </script>
 
 @endsection

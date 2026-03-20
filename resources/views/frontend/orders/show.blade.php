@@ -233,7 +233,11 @@
 
                         <hr>
 
-                        {{-- Action Buttons --}}
+                        <a href="{{ route('frontend.order.invoice', $order->id) }}" target="_blank" class="btn btn-outline-success w-100 mb-2">
+                            <i class="bi bi-receipt me-2"></i>
+                            View Invoice
+                        </a>
+
                         @if ($order->canBeCancelled())
                             <button class="btn btn-outline-danger w-100 mb-2" onclick="confirmCancelOrder()">
                                 <i class="bi bi-x-circle me-2"></i>
