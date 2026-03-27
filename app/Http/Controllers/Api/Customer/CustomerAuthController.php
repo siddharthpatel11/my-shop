@@ -14,6 +14,10 @@ use Carbon\Carbon;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Str;
+use Illuminate\Auth\Events\PasswordReset;
 
 class CustomerAuthController extends Controller
 {
@@ -400,4 +404,84 @@ class CustomerAuthController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Phone number updated successfully.']);
     }
+
+    /**
+     * Forgot Password API - Sends a reset link email
+     */
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer not found with this email'
+            ], 404);
+        }
+
+        // Send reset link using the 'customers' broker
+        $status = Password::broker('customers')->sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === Password::RESET_LINK_SENT
+            ? response()->json([
+                'success' => true,
+                'message' => Lang::get($status)
+            ])
+            : response()->json([
+                'success' => false,
+                'message' => Lang::get($status)
+            ], 500);
+    }
+
+    /**
+     * Reset Password API - Resets password using a token
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email'                 => 'required|email',
+            'token'                 => 'required',
+            'password'              => 'required|min:6|confirmed',
+        ]);
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        // Check if new password is same as old password
+        if ($customer && Hash::check($request->password, $customer->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'New password cannot be same as old password'
+            ], 422);
+        }
+
+        $status = Password::broker('customers')->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($customer, $password) {
+                $customer->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $customer->save();
+
+                event(new PasswordReset($customer));
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? response()->json([
+                'success' => true,
+                'message' => Lang::get($status)
+            ])
+            : response()->json([
+                'success' => false,
+                'message' => Lang::get($status)
+            ], 400);
+    }
+
 }

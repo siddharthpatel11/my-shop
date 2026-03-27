@@ -63,6 +63,9 @@ Route::prefix('v1')->group(function () {
         Route::post('register', [CustomerAuthController::class, 'register'])->name('register');
         Route::post('login', [CustomerAuthController::class, 'login'])->name('login');
         Route::post('verify-2fa', [CustomerAuthController::class, 'verify2FA'])->name('verify-2fa');
+        // Forgot Password API
+        Route::post('forgot-password', [CustomerAuthController::class, 'forgotPassword']);
+        Route::post('reset-password', [CustomerAuthController::class, 'resetPassword']);
 
         // ── Protected Customer Routes ─────────────────────────
         Route::middleware('auth:customer-api')->group(function () {
