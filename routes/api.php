@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\Customer\CartController;
 use App\Http\Controllers\Api\Customer\AddressController;
+use App\Http\Controllers\Api\Customer\ClearOldCartItemsController;
 use App\Http\Controllers\Api\Customer\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -106,6 +107,10 @@ Route::prefix('v1')->group(function () {
                 Route::post('/apply-discount', [CartController::class, 'applyDiscount'])->name('apply-discount');
                 Route::post('/buy-now', [CartController::class, 'buyNow'])->name('buy-now');
             });
+
+            // ── Clear Old Cart Items ──────────────────────────
+
+            Route::get('/cart/clear-old', [ClearOldCartItemsController::class, 'getCart']);
 
             // ── Addresses ─────────────────────────────────────
             Route::prefix('addresses')->name('addresses.')->group(function () {
