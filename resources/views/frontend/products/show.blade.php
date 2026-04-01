@@ -40,8 +40,8 @@
         {{-- Breadcrumb --}}
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('frontend.home') }}">Home</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('frontend.products.index') }}">Products</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('frontend.home') }}">{{ __('products.home') }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('frontend.products.index') }}">{{ __('products.products') }}</a></li>
                 <li class="breadcrumb-item active">{{ $product->name }}</li>
             </ol>
         </nav>
@@ -63,7 +63,7 @@
                             <img id="mainImage" src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
                                 class="card-img-top main-product-image" alt="{{ $product->name }}">
                             @if ($product->created_at && $product->created_at->diffInDays(now()) < 7)
-                                <span class="badge bg-success position-absolute top-0 start-0 m-3">New</span>
+                                <span class="badge bg-success position-absolute top-0 start-0 m-3">{{ __('products.new_badge') }}</span>
                             @endif
                         </div>
                     </div>
@@ -103,12 +103,12 @@
                     {{-- Price --}}
                     <div class="mb-4">
                         <h2 class="text-primary fw-bold mb-0">₹{{ number_format($product->price, 2) }}</h2>
-                        <small class="text-muted">Inclusive of all taxes</small>
+                        <small class="text-muted">{{ __('products.inclusive_taxes') }}</small>
                     </div>
 
                     {{-- Description --}}
                     <div class="mb-4">
-                        <h5 class="fw-semibold mb-2">Product Description</h5>
+                        <h5 class="fw-semibold mb-2">{{ __('products.product_description') }}</h5>
                         <p class="text-muted">{{ $product->detail }}</p>
                     </div>
 
@@ -118,7 +118,7 @@
                     @if (!empty($colorIds))
                         <div class="mb-4">
                             <label class="form-label fw-semibold d-flex align-items-center">
-                                <i class="fas fa-palette me-2"></i> Select Color
+                                <i class="fas fa-palette me-2"></i> {{ __('products.select_color') }}
                                 <span class="ms-2 text-muted small" id="selectedColorName"></span>
                             </label>
                             <div class="d-flex gap-2 flex-wrap">
@@ -142,7 +142,7 @@
                     @if (!empty($sizeIds))
                         <div class="mb-4">
                             <label class="form-label fw-semibold d-flex align-items-center">
-                                <i class="fas fa-ruler me-2"></i> Select Size
+                                <i class="fas fa-ruler me-2"></i> {{ __('products.select_size') }}
                                 <span class="ms-2 text-muted small" id="selectedSizeName"></span>
                             </label>
                             <div class="d-flex gap-2 flex-wrap">
@@ -163,7 +163,7 @@
                     {{-- Quantity Selection --}}
                     <div class="mb-4">
                         <label class="form-label fw-semibold">
-                            <i class="fas fa-sort-numeric-up me-2"></i> Quantity
+                            <i class="fas fa-sort-numeric-up me-2"></i> {{ __('products.quantity') }}
                         </label>
                         <div class="input-group" style="width: 150px;">
                             <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity()">
@@ -182,15 +182,15 @@
                         @auth('customer')
                             @if (in_array($product->id, $cartProductIds ?? []))
                                 <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
-                                    <i class="fas fa-arrow-right me-2"></i> Go to Cart
+                                    <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
                                 </a>
                             @else
                                 <button class="btn btn-primary btn-lg flex-fill" id="addToCartBtn" onclick="addToCart()">
-                                    <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+                                    <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
                                 </button>
                             @endif
                             <button class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
-                                <i class="fas fa-bolt me-2"></i> Buy Now
+                                <i class="fas fa-bolt me-2"></i> {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
                             </button>
                             <button class="btn {{ $inWishlist ? 'btn-danger' : 'btn-outline-danger' }} btn-lg"
                                 onclick="toggleWishlist()">
@@ -198,7 +198,7 @@
                             </button>
                         @else
                             <a href="{{ route('customer.login') }}" class="btn btn-primary btn-lg flex-fill">
-                                <i class="fas fa-sign-in-alt me-2"></i> Login to Buy
+                                <i class="fas fa-sign-in-alt me-2"></i> {{ __('products.login_to_buy') }}
                             </a>
                         @endauth
                     </div>
@@ -210,25 +210,25 @@
                                 <div class="col-6">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-truck text-primary me-2"></i>
-                                        <small>Free Shipping</small>
+                                        <small>{{ __('products.free_shipping') }}</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-undo text-primary me-2"></i>
-                                        <small>Easy Returns</small>
+                                        <small>{{ __('products.easy_returns') }}</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-shield-alt text-primary me-2"></i>
-                                        <small>Secure Payment</small>
+                                        <small>{{ __('products.secure_payment') }}</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-headset text-primary me-2"></i>
-                                        <small>24/7 Support</small>
+                                        <small>{{ __('products.support') }}</small>
                                     </div>
                                 </div>
                             </div>
@@ -242,7 +242,7 @@
         @if ($relatedProducts->count() > 0)
             <div class="row mt-5">
                 <div class="col-12">
-                    <h3 class="fw-bold mb-4">Related Products</h3>
+                    <h3 class="fw-bold mb-4">{{ __('products.related_products') }}</h3>
                 </div>
             </div>
 
@@ -273,7 +273,7 @@
                                 <p class="text-primary fw-bold mb-3">₹{{ number_format($related->price, 2) }}</p>
                                 <a href="{{ route('frontend.products.show', $related->id) }}"
                                     class="btn btn-outline-primary btn-sm w-100">
-                                    View Details
+                                    {{ __('products.view_details') }}
                                 </a>
                             </div>
                         </div>
@@ -509,7 +509,7 @@
             if (hasColorOptions && !selectedColor) {
                 Swal.fire({
                     icon: 'warning',
-                    text: 'Please select a color',
+                    text: '{{ __('products.please_select_color') }}',
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -519,7 +519,7 @@
             if (hasSizeOptions && !selectedSize) {
                 Swal.fire({
                     icon: 'warning',
-                    text: 'Please select a size',
+                    text: '{{ __('products.please_select_size') }}',
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -549,20 +549,20 @@
                         if (callback) {
                             callback(data);
                         } else {
-                            showNotification('Product added to cart!', 'success');
+                            showNotification('{{ __('products.added_to_cart') }}', 'success');
                             // Dynamic button switch
                             const addToCartBtn = document.getElementById('addToCartBtn');
                             if (addToCartBtn) {
                                 const goCartHtml = `
                                 <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
-                                    <i class="fas fa-arrow-right me-2"></i> Go to Cart
+                                    <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
                                 </a>
                             `;
                                 addToCartBtn.outerHTML = goCartHtml;
                             }
                         }
                     } else {
-                        showNotification(data.message || 'Error adding to cart', 'error');
+                        showNotification(data.message || '{{ __('products.something_went_wrong') }}', 'error');
                     }
                 })
                 .catch(error => {

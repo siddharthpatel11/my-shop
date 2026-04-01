@@ -14,6 +14,7 @@ use App\Http\Controllers\Frontend\SocialAuthController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\CustomerAddressController;
 use App\Http\Controllers\Frontend\CustomerTwoFactorController;
+use Illuminate\Http\Request;
 
 /* =====================================================
    PUBLIC ROUTES (No Authentication Required)
@@ -84,6 +85,19 @@ Route::get('/frontend/products', [ProductController::class, 'index'])
 
 Route::get('/frontend/products/{product}', [ProductController::class, 'show'])
     ->name('frontend.products.show');
+
+Route::post('/language/switch', function (Illuminate\Http\Request $request) {
+    $locale = $request->input('locale', 'en');
+    $supported = ['en', 'hi', 'gu', 'sa', 'bn'];
+
+    if (in_array($locale, $supported)) {
+        session(['locale' => $locale]);
+    }
+
+    return back();
+})->name('language.switch');
+
+
 
 // Cart routes - some require authentication
 // [GOOGLE 2FA] ADD 'customer.2fa' to the middleware array below to enable 2FA for customers.

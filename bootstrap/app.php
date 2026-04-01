@@ -24,11 +24,20 @@ return Application::configure(basePath: dirname(__DIR__))
     //     }
     // )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
+        $middleware->api(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
         $middleware->alias([
             'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
             'customer.2fa' => \App\Http\Middleware\Customer2FAMiddleware::class,
             'prevent-back' => \App\Http\Middleware\PreventBackHistory::class,
             '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
+            'setlocale' => \App\Http\Middleware\SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

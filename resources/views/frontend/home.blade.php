@@ -600,7 +600,7 @@
 
     <!-- ── ANNOUNCE ── -->
     <div class="ann-bar">
-        🚀 Free shipping on orders above ₹999 &nbsp;·&nbsp; Use code <strong>BLUE10</strong> for 10% off!
+        {!! __('home.announce') !!}
     </div>
 
     <!-- ── HERO ── -->
@@ -614,22 +614,20 @@
                     <div class="rv d1">
                         <div class="hero-badge">
                             <i class="fas fa-sparkles"></i>
-                            Premium Shopping Experience
+                            {{ __('home.badge_premium') }}
                         </div>
                         <h1 class="hero-h1">
-                            Elevate Your <br>
-                            <span>Lifestyle</span> with India
+                            {!! __('home.hero_title_1') !!}
                         </h1>
                         <p class="hero-p">
-                            Discover a curated collection of premium products designed to enhance your everyday life.
-                            Quality meets elegance in every detail.
+                            {{ __('home.hero_desc') }}
                         </p>
                         <div class="d-flex flex-wrap gap-3">
                             <a href="{{ route('frontend.products.index') }}" class="btn-premium btn-p-solid">
-                                Shop Collection <i class="fas fa-arrow-right ms-2"></i>
+                                {{ __('home.shop_collection') }} <i class="fas fa-arrow-right ms-2"></i>
                             </a>
                             <a href="#categories" class="btn-premium btn-p-outline">
-                                View Categories
+                                {{ __('home.view_categories') }}
                             </a>
                         </div>
                     </div>
@@ -653,7 +651,7 @@
                             </div>
                             <div>
                                 <div class="chip-val">50k+</div>
-                                <div class="chip-lbl">Happy Customers</div>
+                                <div class="chip-lbl">{{ __('home.happy_customers') }}</div>
                             </div>
                         </div>
 
@@ -663,7 +661,7 @@
                             </div>
                             <div>
                                 <div class="chip-val">4.9/5</div>
-                                <div class="chip-lbl">Average Rating</div>
+                                <div class="chip-lbl">{{ __('home.average_rating') }}</div>
                             </div>
                         </div>
                     </div>
@@ -681,29 +679,29 @@
                 <div class="col-6 col-md-3">
                     <div class="rv d1 feat-item">
                         <div class="feat-ic"><i class="fas fa-truck-fast"></i></div>
-                        <h4 class="feat-title">Free Shipping</h4>
-                        <p class="feat-sub">On orders above ₹999</p>
+                        <h4 class="feat-title">{{ __('home.free_shipping') }}</h4>
+                        <p class="feat-sub">{{ __('home.free_shipping_sub') }}</p>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="rv d2 feat-item">
                         <div class="feat-ic"><i class="fas fa-rotate-left"></i></div>
-                        <h4 class="feat-title">Easy Returns</h4>
-                        <p class="feat-sub">30-day return policy</p>
+                        <h4 class="feat-title">{{ __('home.easy_returns') }}</h4>
+                        <p class="feat-sub">{{ __('home.easy_returns_sub') }}</p>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="rv d3 feat-item">
                         <div class="feat-ic"><i class="fas fa-shield-halved"></i></div>
-                        <h4 class="feat-title">Secure Payment</h4>
-                        <p class="feat-sub">100% safe checkout</p>
+                        <h4 class="feat-title">{{ __('home.secure_payment') }}</h4>
+                        <p class="feat-sub">{{ __('home.secure_payment_sub') }}</p>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="rv d4 feat-item">
                         <div class="feat-ic"><i class="fas fa-headset"></i></div>
-                        <h4 class="feat-title">Expert Support</h4>
-                        <p class="feat-sub">24/7 dedicated help</p>
+                        <h4 class="feat-title">{{ __('home.expert_support') }}</h4>
+                        <p class="feat-sub">{{ __('home.expert_support_sub') }}</p>
                     </div>
                 </div>
             </div>
@@ -714,8 +712,8 @@
     <section class="cat-sec" id="categories">
         <div class="container">
             <div class="text-center mb-5 rv d1">
-                <span class="sh-eyebrow">Explore</span>
-                <h2 class="sh-title">Top Categories</h2>
+                <span class="sh-eyebrow">{{ __('home.explore') }}</span>
+                <h2 class="sh-title">{{ __('home.top_categories') }}</h2>
             </div>
 
             <div class="row g-4">
@@ -739,8 +737,8 @@
     <section class="prod-sec">
         <div class="container">
             <div class="text-center mb-5 rv d1">
-                <span class="sh-eyebrow">Handpicked</span>
-                <h2 class="sh-title">New Arrivals</h2>
+                <span class="sh-eyebrow">{{ __('home.handpicked') }}</span>
+                <h2 class="sh-title">{{ __('home.new_arrivals') }}</h2>
             </div>
 
             <div class="row g-4">
@@ -757,19 +755,19 @@
                             <div class="pc-img">
                                 <img src="{{ $imageUrl }}" alt="{{ $product->name }}" loading="lazy">
                                 @if ($i === 0)
-                                    <span class="pc-badge b-hot">Hot</span>
+                                    <span class="pc-badge b-hot">{{ __('home.badge_hot') }}</span>
                                 @elseif($i < 3)
-                                    <span class="pc-badge b-new">New</span>
+                                    <span class="pc-badge b-new">{{ __('home.badge_new') }}</span>
                                 @endif
                             </div>
                             <div class="pc-body">
-                                <p class="pc-cat">{{ $product->category->name ?? 'Collection' }}</p>
+                                <p class="pc-cat">{{ $product->category->name ?? __('home.collection') }}</p>
                                 <h3 class="pc-name">{{ $product->name }}</h3>
                                 <div class="pc-price">
                                     <span class="cur">₹</span>{{ number_format($product->price, 0) }}
                                 </div>
                                 <a href="{{ route('frontend.products.show', $product->id) }}" class="btn-view">
-                                    View Details
+                                    {{ __('home.view_details') }}
                                 </a>
                             </div>
                         </div>
@@ -783,19 +781,18 @@
     <section class="cta-sec">
         <div class="container position-relative">
             <div class="rv d1">
-                <span class="sh-eyebrow" style="color:rgba(255,255,255,0.6)">Exclusive Offer</span>
-                <h2 class="cta-h text-white">Join the <span>Premium</span> Club</h2>
-                <p class="cta-p" style="color:rgba(255,255,255,0.6)">Sign up today and get 15% off your first luxury
-                    purchase.</p>
+                <span class="sh-eyebrow" style="color:rgba(255,255,255,0.6)">{{ __('home.exclusive_offer') }}</span>
+                <h2 class="cta-h text-white">{!! __('home.join_club') !!}</h2>
+                <p class="cta-p" style="color:rgba(255,255,255,0.6)">{{ __('home.join_club_sub') }}</p>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
                     <a href="{{ route('frontend.products.index') }}" class="btn-premium btn-p-solid"
                         style="background:var(--white); color:var(--dk);">
-                        Start Shopping <i class="fas fa-shopping-bag ms-2"></i>
+                        {{ __('home.start_shopping') }} <i class="fas fa-shopping-bag ms-2"></i>
                     </a>
                     @guest('customer')
                         <a href="{{ route('customer.login') }}" class="btn-premium btn-p-outline"
                             style="border-color:var(--white); color:var(--white);">
-                            Create Account
+                            {{ __('home.create_account') }}
                         </a>
                     @endguest
                 </div>

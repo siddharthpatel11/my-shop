@@ -8,8 +8,8 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <h1 class="display-30 fw-bold text-white mb-1">Our Products</h1>
-                    <p class="lead text-white-50">Discover our amazing collection of quality products</p>
+                    <h1 class="display-30 fw-bold text-white mb-1">{{ __('products.our_products') }}</h1>
+                    <p class="lead text-white-50">{{ __('products.discover_text') }}</p>
                 </div>
                 <div class="col-lg-4 text-end">
                     <div class="text-white">
@@ -49,7 +49,7 @@
                             {{-- Badges --}}
                             <div class="position-absolute top-0 start-0 p-2">
                                 @if ($product->created_at && $product->created_at->diffInDays(now()) < 7)
-                                    <span class="badge bg-success">New</span>
+                                    <span class="badge bg-success">{{ __('products.new_badge') }}</span>
                                 @endif
                             </div>
 
@@ -69,7 +69,7 @@
                             <div class="product-overlay">
                                 <a href="{{ route('frontend.products.show', $product->id) }}"
                                     class="btn btn-light btn-sm rounded-pill mb-1 pd-1">
-                                    <i class="fas fa-eye"></i> Quick View
+                                    <i class="fas fa-eye"></i> {{ __('products.quick_view') }}
                                 </a>
                                 @auth('customer')
                                     @php $isInWishlist = in_array($product->id, $wishlistProductIds ?? []); @endphp
@@ -77,7 +77,7 @@
                                         data-product-id="{{ $product->id }}" onclick="addToWishlist(this)">
                                         <i class="{{ $isInWishlist ? 'fas' : 'far' }} fa-heart"
                                             style="{{ $isInWishlist ? 'color: #dc3545;' : '' }}"></i>
-                                        {{ $isInWishlist ? 'In Wishlist' : 'Wishlist' }}
+                                        {{ $isInWishlist ? __('products.in_wishlist') : __('products.wishlist') }}
                                     </button>
                                 @endauth
                             </div>
@@ -112,11 +112,11 @@
                             @if (!empty($colorIds))
                                 <div class="mb-3">
                                     <label class="form-label small text-muted mb-1">
-                                        <i class="fas fa-palette"></i> Select Color:
+                                        <i class="fas fa-palette"></i> {{ __('products.select_color') }}:
                                     </label>
                                     <select class="form-select form-select-sm color-select"
                                         data-product-id="{{ $product->id }}">
-                                        <option value="">Choose Color</option>
+                                        <option value="">{{ __('products.choose_color') }}</option>
                                         @foreach ($colorIds as $cid)
                                             @php $color = $colors->firstWhere('id', (int) $cid); @endphp
                                             @if ($color)
@@ -140,11 +140,11 @@
                             @if (!empty($sizeIds))
                                 <div class="mb-3">
                                     <label class="form-label small text-muted mb-1">
-                                        <i class="fas fa-ruler"></i> Select Size:
+                                        <i class="fas fa-ruler"></i> {{ __('products.select_size') }}:
                                     </label>
                                     <select class="form-select form-select-sm size-select"
                                         data-product-id="{{ $product->id }}">
-                                        <option value="">Choose Size</option>
+                                        <option value="">{{ __('products.choose_size') }}</option>
                                         @foreach ($sizeIds as $sid)
                                             @php $size = $sizes->firstWhere('id', (int) $sid); @endphp
                                             @if ($size)
@@ -162,24 +162,24 @@
                                     @if (in_array($product->id, $cartProductIds ?? []))
                                         <a href="{{ route('frontend.cart') }}"
                                             class="btn btn-outline-warning btn-sm flex-fill">
-                                            <i class="fas fa-arrow-right"></i> Go to Cart
+                                            <i class="fas fa-arrow-right"></i> {{ __('products.go_to_cart') }}
                                         </a>
                                     @else
                                         <button class="btn btn-outline-primary btn-sm flex-fill add-to-cart-btn"
                                             data-product-id="{{ $product->id }}"
                                             data-product-price="{{ $product->price }}" onclick="addToCart(this)">
-                                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                                            <i class="fas fa-shopping-cart"></i> {{ __('products.add_to_cart') }}
                                         </button>
                                     @endif
                                     <button class="btn btn-outline-success btn-sm flex-fill"
                                         data-product-id="{{ $product->id }}" data-product-price="{{ $product->price }}"
                                         onclick="buyNow(this)">
-                                        <i class="fas fa-bolt"></i> Buy at ₹{{ number_format($product->price) }}
+                                        <i class="fas fa-bolt"></i> {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
                                     </button>
                                 </div>
                             @else
                                 <a href="{{ route('customer.login') }}" class="btn btn-primary w-100">
-                                    Login to Buy
+                                    {{ __('products.login_to_buy') }}
                                 </a>
                             @endif
                         </div>
@@ -190,8 +190,8 @@
                 <div class="col-12">
                     <div class="text-center py-5">
                         <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">No products available</h4>
-                        <p class="text-muted">Check back later for new products!</p>
+                        <h4 class="text-muted">{{ __('products.no_products') }}</h4>
+                        <p class="text-muted">{{ __('products.no_products_sub') }}</p>
                     </div>
                 </div>
             @endforelse
@@ -202,8 +202,8 @@
             <div class="col-12">
                 <div class="text-center py-5">
                     <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                    <h4 class="text-muted">No products found</h4>
-                    <p class="text-muted">Try adjusting your filters</p>
+                    <h4 class="text-muted">{{ __('products.no_results') }}</h4>
+                    <p class="text-muted">{{ __('products.no_results_sub') }}</p>
                 </div>
             </div>
         </div>
@@ -361,6 +361,19 @@
 
     {{-- Scripts --}}
     <script>
+        @php
+            $appLang = [
+                'please_select_color'  => __('products.please_select_color'),
+                'please_select_size'   => __('products.please_select_size'),
+                'added_to_cart'        => __('products.added_to_cart'),
+                'something_went_wrong' => __('products.something_went_wrong'),
+                'go_to_cart'           => __('products.go_to_cart'),
+                'in_wishlist'          => __('products.in_wishlist'),
+                'wishlist'             => __('products.wishlist'),
+            ];
+        @endphp
+        window.AppLang = @json($appLang);
+
         // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -411,7 +424,7 @@
             if (colorSelect && !colorId) {
                 Swal.fire({
                     icon: 'warning',
-                    text: 'Please select a color',
+                    text: window.AppLang.please_select_color,
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -421,7 +434,7 @@
             if (sizeSelect && !sizeId) {
                 Swal.fire({
                     icon: 'warning',
-                    text: 'Please select a size',
+                    text: window.AppLang.please_select_size,
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -464,7 +477,7 @@
                         if (callback) {
                             callback(data);
                         } else {
-                            showNotification('Product added to cart!', 'success');
+                            showNotification(window.AppLang.added_to_cart, 'success');
                             // Dynamic button switch
                             const actionContainer = document.getElementById(`product-actions-${productId}`);
                             if (actionContainer) {
@@ -472,7 +485,7 @@
                                 if (addToCartBtn) {
                                     const goCartHtml = `
                                         <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-sm flex-fill">
-                                            <i class="fas fa-arrow-right"></i> Go to Cart
+                                            <i class="fas fa-arrow-right"></i> ${window.AppLang.go_to_cart}
                                         </a>
                                     `;
                                     addToCartBtn.outerHTML = goCartHtml;
@@ -485,7 +498,7 @@
                     console.error(error);
                     Swal.fire({
                         icon: 'error',
-                        text: 'Something went wrong'
+                        text: window.AppLang.something_went_wrong
                     });
                 });
         }
@@ -663,7 +676,7 @@
                             button.classList.add('active');
                             icon.style.color = '#dc3545';
                             if (textNode && textNode.nodeType === Node.TEXT_NODE) textNode.textContent =
-                                ' In Wishlist';
+                                ' ' + window.AppLang.in_wishlist;
 
                             // Update top-right icon
                             if (topIcon) {
@@ -678,7 +691,7 @@
                             button.classList.remove('active');
                             icon.style.color = '';
                             if (textNode && textNode.nodeType === Node.TEXT_NODE) textNode.textContent =
-                                ' Wishlist';
+                                ' ' + window.AppLang.wishlist;
 
                             // Update top-right icon
                             if (topIcon) {
@@ -698,7 +711,7 @@
                 })
                 .catch(error => {
                     console.error(error);
-                    showNotification('Something went wrong', 'error');
+                    showNotification(window.AppLang.something_went_wrong, 'error');
                 });
         }
     </script>

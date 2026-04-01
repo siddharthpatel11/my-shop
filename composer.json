@@ -21,6 +21,7 @@
         "razorpay/razorpay": "*",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "socialiteproviders/twitter": "^4.1",
+        "stichoza/google-translate-php": "^5.3",
         "tinymce/tinymce": "^8.3",
         "twilio/sdk": "^8.11"
     },

@@ -12,40 +12,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @if(isset($globalMetaTag) && $globalMetaTag)
+    @if (isset($globalMetaTag) && $globalMetaTag)
         {{-- Display Global SEO/OG Tags --}}
         <title>{{ $globalMetaTag->seo_title ?: ($globalMetaTag->og_title ?: $appName) }} | {{ $appName }}</title>
-        
-        @if($globalMetaTag->seo_description)
+
+        @if ($globalMetaTag->seo_description)
             <meta name="description" content="{{ $globalMetaTag->seo_description }}">
         @endif
-        @if($globalMetaTag->seo_key)
+        @if ($globalMetaTag->seo_key)
             <meta name="keywords" content="{{ $globalMetaTag->seo_key }}">
         @endif
-        @if($globalMetaTag->seo_canonical)
+        @if ($globalMetaTag->seo_canonical)
             <link rel="canonical" href="{{ $globalMetaTag->seo_canonical }}">
         @endif
-        @if($globalMetaTag->seo_image)
+        @if ($globalMetaTag->seo_image)
             <meta name="image" content="{{ asset('images/seo/' . $globalMetaTag->seo_image) }}">
         @endif
 
         {{-- Open Graph --}}
-        @if($globalMetaTag->og_title)
+        @if ($globalMetaTag->og_title)
             <meta property="og:title" content="{{ $globalMetaTag->og_title }}">
         @endif
-        @if($globalMetaTag->og_description)
+        @if ($globalMetaTag->og_description)
             <meta property="og:description" content="{{ $globalMetaTag->og_description }}">
         @endif
-        @if($globalMetaTag->og_image)
+        @if ($globalMetaTag->og_image)
             <meta property="og:image" content="{{ asset('images/seo/' . $globalMetaTag->og_image) }}">
         @endif
-        @if($globalMetaTag->og_key)
+        @if ($globalMetaTag->og_key)
             <meta property="og:keywords" content="{{ $globalMetaTag->og_key }}">
         @endif
         <meta property="og:url" content="{{ request()->url() }}">
         <meta property="og:type" content="website">
     @else
-        <title>@hasSection('title')@yield('title') | {{ $appName }}@else{{ $appName }}@endif</title>
+        <title>
+            @hasSection('title')
+                @yield('title') | {{ $appName }}@else{{ $appName }}
+            @endif
+        </title>
         @yield('title_and_meta')
         @yield('meta')
     @endif
@@ -54,7 +58,8 @@
     @if (isset($layoutSettings) && $layoutSettings->frontend_favicon_url)
         <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->frontend_favicon_url }}">
     @else
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 640 512%22 fill=%22%23667eea%22><path d=%22M36.8 192H603.2c20.3 0 36.8-16.5 36.8-36.8c0-7.3-2.2-14.4-6.2-20.4L558.2 21.4C549.3 8 534.4 0 518.3 0H121.7c-16 0-31 8-39.9 21.4L6.2 134.7c-4 6.1-6.2 13.2-6.2 20.4C0 175.5 16.5 192 36.8 192zM64 224V464c0 26.5 21.5 48 48 48H528c26.5 0 48-21.5 48-48V224H64zM288 312v112c0 13.3-10.7 24-24 24H168c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24zm208 112c0 13.3-10.7 24-24 24H376c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24v112z%22/></svg>">
+        <link rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 640 512%22 fill=%22%23667eea%22><path d=%22M36.8 192H603.2c20.3 0 36.8-16.5 36.8-36.8c0-7.3-2.2-14.4-6.2-20.4L558.2 21.4C549.3 8 534.4 0 518.3 0H121.7c-16 0-31 8-39.9 21.4L6.2 134.7c-4 6.1-6.2 13.2-6.2 20.4C0 175.5 16.5 192 36.8 192zM64 224V464c0 26.5 21.5 48 48 48H528c26.5 0 48-21.5 48-48V224H64zM288 312v112c0 13.3-10.7 24-24 24H168c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24zm208 112c0 13.3-10.7 24-24 24H376c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24v112z%22/></svg>">
     @endif
 
     {{-- Bootstrap --}}
@@ -451,6 +456,102 @@
                             </ul>
                         </li>
                     @endauth
+                    {{-- Styled Language Switcher --}}
+                    <li class="nav-item dropdown ms-lg-3 d-flex align-items-center">
+                        @php
+                            $locales = [
+                                'en' => 'English',
+                                'hi' => 'Hindi',
+                                'gu' => 'Gujarati',
+                                'sa' => 'Sanskrit',
+                                'bn' => 'Bengali',
+                            ];
+                            $current = session('locale', config('app.locale', 'en'));
+                        @endphp
+                        <style>
+                            .lang-selector-box {
+                                border: 1px solid #e2e8f0;
+                                border-radius: 8px;
+                                padding: 6px 14px;
+                                background-color: #fff;
+                                color: #4a5568 !important;
+                                display: flex;
+                                align-items: center;
+                                font-size: 0.95rem;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                white-space: nowrap;
+                            }
+
+                            .lang-selector-box:hover {
+                                border-color: #cbd5e1;
+                                background-color: #f8fafc;
+                            }
+
+                            .lang-selector-divider {
+                                color: #cbd5e1;
+                                margin: 0 10px;
+                                font-size: 0.9rem;
+                            }
+
+                            .lang-selector-caret {
+                                color: #94a3b8;
+                                font-size: 0.8rem;
+                            }
+                        </style>
+                        <a class="nav-link p-0 no-caret" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="Language">
+                            <div class="lang-selector-box shadow-sm">
+                                <span class="fw-medium">{{ $locales[$current] ?? 'Select Language' }}</span>
+                                <span class="lang-selector-divider">|</span>
+                                <i class="fas fa-caret-down lang-selector-caret"></i>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
+                            style="min-width: 130px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;">
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="en">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'en' ? 'active bg-primary text-white' : '' }}">English</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="hi">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'hi' ? 'active bg-primary text-white' : '' }}">Hindi</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="gu">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'gu' ? 'active bg-primary text-white' : '' }}">Gujarati</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="sa">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'sa' ? 'active bg-primary text-white' : '' }}">Sanskrit</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="bn">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'bn' ? 'active bg-primary text-white' : '' }}">Bengali</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+
                     {{-- Profile Menu --}}
                     @auth('customer')
                         <li class="nav-item dropdown ms-lg-3">
