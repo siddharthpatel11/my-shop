@@ -158,6 +158,10 @@ class OrderController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid size selected'], 422);
             }
 
+            if (!$product->hasStock($request->quantity ?? 1)) {
+                return response()->json(['success' => false, 'message' => 'Product ' . $product->name . ' has insufficient stock.'], 400);
+            }
+
             $itemsToOrder->push((object)[
                 'product_id' => $product->id,
                 'color_id'   => $request->color_id,
@@ -181,6 +185,10 @@ class OrderController extends Controller
             }
 
             foreach ($cartItems as $item) {
+                if (!$item->product->hasStock($item->quantity)) {
+                    return response()->json(['success' => false, 'message' => 'Product ' . $item->product->name . ' has insufficient stock.'], 400);
+                }
+
                 $itemsToOrder->push((object)[
                     'product_id' => $item->product_id,
                     'color_id'   => $item->color_id,
@@ -295,6 +303,12 @@ class OrderController extends Controller
                     'item_status' => 'pending',
                     'status'      => 'active',
                 ]);
+
+                // Decrement stock
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $product->decrementStock($item->quantity);
+                }
             }
 
             if ($request->filled('product_id')) {
@@ -357,7 +371,7 @@ class OrderController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to send WhatsApp notification: ' . $e->getMessage());
             }
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -524,12 +538,30 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $order->update(['order_status' => 'cancelled']);
+        DB::beginTransaction();
+        try {
+            $order->update(['order_status' => 'cancelled']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order cancelled successfully',
-        ]);
+            // Restore Stock
+            foreach ($order->items as $item) {
+                if ($item->product) {
+                    $item->product->incrementStock($item->quantity);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel order: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

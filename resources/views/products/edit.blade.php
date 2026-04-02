@@ -45,13 +45,23 @@
                     @enderror
                 </div>
 
-                <div class="mb-3">
-                    <label for="inputPrice" class="form-label"><strong>Price:</strong></label>
-                    <input type="number" step="0.01" name="price" value="{{ old('price', $product->price) }}"
-                        class="form-control @error('price') is-invalid @enderror" id="inputPrice" placeholder="Price">
-                    @error('price')
-                        <div class="form-text text-danger">{{ $message }}</div>
-                    @enderror
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="inputPrice" class="form-label"><strong>Price:</strong></label>
+                        <input type="number" step="0.01" name="price" value="{{ old('price', $product->price) }}"
+                            class="form-control @error('price') is-invalid @enderror" id="inputPrice" placeholder="Price">
+                        @error('price')
+                            <div class="form-text text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="inputStock" class="form-label"><strong>Stock:</strong></label>
+                        <input type="number" name="stock" value="{{ old('stock', $product->stock) }}"
+                            class="form-control @error('stock') is-invalid @enderror" id="inputStock" placeholder="Stock">
+                        @error('stock')
+                            <div class="form-text text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="row">

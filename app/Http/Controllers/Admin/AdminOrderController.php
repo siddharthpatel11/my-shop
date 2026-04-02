@@ -109,6 +109,26 @@ class AdminOrderController extends Controller
             // Update all items in this order
             OrderItem::where('order_id', $id)->update(['item_status' => $itemStatus]);
 
+            // Handle Stock Restoration if order is cancelled
+            if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
+                foreach ($order->items as $item) {
+                    if ($item->product) {
+                        $item->product->incrementStock($item->quantity);
+                    }
+                }
+            }
+
+            // Handle Stock Re-deduction if moving FROM cancelled to something else
+            if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+                foreach ($order->items as $item) {
+                    if ($item->product) {
+                        // Check if enough stock exists before moving out of cancelled?
+                        // For now, just decrement.
+                        $item->product->decrementStock($item->quantity);
+                    }
+                }
+            }
+
             // Reset partial delivery notified flag since all items are being updated together
             $order->update(['partial_delivery_notified' => false]);
 

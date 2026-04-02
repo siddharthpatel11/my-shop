@@ -3,32 +3,32 @@
 @section('title', $product->seo_meta_title ?? $product->name)
 
 @section('meta')
-    @if($product->seo_meta_title)
+    @if ($product->seo_meta_title)
         <meta name="title" content="{{ $product->seo_meta_title }}">
     @endif
-    @if($product->seo_meta_description)
+    @if ($product->seo_meta_description)
         <meta name="description" content="{{ $product->seo_meta_description }}">
     @endif
-    @if($product->seo_meta_key)
+    @if ($product->seo_meta_key)
         <meta name="keywords" content="{{ $product->seo_meta_key }}">
     @endif
-    @if($product->seo_canonical)
+    @if ($product->seo_canonical)
         <link rel="canonical" href="{{ $product->seo_canonical }}">
     @endif
-    @if($product->seo_meta_image)
+    @if ($product->seo_meta_image)
         <meta name="image" content="{{ asset('images/products/' . $product->seo_meta_image) }}">
     @endif
 
-    @if($product->og_meta_title)
+    @if ($product->og_meta_title)
         <meta property="og:title" content="{{ $product->og_meta_title }}">
     @endif
-    @if($product->og_meta_description)
+    @if ($product->og_meta_description)
         <meta property="og:description" content="{{ $product->og_meta_description }}">
     @endif
-    @if($product->og_meta_image)
+    @if ($product->og_meta_image)
         <meta property="og:image" content="{{ asset('images/products/' . $product->og_meta_image) }}">
     @endif
-    @if($product->og_meta_key)
+    @if ($product->og_meta_key)
         <meta property="og:keywords" content="{{ $product->og_meta_key }}">
     @endif
     <meta property="og:url" content="{{ request()->url() }}">
@@ -41,7 +41,8 @@
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ route('frontend.home') }}">{{ __('products.home') }}</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('frontend.products.index') }}">{{ __('products.products') }}</a></li>
+                <li class="breadcrumb-item"><a
+                        href="{{ route('frontend.products.index') }}">{{ __('products.products') }}</a></li>
                 <li class="breadcrumb-item active">{{ $product->name }}</li>
             </ol>
         </nav>
@@ -63,7 +64,8 @@
                             <img id="mainImage" src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
                                 class="card-img-top main-product-image" alt="{{ $product->name }}">
                             @if ($product->created_at && $product->created_at->diffInDays(now()) < 7)
-                                <span class="badge bg-success position-absolute top-0 start-0 m-3">{{ __('products.new_badge') }}</span>
+                                <span
+                                    class="badge bg-success position-absolute top-0 start-0 m-3">{{ __('products.new_badge') }}</span>
                             @endif
                         </div>
                     </div>
@@ -103,6 +105,12 @@
                     {{-- Price --}}
                     <div class="mb-4">
                         <h2 class="text-primary fw-bold mb-0">₹{{ number_format($product->price, 2) }}</h2>
+                        @if ($product->stock <= 0)
+                            <div class="text-danger fw-bold mt-1" style="color: #d81b60 !important;">Out Of Stock</div>
+                        @elseif($product->stock <= 5)
+                            <div class="text-danger fw-bold mt-1" style="color: #d81b60 !important;">Only
+                                {{ $product->stock }} left</div>
+                        @endif
                         <small class="text-muted">{{ __('products.inclusive_taxes') }}</small>
                     </div>
 
@@ -166,12 +174,16 @@
                             <i class="fas fa-sort-numeric-up me-2"></i> {{ __('products.quantity') }}
                         </label>
                         <div class="input-group" style="width: 150px;">
-                            <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity()"
+                                {{ $product->stock <= 0 ? 'disabled' : '' }}>
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="number" class="form-control text-center" id="quantity" value="1"
-                                min="1" max="10">
-                            <button class="btn btn-outline-secondary" type="button" onclick="incrementQuantity()">
+                            <input type="number" class="form-control text-center" id="quantity"
+                                value="{{ $product->stock <= 0 ? '0' : '1' }}"
+                                min="{{ $product->stock <= 0 ? '0' : '1' }}" max="10"
+                                {{ $product->stock <= 0 ? 'disabled' : '' }}>
+                            <button class="btn btn-outline-secondary" type="button" onclick="incrementQuantity()"
+                                {{ $product->stock <= 0 ? 'disabled' : '' }}>
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
@@ -180,18 +192,25 @@
                     {{-- Action Buttons --}}
                     <div class="d-flex gap-3 mb-4" id="main-product-actions">
                         @auth('customer')
-                            @if (in_array($product->id, $cartProductIds ?? []))
-                                <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
-                                    <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
-                                </a>
+                            @if ($product->stock > 0)
+                                @if (in_array($product->id, $cartProductIds ?? []))
+                                    <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
+                                        <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
+                                    </a>
+                                @else
+                                    <button class="btn btn-primary btn-lg flex-fill" id="addToCartBtn" onclick="addToCart()">
+                                        <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
+                                    </button>
+                                @endif
+                                <button class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
+                                    <i class="fas fa-bolt me-2"></i>
+                                    {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
+                                </button>
                             @else
-                                <button class="btn btn-primary btn-lg flex-fill" id="addToCartBtn" onclick="addToCart()">
-                                    <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
+                                <button class="btn btn-secondary btn-lg flex-fill disabled">
+                                    <i class="fas fa-ban me-2"></i> Currently Unavailable
                                 </button>
                             @endif
-                            <button class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
-                                <i class="fas fa-bolt me-2"></i> {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
-                            </button>
                             <button class="btn {{ $inWishlist ? 'btn-danger' : 'btn-outline-danger' }} btn-lg"
                                 onclick="toggleWishlist()">
                                 <i class="{{ $inWishlist ? 'fas' : 'far' }} fa-heart"></i>

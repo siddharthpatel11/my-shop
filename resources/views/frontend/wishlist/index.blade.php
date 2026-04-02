@@ -48,8 +48,14 @@
                             </div>
                             <div class="product-image-wrapper position-relative" style="height: 200px;">
                                 <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
-                                    class="card-img-top" alt="{{ $product->name }}"
+                                    class="card-img-top {{ $product->stock <= 0 ? 'opacity-50' : '' }}" alt="{{ $product->name }}"
                                     style="height: 100%; object-fit: contain; padding: 10px;">
+
+                                @if($product->stock <= 0)
+                                    <div class="position-absolute top-50 start-50 translate-middle w-100 text-center">
+                                        <span class="badge bg-danger px-3 py-2 shadow-sm">Out of Stock</span>
+                                    </div>
+                                @endif
 
                                 <form action="{{ route('wishlist.remove', $item->id) }}" method="POST"
                                     class="position-absolute top-0 end-0 p-2">
@@ -62,14 +68,32 @@
                                 </form>
                             </div>
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title fw-bold text-truncate mb-2" title="{{ $product->name }}">
+                                <h5 class="card-title fw-bold text-truncate mb-1" title="{{ $product->name }}">
                                     {{ $product->name }}
                                 </h5>
-                                <p class="text-primary fw-bold mb-3">₹{{ number_format($product->price, 2) }}</p>
+                                
+                                <div class="mb-2">
+                                    <p class="text-primary fw-bold d-inline-block mb-0">₹{{ number_format($product->price, 2) }}</p>
+                                    @if($product->stock > 0 && $product->stock <= 5)
+                                        <span class="badge bg-warning text-dark ms-2 small animate__animated animate__pulse animate__infinite">
+                                            Only {{ $product->stock }} left
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if($product->stock <= 0)
+                                    <div class="alert alert-danger py-1 px-2 mb-3 small d-flex align-items-center">
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                        Currently Unavailable
+                                    </div>
+                                @endif
 
                                 <div class="mt-auto">
-                                    <button class="btn btn-primary btn-sm w-100 mb-2" data-product-id="{{ $product->id }}"
-                                        data-product-price="{{ $product->price }}" onclick="addToCart(this)">
+                                    <button class="btn btn-primary btn-sm w-100 mb-2 {{ $product->stock <= 0 ? 'disabled' : '' }}" 
+                                        data-product-id="{{ $product->id }}"
+                                        data-product-price="{{ $product->price }}" 
+                                        onclick="addToCart(this)"
+                                        {{ $product->stock <= 0 ? 'disabled' : '' }}>
                                         <i class="fas fa-shopping-cart me-1"></i> Add to Cart
                                     </button>
                                     <a href="{{ route('frontend.products.show', $product->id) }}"

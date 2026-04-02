@@ -85,17 +85,31 @@
                                     <div class="col-md-2 col-6 mb-3 mb-md-0">
                                         <div class="text-md-center">
                                             <small class="text-muted d-block mb-2">Quantity</small>
-                                            <div class="quantity-control">
+                                            <div
+                                                class="quantity-control {{ $item->product->stock <= 0 ? 'opacity-50' : '' }}">
                                                 <button
-                                                    onclick="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">
+                                                    onclick="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})"
+                                                    {{ $item->quantity <= 1 || $item->product->stock <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-minus"></i>
                                                 </button>
-                                                <input type="number" value="{{ $item->quantity }}" readonly>
+                                                <input type="number"
+                                                    value="{{ $item->product->stock <= 0 ? 0 : $item->quantity }}"
+                                                    readonly>
                                                 <button
-                                                    onclick="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">
+                                                    onclick="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})"
+                                                    {{ $item->quantity >= $item->product->stock || $item->product->stock <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-plus"></i>
                                                 </button>
                                             </div>
+                                            @if ($item->product->stock > 0 && $item->product->stock <= 5)
+                                                <div class="text-danger small mt-1 fw-bold">
+                                                    Only {{ $item->product->stock }} left
+                                                </div>
+                                            @elseif($item->product->stock <= 0)
+                                                <div class="text-danger small mt-1 fw-bold">
+                                                    Out of Stock
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
 
@@ -106,12 +120,13 @@
                                                 ₹{{ number_format($item->price * $item->quantity, 2) }}
                                             </div>
                                             <div class="d-grid gap-2">
-                                                <button class="btn btn-sm btn-outline-danger"
+                                                <button class="btn btn-sm btn-outline-danger text-nowrap"
                                                     onclick="removeItem({{ $item->id }})">
                                                     <i class="fas fa-trash-alt me-1"></i> Remove
                                                 </button>
-                                                <button class="btn btn-sm btn-primary"
-                                                    onclick="checkoutSingleItem({{ $item->id }})">
+                                                <button class="btn btn-sm btn-primary text-nowrap"
+                                                    onclick="checkoutSingleItem({{ $item->id }})"
+                                                    {{ $item->product->stock <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-bolt me-1"></i> Buy This
                                                 </button>
                                             </div>
@@ -856,11 +871,6 @@
                 return;
             }
 
-            if (newQuantity > 10) {
-                showNotification('Maximum quantity is 10', 'warning');
-                return;
-            }
-
             fetch("{{ route('cart.update') }}", {
                     method: "POST",
                     headers: {
@@ -873,17 +883,19 @@
                         quantity: newQuantity
                     })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                .then(async response => {
+                    const data = await response.json();
+                    if (response.ok && data.success) {
                         location.reload();
+                    } else {
+                        throw new Error(data.message || 'Error updating quantity');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     Swal.fire({
                         icon: 'error',
-                        text: 'Error updating quantity',
+                        text: error.message || 'Error updating quantity',
                         timer: 3000,
                         showConfirmButton: false,
                         toast: true,
@@ -945,34 +957,15 @@
 
         // Show notification
         function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            Swal.fire({
+                icon: type === 'danger' ? 'error' : (type === 'info' ? 'info' : (type === 'success' ? 'success' :
+                    (type === 'warning' ? 'warning' : 'info'))),
+                text: message,
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
         }
     </script>
-
-    {{--  Font Awesome for icons
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    function showNotification(message, type = 'info') {
-    Swal.fire({
-    icon: type === 'danger' ? 'error' : (type === 'info' ? 'info' : (type === 'success' ? 'success' : (type
-    === 'warning' ? 'warning' : 'info'))),
-    text: message,
-    timer: 3000,
-    showConfirmButton: false,
-    toast: true,
-    position: 'top-end'
-    });
-    }
-    </script>  --}}
 @endsection

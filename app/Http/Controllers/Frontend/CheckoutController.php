@@ -204,6 +204,16 @@ class CheckoutController extends Controller
             ], 400);
         }
 
+        // Validate stock availability
+        foreach ($cartItems as $item) {
+            if (!$item->product->hasStock($item->quantity)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product ' . $item->product->name . ' is out of stock or has insufficient quantity.'
+                ], 400);
+            }
+        }
+
         // Calculate totals
         $subtotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
 
@@ -282,7 +292,7 @@ class CheckoutController extends Controller
                 'status' => 'active',
             ]);
 
-            // Create order items from cart
+            // Create order items from cart and decrement stock
             foreach ($cartItems as $cartItem) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -295,6 +305,9 @@ class CheckoutController extends Controller
                     'item_status' => 'pending',
                     'status' => 'active',
                 ]);
+
+                // Decrement product stock
+                $cartItem->product->decrementStock($cartItem->quantity);
             }
 
             // Clear cart and discount session

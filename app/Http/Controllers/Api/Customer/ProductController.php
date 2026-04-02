@@ -71,6 +71,9 @@ class ProductController extends Controller
                 $size->makeHidden($this->hiddenLocalizationFields);
             });
             $product->setAttribute('available_sizes', $sizes);
+            
+            // Stock logic
+            $product->setAttribute('stock_status', $this->getStockStatus($product->stock));
 
             return $product;
         });
@@ -124,10 +127,27 @@ class ProductController extends Controller
         });
         $product->setAttribute('available_sizes', $sizes);
 
+        // Stock logic
+        $product->setAttribute('stock_status', $this->getStockStatus($product->stock));
+
         return response()->json([
             'status' => 'success',
             'locale_applied' => app()->getLocale(),
             'data' => $product
         ]);
+    }
+
+    /**
+     * Determine the stock status message.
+     */
+    private function getStockStatus($stock): string
+    {
+        $stock = (int)$stock;
+        if ($stock <= 0) {
+            return 'Out of Stock';
+        } elseif ($stock <= 5) {
+            return "Only {$stock} left";
+        }
+        return '';
     }
 }

@@ -84,6 +84,10 @@
                     <strong>Price:</strong>
                     <p class="text-muted">{{ number_format($product->price, 2) }}</p>
                 </div>
+                <div class="col-md-4 mb-2">
+                    <strong>Stock:</strong>
+                    <p class="text-muted">{{ $product->stock ?? 0 }}</p>
+                </div>
 
                 {{-- SIZE --}}
                 <div class="col-md-4 mb-2">

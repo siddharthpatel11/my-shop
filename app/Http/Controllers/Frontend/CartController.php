@@ -196,30 +196,52 @@ class CartController extends Controller
             'mode'       => 'nullable|string|in:increment,replace',
         ]);
 
+        $productId = $request->product_id;
+        $quantity = $request->quantity;
         $customerId = auth('customer')->id();
         $mode = $request->input('mode', 'increment');
 
+        $product = \App\Models\Product::find($productId);
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
         $item = CartItem::where([
             'customer_id' => $customerId,
-            'product_id'  => $request->product_id,
+            'product_id'  => $productId,
             'color_id'    => $request->color_id,
             'size_id'     => $request->size_id,
         ])->first();
 
+        // Calculate total requested quantity
+        $newQuantity = $quantity;
+        if ($item && $mode === 'increment') {
+            $newQuantity += $item->quantity;
+        }
+
+        // Validate stock
+        if (!$product->hasStock($newQuantity)) {
+            $available = $product->stock;
+            return response()->json([
+                'success' => false,
+                'message' => "Only {$available} items available in stock. You already have " . ($item ? $item->quantity : 0) . " in your cart."
+            ], 422);
+        }
+
         if ($item) {
             if ($mode === 'replace') {
-                $item->quantity = $request->quantity;
+                $item->quantity = $quantity;
             } else {
-                $item->quantity = min(10, $item->quantity + $request->quantity);
+                $item->quantity = $newQuantity;
             }
             $item->save();
         } else {
             $item = CartItem::create([
                 'customer_id' => $customerId,
-                'product_id'  => $request->product_id,
+                'product_id'  => $productId,
                 'color_id'    => $request->color_id,
                 'size_id'     => $request->size_id,
-                'quantity'    => $request->quantity,
+                'quantity'    => $quantity,
                 'price'       => $request->price,
             ]);
         }
@@ -240,14 +262,26 @@ class CartController extends Controller
             ], 401);
         }
 
-        $request->validate([
-            'id' => 'required|integer',
-            'quantity' => 'required|min:1|max:10'
-        ]);
+        $cartId = $request->id;
+        $quantity = $request->quantity;
 
-        CartItem::where('id', $request->id)
+        $cartItem = CartItem::with('product')->where('id', $cartId)
             ->where('customer_id', auth('customer')->id())
-            ->update(['quantity' => $request->quantity]);
+            ->first();
+
+        if (!$cartItem) {
+            return response()->json(['success' => false, 'message' => 'Cart item not found'], 404);
+        }
+
+        // Validate stock
+        if (!$cartItem->product->hasStock($quantity)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Only {$cartItem->product->stock} items available in stock."
+            ], 422);
+        }
+
+        $cartItem->update(['quantity' => $quantity]);
 
         return response()->json(['success' => true]);
     }

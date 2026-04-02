@@ -84,104 +84,131 @@
                         </div>
 
                         <div class="card-body d-flex flex-column">
-                            {{-- Product Name --}}
-                            <h5 class="card-title fw-bold mb-2 text-truncate" title="{{ $product->name }}">
-                                {{ $product->name }}
-                            </h5>
+                            {{-- Wrap top content to push buttons to bottom --}}
+                            <div class="flex-grow-1">
+                                {{-- Product Name --}}
+                                <h5 class="card-title fw-bold mb-2 text-truncate" title="{{ $product->name }}">
+                                    {{ $product->name }}
+                                </h5>
 
-                            {{-- Category --}}
-                            @if ($product->category)
-                                <p class="text-muted small mb-2">
-                                    <i class="fas fa-tag"></i> {{ $product->category->name }}
+                                {{-- Category --}}
+                                @if ($product->category)
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-tag"></i> {{ $product->category->name }}
+                                    </p>
+                                @endif
+
+                                {{-- Description --}}
+                                <p class="card-text text-muted small mb-3" style="min-height: 40px;">
+                                    {{ \Illuminate\Support\Str::limit($product->detail, 60) }}
                                 </p>
-                            @endif
 
-                            {{-- Description --}}
-                            <p class="card-text text-muted small mb-3" style="min-height: 40px;">
-                                {{ \Illuminate\Support\Str::limit($product->detail, 60) }}
-                            </p>
-
-                            {{-- Price --}}
-                            <div class="mb-3">
-                                <h4 class="text-primary fw-bold mb-0">
-                                    ₹{{ number_format($product->price, 2) }}
-                                </h4>
-                            </div>
-
-                            {{-- Color Selection Dropdown --}}
-                            @if (!empty($colorIds))
+                                {{-- Price & Stock --}}
                                 <div class="mb-3">
-                                    <label class="form-label small text-muted mb-1">
-                                        <i class="fas fa-palette"></i> {{ __('products.select_color') }}:
-                                    </label>
-                                    <select class="form-select form-select-sm color-select"
-                                        data-product-id="{{ $product->id }}">
-                                        <option value="">{{ __('products.choose_color') }}</option>
-                                        @foreach ($colorIds as $cid)
-                                            @php $color = $colors->firstWhere('id', (int) $cid); @endphp
-                                            @if ($color)
-                                                <option value="{{ $color->id }}" data-hex="{{ $color->hex_code }}">
-                                                    {{ $color->name }}
-                                                </option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                    {{-- Color Preview --}}
-                                    <div class="color-preview mt-2" id="colorPreview{{ $product->id }}"
-                                        style="display: none;">
-                                        <small class="text-muted">Selected: </small>
-                                        <span class="color-indicator" id="colorIndicator{{ $product->id }}"></span>
-                                        <small id="colorName{{ $product->id }}"></small>
+                                    <h4 class="text-primary fw-bold mb-0">
+                                        ₹{{ number_format($product->price, 2) }}
+                                    </h4>
+                                    {{-- Stock Status with fixed height to prevent vertical shifting --}}
+                                    <div style="min-height: 24px;">
+                                        @if ($product->stock <= 0)
+                                            <div class="text-danger fw-bold mt-1"
+                                                style="color: #d81b60 !important; font-size: 0.85rem;">Out Of Stock
+                                            </div>
+                                        @elseif($product->stock <= 5)
+                                            <div class="text-danger fw-bold mt-1"
+                                                style="color: #d81b60 !important; font-size: 0.85rem;">Only
+                                                {{ $product->stock }} left</div>
+                                        @endif
                                     </div>
                                 </div>
-                            @endif
 
-                            {{-- Size Selection Dropdown --}}
-                            @if (!empty($sizeIds))
-                                <div class="mb-3">
-                                    <label class="form-label small text-muted mb-1">
-                                        <i class="fas fa-ruler"></i> {{ __('products.select_size') }}:
-                                    </label>
-                                    <select class="form-select form-select-sm size-select"
-                                        data-product-id="{{ $product->id }}">
-                                        <option value="">{{ __('products.choose_size') }}</option>
-                                        @foreach ($sizeIds as $sid)
-                                            @php $size = $sizes->firstWhere('id', (int) $sid); @endphp
-                                            @if ($size)
-                                                <option value="{{ $size->id }}">
-                                                    {{ $size->code ?? $size->name }}
-                                                </option>
+                                {{-- Color Selection Dropdown --}}
+                                @if (!empty($colorIds))
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">
+                                            <i class="fas fa-palette"></i> {{ __('products.select_color') }}:
+                                        </label>
+                                        <select class="form-select form-select-sm color-select"
+                                            data-product-id="{{ $product->id }}">
+                                            <option value="">{{ __('products.choose_color') }}</option>
+                                            @foreach ($colorIds as $cid)
+                                                @php $color = $colors->firstWhere('id', (int) $cid); @endphp
+                                                @if ($color)
+                                                    <option value="{{ $color->id }}" data-hex="{{ $color->hex_code }}">
+                                                        {{ $color->name }}
+                                                    </option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        {{-- Color Preview --}}
+                                        <div class="color-preview mt-2" id="colorPreview{{ $product->id }}"
+                                            style="display: none;">
+                                            <small class="text-muted">Selected: </small>
+                                            <span class="color-indicator" id="colorIndicator{{ $product->id }}"></span>
+                                            <small id="colorName{{ $product->id }}"></small>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Size Selection Dropdown --}}
+                                @if (!empty($sizeIds))
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">
+                                            <i class="fas fa-ruler"></i> {{ __('products.select_size') }}:
+                                        </label>
+                                        <select class="form-select form-select-sm size-select"
+                                            data-product-id="{{ $product->id }}">
+                                            <option value="">{{ __('products.choose_size') }}</option>
+                                            @foreach ($sizeIds as $sid)
+                                                @php $size = $sizes->firstWhere('id', (int) $sid); @endphp
+                                                @if ($size)
+                                                    <option value="{{ $size->id }}">
+                                                        {{ $size->code ?? $size->name }}
+                                                    </option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Action Buttons - pinned to bottom --}}
+                            <div class="mt-auto">
+
+                                @if (session()->has('customer_id'))
+                                    <div class="d-flex gap-2" id="product-actions-{{ $product->id }}">
+                                        @if ($product->stock > 0)
+                                            @if (in_array($product->id, $cartProductIds ?? []))
+                                                <a href="{{ route('frontend.cart') }}"
+                                                    class="btn btn-outline-warning btn-sm flex-fill text-nowrap">
+                                                    <i class="fas fa-arrow-right"></i> {{ __('products.go_to_cart') }}
+                                                </a>
+                                            @else
+                                                <button
+                                                    class="btn btn-outline-primary btn-sm flex-fill add-to-cart-btn text-nowrap"
+                                                    data-product-id="{{ $product->id }}"
+                                                    data-product-price="{{ $product->price }}" onclick="addToCart(this)">
+                                                    <i class="fas fa-shopping-cart"></i> {{ __('products.add_to_cart') }}
+                                                </button>
                                             @endif
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
-
-                            @if (session()->has('customer_id'))
-                                <div class="d-flex gap-2" id="product-actions-{{ $product->id }}">
-                                    @if (in_array($product->id, $cartProductIds ?? []))
-                                        <a href="{{ route('frontend.cart') }}"
-                                            class="btn btn-outline-warning btn-sm flex-fill">
-                                            <i class="fas fa-arrow-right"></i> {{ __('products.go_to_cart') }}
-                                        </a>
-                                    @else
-                                        <button class="btn btn-outline-primary btn-sm flex-fill add-to-cart-btn"
-                                            data-product-id="{{ $product->id }}"
-                                            data-product-price="{{ $product->price }}" onclick="addToCart(this)">
-                                            <i class="fas fa-shopping-cart"></i> {{ __('products.add_to_cart') }}
-                                        </button>
-                                    @endif
-                                    <button class="btn btn-outline-success btn-sm flex-fill"
-                                        data-product-id="{{ $product->id }}" data-product-price="{{ $product->price }}"
-                                        onclick="buyNow(this)">
-                                        <i class="fas fa-bolt"></i> {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
-                                    </button>
-                                </div>
-                            @else
-                                <a href="{{ route('customer.login') }}" class="btn btn-primary w-100">
-                                    {{ __('products.login_to_buy') }}
-                                </a>
-                            @endif
+                                            <button class="btn btn-outline-success btn-sm flex-fill text-nowrap"
+                                                data-product-id="{{ $product->id }}"
+                                                data-product-price="{{ $product->price }}" onclick="buyNow(this)">
+                                                <i class="fas fa-bolt"></i>
+                                                {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
+                                            </button>
+                                        @else
+                                            <button class="btn btn-outline-secondary btn-sm w-100 disabled text-nowrap">
+                                                <i class="fas fa-ban"></i> Currently Unavailable
+                                            </button>
+                                        @endif
+                                    </div>
+                                @else
+                                    <a href="{{ route('customer.login') }}" class="btn btn-primary w-100">
+                                        {{ __('products.login_to_buy') }}
+                                    </a>
+                                @endif
+                            </div> {{-- End mt-auto --}}
                         </div>
                     </div>
                 </div>
@@ -363,13 +390,13 @@
     <script>
         @php
             $appLang = [
-                'please_select_color'  => __('products.please_select_color'),
-                'please_select_size'   => __('products.please_select_size'),
-                'added_to_cart'        => __('products.added_to_cart'),
+                'please_select_color' => __('products.please_select_color'),
+                'please_select_size' => __('products.please_select_size'),
+                'added_to_cart' => __('products.added_to_cart'),
                 'something_went_wrong' => __('products.something_went_wrong'),
-                'go_to_cart'           => __('products.go_to_cart'),
-                'in_wishlist'          => __('products.in_wishlist'),
-                'wishlist'             => __('products.wishlist'),
+                'go_to_cart' => __('products.go_to_cart'),
+                'in_wishlist' => __('products.in_wishlist'),
+                'wishlist' => __('products.wishlist'),
             ];
         @endphp
         window.AppLang = @json($appLang);

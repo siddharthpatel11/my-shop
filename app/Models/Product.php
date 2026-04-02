@@ -30,6 +30,7 @@ class Product extends Model
         'size_id',
         'color_id',
         'price',
+        'stock',
         'status',
         'seo_meta_title',
         'seo_meta_description',
@@ -44,7 +45,32 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'stock' => 'integer',
     ];
+
+    /**
+     * Check if product has enough stock
+     */
+    public function hasStock(int $quantity): bool
+    {
+        return $this->stock >= $quantity;
+    }
+
+    /**
+     * Decrement stock
+     */
+    public function decrementStock(int $quantity)
+    {
+        $this->decrement('stock', $quantity);
+    }
+
+    /**
+     * Increment stock
+     */
+    public function incrementStock(int $quantity)
+    {
+        $this->increment('stock', $quantity);
+    }
     public function category()
     {
         return $this->belongsTo(Category::class);

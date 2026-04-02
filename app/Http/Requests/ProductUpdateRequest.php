@@ -34,6 +34,7 @@ class ProductUpdateRequest extends FormRequest
             'color_id'    => 'nullable|array',
             'color_id.*'  => 'exists:colors,id',
             'price' => 'required|numeric|min:0',
+            'stock'                => 'nullable|integer|min:0',
             'seo_meta_title'       => 'nullable|string|max:255',
             'seo_meta_description' => 'nullable|string',
             'seo_meta_key'         => 'nullable|string|max:255',

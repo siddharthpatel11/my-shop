@@ -77,6 +77,7 @@
                         <th>Name</th>
                         <th>Category</th>
                         <th>Price</th>
+                        <th>Stock</th>
                         <th>Size</th>
                         <th>Color</th>
                         <th>Status</th>
@@ -112,6 +113,7 @@
                             <td>{{ $product->name }}</td>
                             <td>{{ $product->category->name ?? '-' }}</td>
                             <td>{{ number_format($product->price, 2) }}</td>
+                            <td>{{ $product->stock ?? 0 }}</td>
 
                             {{-- SIZE --}}
                             <td>
