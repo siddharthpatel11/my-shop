@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Customer\AddressController;
 use App\Http\Controllers\Api\Customer\ClearOldCartItemsController;
 use App\Http\Controllers\Api\Customer\OrderController;
 use App\Http\Controllers\Api\TranslationController;
+use App\Http\Controllers\Api\DatabaseBackupApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +60,12 @@ Route::prefix('v1')->group(function () {
     Route::put('products/{product}', [ProductApiController::class, 'update']);
     Route::delete('products', [ProductApiController::class, 'destroy']);
 
+    // ── Database Backup ───────────────────────────────────────
+    // Route::get('database/backup', [DatabaseBackupApiController::class, 'backup'])->name('api.database.backup');
+    // Route::get('database/backups', [DatabaseBackupApiController::class, 'list'])->name('api.database.list');
+    // Route::get('database/download/{filename}', [DatabaseBackupApiController::class, 'download'])->name('api.database.download');
+    // Route::delete('database/backup/{filename}', [DatabaseBackupApiController::class, 'destroy'])->name('api.database.destroy');
+
     // ============================================================
     // Customer API Group
     // ============================================================
@@ -71,7 +78,7 @@ Route::prefix('v1')->group(function () {
         // Forgot Password API
         Route::post('forgot-password', [CustomerAuthController::class, 'forgotPassword']);
         Route::post('reset-password', [CustomerAuthController::class, 'resetPassword']);
-        
+
         // ── Products (Public Customer Facing) ─────────────────
         Route::get('products', [\App\Http\Controllers\Api\Customer\ProductController::class, 'index'])->name('products.index');
         Route::get('products/{id}', [\App\Http\Controllers\Api\Customer\ProductController::class, 'show'])->name('products.show');

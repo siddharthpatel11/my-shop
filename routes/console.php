@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Schedule;
 // Schedule::command('cart:clear-old')->hourly();
 Schedule::command('cart:clear-old')->everyMinute();
 
+Schedule::command('database:backup')->daily();
+// Schedule::command('database:backup')->everyMinute();
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
