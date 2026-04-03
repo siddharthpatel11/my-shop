@@ -24,7 +24,7 @@
 
                     {{-- Profile Card --}}
                     <div class="col-md-4">
-                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card border-0 shadow-sm rounded-4">
                             <div class="card-body text-center p-4">
                                 <div class="position-relative d-inline-block mb-3">
                                     <div class="bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center"
@@ -70,11 +70,44 @@
                                 </span>
                             </div>
                         </div>
+
+                        {{-- Theme Settings Card --}}
+                        <div class="card border-0 shadow-sm rounded-4 mt-4">
+                            <div class="card-body p-4">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-palette text-primary me-2"></i>Theme Mode
+                                </h6>
+                                <div class="theme-switcher-group mt-1">
+                                    <input type="radio" class="d-none" name="theme_mode" id="theme-light"
+                                        value="light" {{ $customer->theme_mode == 'light' ? 'checked' : '' }}>
+                                    <label for="theme-light" title="Light Mode">
+                                        <i class="fas fa-sun"></i>
+                                        <span>Light</span>
+                                    </label>
+
+                                    <input type="radio" class="d-none" name="theme_mode" id="theme-dark"
+                                        value="dark" {{ $customer->theme_mode == 'dark' ? 'checked' : '' }}>
+                                    <label for="theme-dark" title="Dark Mode">
+                                        <i class="fas fa-moon"></i>
+                                        <span>Dark</span>
+                                    </label>
+
+                                    <input type="radio" class="d-none" name="theme_mode" id="theme-system"
+                                        value="system" {{ $customer->theme_mode == 'system' ? 'checked' : '' }}>
+                                    <label for="theme-system" title="System Default">
+                                        <i class="fas fa-desktop"></i>
+                                        <span>Auto</span>
+                                    </label>
+
+                                    <div class="theme-bubble"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Details Card --}}
                     <div class="col-md-8">
-                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card border-0 shadow-sm rounded-4">
                             <div class="card-header bg-white border-0 p-4">
                                 <h5 class="fw-bold mb-0">
                                     <i class="fas fa-id-card text-primary me-2"></i>Account Information
@@ -748,6 +781,44 @@
                     });
                 });
             }
+
+            // Theme Mode Update Logic
+            document.querySelectorAll('input[name="theme_mode"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const mode = this.value;
+
+                    // Instantly apply visually
+                    if (window.ThemeManager) {
+                        window.ThemeManager.setTheme(mode);
+                    }
+
+                    fetch('{{ route('customer.profile.update') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({
+                                theme_mode: mode,
+                                name: document.getElementById('display-name').textContent
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.success) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Theme switch error:', err);
+                        });
+                });
+            });
 
             // Name Update Logic
             const editNameForm = document.getElementById('edit-name-form');

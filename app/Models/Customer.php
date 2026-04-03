@@ -34,6 +34,7 @@ class Customer extends Authenticatable
         'phone_otp_expires_at',
         'google2fa_secret',
         'google2fa_enabled',
+        'theme_mode',
     ];
 
     protected $hidden = [

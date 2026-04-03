@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,21 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- Universal Theme Detection (Prevent Flicker) --}}
+    <script>
+        (function() {
+            const themeMode = @json(auth('customer')->check() ? auth('customer')->user()->theme_mode : 'system');
+            const htmlElement = document.documentElement;
+
+            if (themeMode === 'dark' || (themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)')
+                    .matches)) {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+            } else {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+            }
+        })();
+    </script>
 
     @if (isset($globalMetaTag) && $globalMetaTag)
         {{-- Display Global SEO/OG Tags --}}
@@ -207,6 +222,128 @@
 
         .dropdown-menu {
             z-index: 1060 !important;
+        }
+
+        /* Dark Mode Aesthetic Adjustments */
+        [data-bs-theme="dark"] .bg-white {
+            background-color: var(--bs-body-bg) !important;
+        }
+
+        [data-bs-theme="dark"] .card {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .bg-light {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        [data-bs-theme="dark"] .text-muted {
+            color: #adb5bd !important;
+        }
+
+        [data-bs-theme="dark"] .navbar {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Fix for gradient text in dark mode */
+        [data-bs-theme="dark"] .navbar-brand-text {
+            background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        [data-bs-theme="dark"] .navbar .nav-link,
+        [data-bs-theme="dark"] .navbar .navbar-toggler-icon,
+        [data-bs-theme="dark"] .navbar .cart-icon-wrapper i,
+        [data-bs-theme="dark"] .navbar .lang-selector-box,
+        [data-bs-theme="dark"] .navbar .lang-selector-caret {
+            color: #f8f9fa !important;
+        }
+
+        [data-bs-theme="dark"] .navbar .lang-selector-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        [data-bs-theme="dark"] .navbar .nav-link:hover {
+            color: #667eea !important;
+        }
+
+        [data-bs-theme="dark"] .navbar .nav-link.active {
+            color: #a5b4fc !important;
+            border-bottom-color: #a5b4fc;
+        }
+
+        /* High-Fidelity Theme Switcher */
+        .theme-switcher-group {
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 80px;
+            position: relative;
+            display: flex;
+            width: 100%;
+            height: 48px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        [data-bs-theme="dark"] .theme-switcher-group {
+            background: #1e293b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .theme-switcher-group label {
+            flex: 1;
+            z-index: 2;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin: 0;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+            user-select: none;
+        }
+
+        .theme-switcher-group input:checked + label {
+            color: #fff;
+        }
+
+        [data-bs-theme="dark"] .theme-switcher-group label {
+            color: #94a3b8;
+        }
+
+        [data-bs-theme="dark"] .theme-switcher-group input:checked + label {
+            color: #fff;
+        }
+
+        .theme-switcher-group .theme-bubble {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(33.333% - 4px);
+            height: calc(100% - 8px);
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border-radius: 80px;
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Bubble Positioning */
+        #theme-light:checked ~ .theme-bubble { transform: translateX(0); }
+        #theme-dark:checked ~ .theme-bubble { transform: translateX(100%); }
+        #theme-system:checked ~ .theme-bubble { transform: translateX(200%); }
+
+        /* Icon Animation */
+        .theme-switcher-group label i {
+            transition: transform 0.3s ease;
+        }
+        .theme-switcher-group input:checked + label i {
+            transform: scale(1.15);
         }
     </style>
 
@@ -795,6 +932,50 @@
 
         // Update on page load
         document.addEventListener('DOMContentLoaded', updateCartCount);
+
+        // Update when storage changes (for multi-tab support)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'shoppingCart') {
+                updateCartCount();
+            }
+        });
+
+        // Global Theme Manager
+        window.ThemeManager = {
+            currentMode: @json(auth('customer')->check() ? auth('customer')->user()->theme_mode : 'system'),
+
+            init() {
+                this.applyTheme(this.currentMode);
+
+                // Listen for system theme changes if in system mode
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    if (this.currentMode === 'system') {
+                        this.applyTheme('system');
+                    }
+                });
+            },
+
+            applyTheme(mode) {
+                const html = document.documentElement;
+                this.currentMode = mode;
+
+                if (mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)')
+                    .matches)) {
+                    html.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    html.setAttribute('data-bs-theme', 'light');
+                }
+            },
+
+            setTheme(mode) {
+                this.applyTheme(mode);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCount();
+            window.ThemeManager.init();
+        });
 
         // Update when storage changes (for multi-tab support)
         window.addEventListener('storage', function(e) {

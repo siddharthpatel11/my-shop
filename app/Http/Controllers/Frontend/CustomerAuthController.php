@@ -126,12 +126,17 @@ class CustomerAuthController extends Controller
         $customer = Auth::guard('customer')->user();
 
         $request->validate([
-            'name'   => 'required|string|max:255',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'name'       => 'required|string|max:255',
+            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'theme_mode' => 'nullable|in:light,dark,system',
         ]);
 
         try {
             $customer->name = $request->name;
+
+            if ($request->has('theme_mode')) {
+                $customer->theme_mode = $request->theme_mode;
+            }
 
             if ($request->hasFile('avatar')) {
                 // Delete old avatar if exists

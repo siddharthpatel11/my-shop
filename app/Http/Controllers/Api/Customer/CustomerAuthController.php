@@ -242,14 +242,19 @@ class CustomerAuthController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'name'   => 'required|string|max:255',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'name'       => 'required|string|max:255',
+            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'theme_mode' => 'nullable|in:light,dark,system',
         ]);
 
         $customer = $request->user();
 
         try {
             $customer->name = $request->name;
+
+            if ($request->has('theme_mode')) {
+                $customer->theme_mode = $request->theme_mode;
+            }
 
             if ($request->hasFile('avatar')) {
                 // Delete old avatar if exists
