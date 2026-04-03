@@ -136,16 +136,41 @@
                 @endif  --}}
 
 
-                @if ($existingImages)
-                    <div class="row mb-3">
-                        @foreach ($existingImages as $img)
-                            <div class="col-md-3 text-center mb-2">
-                                <img src="{{ asset('images/products/' . $img) }}"
-                                    style="width:100px;height:100px;object-fit:cover;border:1px solid #ddd">
-                                <div class="form-check mt-1">
-                                    <input type="checkbox" name="remove_images[]" value="{{ $img }}"
-                                        class="form-check-input">
-                                    <label class="form-check-label">Remove</label>
+                @if ($product->images->count() > 0)
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label"><strong>Existing Product Images:</strong></label>
+                        </div>
+                        @foreach ($product->images as $img)
+                            <div class="col-md-4 col-lg-3 mb-3">
+                                <div class="card shadow-sm border-0 h-100">
+                                    <div class="card-img-wrapper text-center p-2" style="background:#f8f9fa;">
+                                        <img src="{{ asset('images/products/' . $img->image) }}"
+                                            style="width:120px;height:120px;object-fit:contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="mb-2">
+                                            <label class="small fw-bold">Image Color:</label>
+                                            <select name="existing_image_colors[{{ $img->image }}]"
+                                                class="form-select form-select-sm color-selector">
+                                                <option value="">No Color (General)</option>
+                                                @foreach ($colors as $color)
+                                                    @if (in_array($color->id, $selectedColors))
+                                                        <option value="{{ $color->id }}"
+                                                            {{ $img->color_id == $color->id ? 'selected' : '' }}>
+                                                            {{ $color->name }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" name="remove_images[]" value="{{ $img->image }}"
+                                                class="form-check-input" id="remove_idx_{{ $img->id }}">
+                                            <label class="form-check-label text-danger small"
+                                                for="remove_idx_{{ $img->id }}">Remove Image</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         @endforeach
@@ -157,14 +182,31 @@
                     <label class="form-label"><strong>Add New Images:</strong></label>
 
                     <div id="imageRepeater">
-                        <div class="row mb-2 image-row">
-                            <div class="col-md-5">
+                        <div class="row mb-2 image-row align-items-end">
+                            <div class="col-md-4">
+                                <label class="small fw-bold">Image:</label>
                                 <input type="file" name="images[]" class="form-control image-input" accept="image/*">
                             </div>
-                            <div class="col-md-5">
-                                <img class="img-preview d-none"
-                                    style="width:80px;height:80px;object-fit:cover;border:1px solid #ddd">
+
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Color:</label>
+                                <select name="image_colors[]" class="form-select color-selector">
+                                    <option value="">No Color (General)</option>
+                                    @foreach ($colors as $color)
+                                        @if (in_array($color->id, $selectedColors))
+                                            <option value="{{ $color->id }}">
+                                                {{ $color->name }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
                             </div>
+
+                            <div class="col-md-3 text-center">
+                                <img src="" class="img-preview d-none shadow-sm"
+                                    style="width:60px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
+                            </div>
+
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-danger remove-image d-none">
                                     <i class="fa fa-trash"></i>
@@ -173,8 +215,8 @@
                         </div>
                     </div>
 
-                    <button type="button" id="addImage" class="btn btn-secondary btn-sm mt-2">
-                        <i class="fa fa-plus"></i> Add Image
+                    <button type="button" id="addImage" class="btn btn-secondary btn-sm mt-1">
+                        <i class="fa fa-plus"></i> Add Another Image
                     </button>
                 </div>
 
@@ -348,18 +390,30 @@
             /* ========== IMAGE REPEATER ========== */
 
             $('#addImage').on('click', function() {
+                // Get all selected colors from Select2
+                let selectedOptions = $('#inputColor').select2('data');
+                let colorOptions = '<option value="">No Color (General)</option>';
+                selectedOptions.forEach(function(opt) {
+                    colorOptions += `<option value="${opt.id}">${opt.text}</option>`;
+                });
+
                 let row = `
-        <div class="row mb-2 image-row">
-            <div class="col-md-5">
-                <input type="file" name="images[]"
-                    class="form-control image-input"
-                    accept="image/*">
+        <div class="row mb-2 image-row align-items-end">
+            <div class="col-md-4">
+                <label class="small fw-bold">Image:</label>
+                <input type="file" name="images[]" class="form-control image-input" accept="image/*">
             </div>
 
-            <div class="col-md-5">
-                <img src="" class="img-preview d-none"
-                    style="width:80px;height:80px;object-fit:cover;
-                           border:1px solid #ddd;border-radius:5px;">
+            <div class="col-md-3">
+                <label class="small fw-bold">Color:</label>
+                <select name="image_colors[]" class="form-select color-selector">
+                    ${colorOptions}
+                </select>
+            </div>
+
+            <div class="col-md-3 text-center">
+                <img src="" class="img-preview d-none shadow-sm"
+                    style="width:60px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
             </div>
 
             <div class="col-md-2">
@@ -369,6 +423,25 @@
             </div>
         </div>`;
                 $('#imageRepeater').append(row);
+            });
+
+            // Update color options in all selectors when main color select changes
+            $('#inputColor').on('change', function() {
+                let selectedOptions = $(this).select2('data');
+                let colorOptions = '<option value="">No Color (General)</option>';
+
+                selectedOptions.forEach(function(opt) {
+                    colorOptions += `<option value="${opt.id}">${opt.text}</option>`;
+                });
+
+                $('.color-selector').each(function() {
+                    let currentVal = $(this).val();
+                    $(this).html(colorOptions);
+                    // Try to preserve value if it still exists in new options
+                    if ($(this).find(`option[value="${currentVal}"]`).length > 0) {
+                        $(this).val(currentVal);
+                    }
+                });
             });
 
             $(document).on('click', '.remove-image', function() {

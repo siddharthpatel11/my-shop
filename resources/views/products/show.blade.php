@@ -52,16 +52,27 @@
 
             <div class="row">
 
-                {{-- PRODUCT IMAGES --}}
-                @if (!empty($images))
+                {{-- PRODUCT IMAGES (Color-wise) --}}
+                @if ($product->images->count() > 0)
                     <div class="col-12 mb-4">
                         <div class="d-flex flex-wrap justify-content-center gap-3">
-                            @foreach ($images as $img)
-                                <img src="{{ asset('images/products/' . $img) }}" alt="{{ $product->name }}"
-                                    style="width:200px;height:200px;
-                                        object-fit:cover;
-                                        border:1px solid #ddd;
-                                        border-radius:6px;">
+                            @foreach ($product->images as $img)
+                                <div class="text-center">
+                                    <div class="card shadow-sm border-0 p-1">
+                                        <img src="{{ asset('images/products/' . $img->image) }}"
+                                            alt="{{ $product->name }}"
+                                            style="width:200px;height:200px;object-fit:contain;border-radius:6px; background:#f8f9fa;">
+                                        <div class="mt-2 text-muted small">
+                                            @if ($img->color)
+                                                <span class="badge" style="background:{{ $img->color->hex_code }}; color:#fff;">
+                                                    {{ $img->color->name }}
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary">General</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
                     </div>

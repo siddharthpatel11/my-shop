@@ -99,53 +99,61 @@
                             {{-- IMAGE --}}
                             <td>
                                 @if (!empty($images))
-                                    <div class="d-flex flex-wrap gap-1">
-                                        @foreach ($images as $img)
-                                            <img src="{{ asset('images/products/' . $img) }}"
-                                                style="width:40px;height:40px;object-fit:cover;border:1px solid #ddd;border-radius:4px;">
-                                        @endforeach
+                                    <div class="position-relative d-inline-block">
+                                        <img src="{{ asset('images/products/' . $images[0]) }}"
+                                            style="width:50px;height:50px;object-fit:contain;border:1px solid #ddd;border-radius:4px;background:#f8f9fa;">
+                                        @if (count($images) > 1)
+                                            <span class="badge bg-dark position-absolute bottom-0 end-0"
+                                                style="font-size: 0.65rem; opacity: 0.8;">+{{ count($images) - 1 }}</span>
+                                        @endif
                                     </div>
                                 @else
-                                    <span class="text-muted">No Image</span>
+                                    <span class="text-muted small">No Image</span>
                                 @endif
                             </td>
 
-                            <td>{{ $product->name }}</td>
+                            <td class="text-nowrap text-dark fw-semibold" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="{{ $product->name }}">
+                                {{ $product->name }}
+                            </td>
                             <td>{{ $product->category->name ?? '-' }}</td>
                             <td>{{ number_format($product->price, 2) }}</td>
                             <td>{{ $product->stock ?? 0 }}</td>
 
                             {{-- SIZE --}}
                             <td>
-                                @php $sizeIds = array_filter(array_map('trim', $sizeIds)); @endphp
-                                @if (!empty($sizeIds))
-                                    @foreach ($sizeIds as $sid)
-                                        @php $size = $sizes->firstWhere('id', (int)$sid); @endphp
-                                        @if ($size)
-                                            <span class="badge bg-secondary">{{ $size->name }}</span>
-                                        @endif
-                                    @endforeach
-                                @else
-                                    -
-                                @endif
+                                <div class="d-flex flex-wrap gap-1">
+                                    @php $sizeIds = array_filter(array_map('trim', $sizeIds)); @endphp
+                                    @if (!empty($sizeIds))
+                                        @foreach ($sizeIds as $sid)
+                                            @php $size = $sizes->firstWhere('id', (int)$sid); @endphp
+                                            @if ($size)
+                                                <span class="badge bg-light text-dark border small" style="font-size: 0.7rem;">{{ $size->name }}</span>
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        -
+                                    @endif
+                                </div>
                             </td>
 
                             {{-- COLOR --}}
                             <td>
-                                @php $colorIds = array_filter(array_map('trim', $colorIds)); @endphp
-                                @if (!empty($colorIds))
-                                    @foreach ($colorIds as $cid)
-                                        @php $color = $colors->firstWhere('id', (int)$cid); @endphp
-                                        @if ($color)
-                                            <span class="badge"
-                                                style="background:{{ $color->hex_code ?? '#6c757d' }};color:#fff;">
-                                                {{ $color->name }}
-                                            </span>
-                                        @endif
-                                    @endforeach
-                                @else
-                                    -
-                                @endif
+                                <div class="d-flex flex-wrap gap-1">
+                                    @php $colorIds = array_filter(array_map('trim', $colorIds)); @endphp
+                                    @if (!empty($colorIds))
+                                        @foreach ($colorIds as $cid)
+                                            @php $color = $colors->firstWhere('id', (int)$cid); @endphp
+                                            @if ($color)
+                                                <span class="badge"
+                                                    style="background:{{ $color->hex_code ?? '#6c757d' }};color:#fff;font-size: 0.7rem;">
+                                                    {{ $color->name }}
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        -
+                                    @endif
+                                </div>
                             </td>
 
                             {{-- STATUS --}}

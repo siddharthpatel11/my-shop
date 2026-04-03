@@ -50,9 +50,17 @@
         {{-- Product Details --}}
         <div class="row g-4 mb-5">
             @php
-                $images = $product->image ? explode(',', $product->image) : [];
+                $allImages = $product->images;
                 $sizeIds = $product->size_id ? explode(',', $product->size_id) : [];
                 $colorIds = $product->color_id ? explode(',', $product->color_id) : [];
+
+                // Filter images by color or show all if no color selected/general images exist
+                // Initially, we show either general images (color_id null) or images of the first selected color
+                $initialColorId = $colorIds[0] ?? null;
+                $displayImages = $allImages->filter(fn($img) => $img->color_id == $initialColorId || $img->color_id === null);
+                if ($displayImages->isEmpty() && !$allImages->isEmpty()) {
+                    $displayImages = collect([$allImages->first()]);
+                }
             @endphp
 
             {{-- Image Gallery --}}
@@ -61,7 +69,8 @@
                     {{-- Main Image --}}
                     <div class="card border-0 shadow-sm mb-3">
                         <div class="main-image-container">
-                            <img id="mainImage" src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
+                            <img id="mainImage"
+                                src="{{ asset('images/products/' . ($displayImages->first()->image ?? 'no-image.png')) }}"
                                 class="card-img-top main-product-image" alt="{{ $product->name }}">
                             @if ($product->created_at && $product->created_at->diffInDays(now()) < 7)
                                 <span
@@ -71,19 +80,16 @@
                     </div>
 
                     {{-- Thumbnail Gallery --}}
-                    @if (count($images) > 1)
-                        <div class="row g-2">
-                            @foreach ($images as $index => $image)
-                                <div class="col-3">
-                                    <img src="{{ asset('images/products/' . $image) }}"
-                                        class="img-thumbnail thumbnail-image {{ $index === 0 ? 'active' : '' }}"
-                                        onclick="changeMainImage('{{ asset('images/products/' . $image) }}', this)"
-                                        style="cursor: pointer; height: 100px; object-fit: cover;"
-                                        alt="{{ $product->name }}">
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
+                    <div class="row g-2" id="thumbnailGallery">
+                        @foreach ($displayImages as $index => $img)
+                            <div class="col-3">
+                                <img src="{{ asset('images/products/' . $img->image) }}"
+                                    class="img-thumbnail thumbnail-image {{ $index === 0 ? 'active' : '' }}"
+                                    onclick="changeMainImage('{{ asset('images/products/' . $img->image) }}', this)"
+                                    style="cursor: pointer; height: 100px; object-fit: contain;" alt="{{ $product->name }}">
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
@@ -131,13 +137,26 @@
                             </label>
                             <div class="d-flex gap-2 flex-wrap">
                                 @foreach ($colorIds as $index => $cid)
-                                    @php $color = $colors->firstWhere('id', (int) $cid); @endphp
-                                    @if ($color && $color->hex_code)
-                                        <div class="color-option {{ $index === 0 ? 'selected' : '' }}"
-                                            data-color-id="{{ $color->id }}" data-color-name="{{ $color->name }}"
-                                            onclick="selectColor(this)">
-                                            <div class="color-swatch" style="background-color: {{ $color->hex_code }}">
-                                            </div>
+                                    @php
+                                        $color = $colors->firstWhere('id', (int) $cid);
+                                        // Find first image for this color to show as thumbnail
+                                        $colorImage = $allImages->firstWhere('color_id', (int) $cid);
+                                        // Fallback to product main if no specific color image
+                                        $imageUrl = $colorImage ? asset('images/products/' . $colorImage->image) : asset('images/products/no-image.png');
+                                    @endphp
+                                    @if ($color)
+                                         <div class="color-option {{ $index === 0 ? 'selected' : '' }}"
+                                             data-color-id="{{ $color->id }}" data-color-name="{{ $color->name }}"
+                                             onclick="handleColorSelection(this)">
+                                            @if ($colorImage)
+                                                <div class="color-image-thumb">
+                                                    <img src="{{ $imageUrl }}" alt="{{ $color->name }}">
+                                                </div>
+                                            @else
+                                                <div class="color-swatch"
+                                                    style="background-color: {{ $color->hex_code }}">
+                                                </div>
+                                            @endif
                                             <small class="color-label">{{ $color->name }}</small>
                                         </div>
                                     @endif
@@ -363,15 +382,32 @@
         .color-option.selected {
             border-color: #667eea;
             background-color: #f8f9ff;
+            box-shadow: 0 0 0 1px #667eea;
         }
 
         .color-swatch {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: 2px solid #fff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             margin: 0 auto 4px;
+        }
+
+        .color-image-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            margin: 0 auto 4px;
+        }
+
+        .color-image-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #fff;
         }
 
         .color-label {
@@ -474,14 +510,64 @@
             element.classList.add('active');
         }
 
-        // Select color
-        function selectColor(element) {
-            document.querySelectorAll('.color-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            element.classList.add('selected');
-            selectedColor = element.dataset.colorId;
-            document.getElementById('selectedColorName').textContent = `(${element.dataset.colorName})`;
+        // Product images JSON for JS filtering (ensure sequential array)
+        const productImages = {!! $allImages->values()->toJson() !!};
+        const assetUrl = "{{ asset('images/products') }}"; // Internal path without trailing slash
+
+        // Select color handler
+        function handleColorSelection(element) {
+            // Ensure we have the div element even if child was clicked
+            const el = element.closest('.color-option');
+            if (!el) return;
+
+            console.log('Color selection triggered:', el.dataset.colorName, 'ID:', el.dataset.colorId);
+            
+            // UI Update: Selected state
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+
+            const colorId = el.dataset.colorId;
+            selectedColor = colorId;
+            
+            // Name display
+            const nameEl = document.getElementById('selectedColorName');
+            if (nameEl) nameEl.textContent = `(${el.dataset.colorName})`;
+
+            // Filtering logic
+            let filtered = productImages.filter(img => String(img.color_id || '') === String(colorId || ''));
+            
+            // Fallback to general images if specific color images not found
+            if (filtered.length === 0) {
+                filtered = productImages.filter(img => !img.color_id);
+            }
+
+            console.log('Images found:', filtered.length);
+
+            // DOM Updates
+            if (filtered.length > 0) {
+                const mainImg = document.getElementById('mainImage');
+                if (mainImg) {
+                    mainImg.src = `${assetUrl}/${filtered[0].image}`;
+                }
+
+                const gallery = document.getElementById('thumbnailGallery');
+                if (gallery) {
+                    gallery.innerHTML = '';
+                    filtered.forEach((img, idx) => {
+                        const imgUrl = `${assetUrl}/${img.image}`;
+                        const col = document.createElement('div');
+                        col.className = 'col-3';
+                        col.innerHTML = `
+                            <img src="${imgUrl}"
+                                class="img-thumbnail thumbnail-image ${idx === 0 ? 'active' : ''}"
+                                onclick="changeMainImage('${imgUrl}', this)"
+                                style="cursor: pointer; height: 100px; object-fit: contain;"
+                                alt="{{ $product->name }}">
+                        `;
+                        gallery.appendChild(col);
+                    });
+                }
+            }
         }
 
         // Select size
@@ -674,14 +760,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             const firstColor = document.querySelector('.color-option.selected');
             if (firstColor) {
-                selectedColor = firstColor.dataset.colorId;
-                document.getElementById('selectedColorName').textContent = `(${firstColor.dataset.colorName})`;
+                // Trigger initial selection logic
+                handleColorSelection(firstColor);
             }
 
             const firstSize = document.querySelector('.size-option.selected');
             if (firstSize) {
                 selectedSize = firstSize.dataset.sizeId;
-                document.getElementById('selectedSizeName').textContent = `(${firstSize.dataset.sizeName})`;
+                const sizeNameEl = document.getElementById('selectedSizeName');
+                if (sizeNameEl) {
+                    sizeNameEl.textContent = `(${firstSize.dataset.sizeName})`;
+                }
+                firstSize.classList.add('selected');
             }
         });
 
@@ -727,13 +817,12 @@
                         } else {
                             showNotification(data.message || 'Error updating wishlist', 'error');
                         }
-                    }
-                })
-        .catch(error => {
-            console.error(error);
-            showNotification('Something went wrong', 'error');
-        });
-        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        showNotification('Something went wrong', 'error');
+                    });
+            }
     </script>
 
     {{-- Font Awesome for icons --}}

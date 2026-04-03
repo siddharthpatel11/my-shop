@@ -111,14 +111,23 @@
                     <label class="form-label"><strong>Product Images:</strong></label>
 
                     <div id="imageRepeater">
-                        <div class="row mb-2 image-row">
-                            <div class="col-md-5">
+                        <div class="row mb-2 image-row align-items-end">
+                            <div class="col-md-4">
+                                <label class="small fw-bold">Image:</label>
                                 <input type="file" name="images[]" class="form-control image-input" accept="image/*">
                             </div>
 
-                            <div class="col-md-5">
-                                <img src="" class="img-preview d-none"
-                                    style="width:80px;height:80px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Color:</label>
+                                <select name="image_colors[]" class="form-select color-selector">
+                                    <option value="">No Color (General)</option>
+                                    {{-- Populated by JS based on Color select --}}
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 text-center">
+                                <img src="" class="img-preview d-none shadow-sm"
+                                    style="width:60px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
                             </div>
 
                             <div class="col-md-2">
@@ -130,7 +139,7 @@
                     </div>
 
                     <button type="button" class="btn btn-secondary btn-sm mt-2" id="addImage">
-                        <i class="fa fa-plus"></i> Add Image
+                        <i class="fa fa-plus"></i> Add Another Image
                     </button>
                 </div>
 
@@ -270,18 +279,30 @@
             /* ================= IMAGE REPEATER ================= */
 
             $('#addImage').on('click', function() {
+                // Get all selected colors from Select2
+                let selectedOptions = $('#inputColor').select2('data');
+                let colorOptions = '<option value="">No Color (General)</option>';
+                selectedOptions.forEach(function(opt) {
+                    colorOptions += `<option value="${opt.id}">${opt.text}</option>`;
+                });
+
                 let row = `
-        <div class="row mb-2 image-row">
-            <div class="col-md-5">
-                <input type="file" name="images[]"
-                    class="form-control image-input"
-                    accept="image/*">
+        <div class="row mb-2 image-row align-items-end">
+            <div class="col-md-4">
+                <label class="small fw-bold">Image:</label>
+                <input type="file" name="images[]" class="form-control image-input" accept="image/*">
             </div>
 
-            <div class="col-md-5">
-                <img src="" class="img-preview d-none"
-                    style="width:80px;height:80px;object-fit:cover;
-                           border:1px solid #ddd;border-radius:5px;">
+            <div class="col-md-3">
+                <label class="small fw-bold">Color:</label>
+                <select name="image_colors[]" class="form-select color-selector">
+                    ${colorOptions}
+                </select>
+            </div>
+
+            <div class="col-md-3 text-center">
+                <img src="" class="img-preview d-none shadow-sm"
+                    style="width:60px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
             </div>
 
             <div class="col-md-2">
@@ -291,6 +312,25 @@
             </div>
         </div>`;
                 $('#imageRepeater').append(row);
+            });
+
+            // Update color options in repeater when main color select changes
+            $('#inputColor').on('change', function() {
+                let selectedOptions = $(this).select2('data');
+                let colorOptions = '<option value="">No Color (General)</option>';
+
+                selectedOptions.forEach(function(opt) {
+                    colorOptions += `<option value="${opt.id}">${opt.text}</option>`;
+                });
+
+                $('.color-selector').each(function() {
+                    let currentVal = $(this).val();
+                    $(this).html(colorOptions);
+                    // Try to preserve value if it still exists in new options
+                    if ($(this).find(`option[value="${currentVal}"]`).length > 0) {
+                        $(this).val(currentVal);
+                    }
+                });
             });
 
             // Remove image row

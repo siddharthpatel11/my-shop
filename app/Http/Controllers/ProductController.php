@@ -12,6 +12,7 @@ use App\Http\Requests\ProductUpdateRequest;
 use App\Models\Category;
 use App\Models\Color;
 use App\Models\Size;
+use App\Models\ProductImage;
 
 class ProductController extends Controller
 {
@@ -92,14 +93,25 @@ class ProductController extends Controller
         $data['size_id']  = implode(',', $request->size_id ?? []);
         $data['color_id'] = implode(',', $request->color_id ?? []);
 
-        /* ===== MULTIPLE IMAGES ===== */
+        /* ===== COLOR-WISE IMAGES ===== */
         $images = [];
 
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $img) {
+            foreach ($request->file('images') as $index => $img) {
+                // Determine name and move file
                 $name = time() . '_' . uniqid() . '.' . $img->extension();
                 $img->move(public_path('images/products'), $name);
                 $images[] = $name;
+
+                // Create relationship
+                $colorId = isset($request->image_colors[$index]) ? $request->image_colors[$index] : null;
+
+                ProductImage::create([
+                    'product_id' => null, // Will set after product create
+                    'color_id'   => $colorId,
+                    'image'      => $name,
+                    'sort_order' => $index
+                ]);
             }
         }
 
@@ -117,7 +129,14 @@ class ProductController extends Controller
             $data['og_meta_image'] = $name;
         }
 
-        Product::create($data);
+        $product = Product::create($data);
+
+        // Update temp product_id in images
+        ProductImage::where('product_id', null)->whereIn('image', $images)->update(['product_id' => $product->id]);
+
+        // Sync main image string with table to ensure consistency
+        $allImages = ProductImage::where('product_id', $product->id)->pluck('image')->toArray();
+        $product->update(['image' => implode(',', $allImages)]);
 
         return redirect()->route('products.index')
             ->with('success', 'Product created successfully.');
@@ -151,32 +170,53 @@ class ProductController extends Controller
         $data['size_id']  = implode(',', $request->size_id ?? []);
         $data['color_id'] = implode(',', $request->color_id ?? []);
 
-        /* ===== EXISTING IMAGES ===== */
-        $existingImages = $product->image
-            ? explode(',', $product->image)
-            : [];
+        /* ===== HANDLE REMOVED IMAGES ===== */
+        $existingImages = $product->image ? explode(',', $product->image) : [];
 
-        // remove selected images
         if ($request->remove_images) {
-            foreach ($request->remove_images as $img) {
-                if (file_exists(public_path('images/products/' . $img))) {
-                    unlink(public_path('images/products/' . $img));
+            foreach ($request->remove_images as $imgName) {
+                // Delete file
+                if (file_exists(public_path('images/products/' . $imgName))) {
+                    unlink(public_path('images/products/' . $imgName));
                 }
-                $existingImages = array_diff($existingImages, [$img]);
+                // Delete from table
+                ProductImage::where('product_id', $product->id)->where('image', $imgName)->delete();
+                // Remove from local array
+                $existingImages = array_diff($existingImages, [$imgName]);
             }
         }
 
-        // add new images
+        /* ===== UPDATE EXISTING IMAGE COLORS ===== */
+        if ($request->existing_image_colors) {
+            foreach ($request->existing_image_colors as $imgName => $colorId) {
+                ProductImage::where('product_id', $product->id)
+                    ->where('image', $imgName)
+                    ->update(['color_id' => $colorId ?: null]);
+            }
+        }
+
+        /* ===== ADD NEW COLOR-WISE IMAGES ===== */
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $img) {
+            $lastSortOrder = ProductImage::where('product_id', $product->id)->max('sort_order') ?? -1;
+            foreach ($request->file('images') as $index => $img) {
                 $name = time() . '_' . uniqid() . '.' . $img->extension();
                 $img->move(public_path('images/products'), $name);
                 $existingImages[] = $name;
+
+                $colorId = isset($request->image_colors[$index]) ? $request->image_colors[$index] : null;
+
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'color_id'   => $colorId,
+                    'image'      => $name,
+                    'sort_order' => ++$lastSortOrder
+                ]);
             }
         }
 
         $data['image'] = implode(',', $existingImages);
 
+        /* ===== SEO & OG IMAGES ===== */
         if ($request->remove_seo_image) {
             if ($product->seo_meta_image && file_exists(public_path('images/products/' . $product->seo_meta_image))) {
                 unlink(public_path('images/products/' . $product->seo_meta_image));
@@ -211,6 +251,10 @@ class ProductController extends Controller
 
         $product->update($data);
 
+        // Final sync of main image string from table record to prevent duplication/stale data
+        $allImages = ProductImage::where('product_id', $product->id)->orderBy('sort_order')->pluck('image')->toArray();
+        $product->update(['image' => implode(',', $allImages)]);
+
         return redirect()->route('products.index')
             ->with('success', 'Product updated successfully.');
     }
@@ -218,12 +262,12 @@ class ProductController extends Controller
     /* ================= DELETE ================= */
     public function destroy(Product $product): RedirectResponse
     {
-        if ($product->image) {
-            foreach (explode(',', $product->image) as $img) {
-                if (file_exists(public_path('images/products/' . $img))) {
-                    unlink(public_path('images/products/' . $img));
-                }
+        // Delete all associated images
+        foreach ($product->images as $img) {
+            if (file_exists(public_path('images/products/' . $img->image))) {
+                unlink(public_path('images/products/' . $img->image));
             }
+            $img->delete();
         }
 
         if ($product->seo_meta_image && file_exists(public_path('images/products/' . $product->seo_meta_image))) {
