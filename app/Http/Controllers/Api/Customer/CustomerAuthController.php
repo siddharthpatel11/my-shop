@@ -237,24 +237,81 @@ class CustomerAuthController extends Controller
     }
 
     /**
-     * Update basic profile info (Name only)
+     * Update basic profile info (Name and Avatar)
      */
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'   => 'required|string|max:255',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $customer = $request->user();
-        $customer->update([
-            'name' => $request->name,
-        ]);
 
-        return response()->json([
-            'success'  => true,
-            'message'  => 'Profile updated successfully',
-            'customer' => new CustomerResource($customer),
-        ]);
+        try {
+            $customer->name = $request->name;
+
+            if ($request->hasFile('avatar')) {
+                // Delete old avatar if exists
+                if ($customer->avatar && file_exists(public_path('images/customers/' . $customer->avatar))) {
+                    unlink(public_path('images/customers/' . $customer->avatar));
+                }
+
+                $image = $request->file('avatar');
+                $imageName = time() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('images/customers/'), $imageName);
+                $customer->avatar = $imageName;
+            }
+
+            $customer->save();
+
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Profile updated successfully',
+                'customer' => new CustomerResource($customer),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove profile image
+     */
+    public function removeAvatar(Request $request)
+    {
+        $customer = $request->user();
+
+        try {
+            if ($customer->avatar) {
+                // Delete image file if exists
+                if (file_exists(public_path('images/customers/' . $customer->avatar))) {
+                    unlink(public_path('images/customers/' . $customer->avatar));
+                }
+
+                $customer->avatar = null;
+                $customer->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile image removed successfully!',
+                    'customer' => new CustomerResource($customer),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'No profile image to remove.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /* ================= EMAIL CHANGE ================= */

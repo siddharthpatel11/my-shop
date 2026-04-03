@@ -26,15 +26,45 @@
                     <div class="col-md-4">
                         <div class="card border-0 shadow-sm rounded-4 h-100">
                             <div class="card-body text-center p-4">
-                                <div class="bg-gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                    style="width: 100px; height: 100px;">
-                                    <i class="fas fa-user fa-3x text-white"></i>
+                                <div class="position-relative d-inline-block mb-3">
+                                    <div class="bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center"
+                                        style="width: 120px; height: 120px; overflow: hidden; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                        @if ($customer->avatar)
+                                            <img src="{{ asset('images/customers/' . $customer->avatar) }}"
+                                                alt="{{ $customer->name }}" id="profile-avatar-img"
+                                                style="width: 100%; height: 100%; object-fit: cover;">
+                                        @else
+                                            <i class="fas fa-user fa-3x text-white" id="profile-avatar-icon"></i>
+                                            <img src="" alt="{{ $customer->name }}" id="profile-avatar-img"
+                                                class="d-none" style="width: 100%; height: 100%; object-fit: cover;">
+                                        @endif
+                                    </div>
+                                    <div class="position-absolute bottom-0 end-0 d-flex gap-1">
+                                        <button type="button"
+                                            class="btn btn-sm btn-primary rounded-circle p-2 shadow-sm"
+                                            onclick="document.getElementById('avatar-input').click()"
+                                            style="width: 35px; height: 35px;" title="Change Avatar">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+                                        <button type="button" id="btn-remove-avatar"
+                                            class="btn btn-sm btn-danger rounded-circle p-2 shadow-sm {{ !$customer->avatar ? 'd-none' : '' }}"
+                                            style="width: 35px; height: 35px;" title="Remove Avatar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <input type="file" id="avatar-input" class="d-none" accept="image/*">
                                 </div>
-                                <h4 class="fw-bold mb-1">{{ $customer->name }}</h4>
+                                <div class="d-flex align-items-center justify-content-center mb-1">
+                                    <h4 class="fw-bold mb-0 me-2" id="display-name">{{ $customer->name }}</h4>
+                                    <button type="button" class="btn btn-sm btn-link p-0" data-bs-toggle="modal"
+                                        data-bs-target="#editNameModal">
+                                        <i class="fas fa-edit text-muted"></i>
+                                    </button>
+                                </div>
                                 <p class="text-muted small mb-3">
                                     <i class="fas fa-envelope me-2"></i>{{ $customer->email }}
                                 </p>
-                                <span class="badge bg-success-subtle text-success px-3 py-2">
+                                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
                                     <i class="fas fa-check-circle me-1"></i>
                                     {{ ucfirst($customer->status) }}
                                 </span>
@@ -60,8 +90,12 @@
                                                 <i class="fas fa-user text-primary me-2"></i>Full Name
                                             </p>
                                         </div>
-                                        <div class="col-7">
-                                            <p class="fw-semibold mb-0">{{ $customer->name }}</p>
+                                        <div class="col-7 d-flex justify-content-between align-items-center">
+                                            <p class="fw-semibold mb-0" id="info-display-name">{{ $customer->name }}</p>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal" data-bs-target="#editNameModal">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -323,6 +357,34 @@
 
     </div>
 
+    <!-- Edit Name Modal -->
+    <div class="modal fade" id="editNameModal" tabindex="-1" aria-labelledby="editNameModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="editNameModalLabel">Edit Full Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="edit-name-form">
+                        <div class="mb-3">
+                            <label for="input-name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="input-name" value="{{ $customer->name }}"
+                                required>
+                            <div class="invalid-feedback" id="name-error"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 rounded-3" id="btn-update-name">
+                            <span class="spinner-border spinner-border-sm d-none" id="spinner-name"
+                                role="status"></span>
+                            Update Name
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Email Modal -->
     <div class="modal fade" id="editEmailModal" tabindex="-1" aria-labelledby="editEmailModalLabel"
         aria-hidden="true">
@@ -572,9 +634,174 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Email Change Logic
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+            // Avatar Update Logic
+            const avatarInput = document.getElementById('avatar-input');
+            if (avatarInput) {
+                avatarInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('avatar', file);
+                    formData.append('name', document.getElementById('display-name').textContent);
+
+                    fetch('{{ route('customer.profile.update') }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const avatarImg = document.getElementById('profile-avatar-img');
+                                const avatarIcon = document.getElementById('profile-avatar-icon');
+
+                                if (avatarImg) {
+                                    avatarImg.src = data.avatar_url;
+                                    avatarImg.classList.remove('d-none');
+                                }
+                                if (avatarIcon) {
+                                    avatarIcon.classList.add('d-none');
+                                }
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Updated',
+                                    text: data.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+
+                                // Show remove button
+                                document.getElementById('btn-remove-avatar').classList.remove('d-none');
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: data.message
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An unexpected error occurred.'
+                            });
+                        });
+                });
+            }
+
+            // Avatar Remove Logic
+            const btnRemoveAvatar = document.getElementById('btn-remove-avatar');
+            if (btnRemoveAvatar) {
+                btnRemoveAvatar.addEventListener('click', function() {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "Do you want to remove your profile image?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, remove it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('{{ route('customer.profile.remove-avatar') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrfToken,
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        const avatarImg = document.getElementById('profile-avatar-img');
+                                        const avatarIcon = document.getElementById('profile-avatar-icon');
+
+                                        if (avatarImg) {
+                                            avatarImg.classList.add('d-none');
+                                            avatarImg.src = '';
+                                        }
+                                        if (avatarIcon) {
+                                            avatarIcon.classList.remove('d-none');
+                                        }
+
+                                        btnRemoveAvatar.classList.add('d-none');
+
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Removed',
+                                            text: data.message,
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        });
+                                    }
+                                });
+                        }
+                    });
+                });
+            }
+
+            // Name Update Logic
+            const editNameForm = document.getElementById('edit-name-form');
+            if (editNameForm) {
+                editNameForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const name = document.getElementById('input-name').value;
+                    const btn = document.getElementById('btn-update-name');
+                    const spinner = document.getElementById('spinner-name');
+
+                    btn.disabled = true;
+                    spinner.classList.remove('d-none');
+
+                    fetch('{{ route('customer.profile.update') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({
+                                name: name
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('display-name').textContent = data.name;
+                                document.getElementById('info-display-name').textContent = data.name;
+                                $('#editNameModal').modal('hide');
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: data.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message
+                                });
+                            }
+                        })
+                        .finally(() => {
+                            btn.disabled = false;
+                            spinner.classList.add('d-none');
+                        });
+                });
+            }
+
+            // Email Change Logic
             const btnSendOtp = document.getElementById('btn-send-otp');
             const btnVerifyOtp = document.getElementById('btn-verify-otp');
             const btnResendOtp = document.getElementById('btn-resend-otp');

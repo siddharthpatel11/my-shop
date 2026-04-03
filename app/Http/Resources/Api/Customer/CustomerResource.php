@@ -20,7 +20,7 @@ class CustomerResource extends JsonResource
             'email'          => $this->email,
             'phone_number'   => $this->phone_number,
             'status'         => $this->status,
-            'avatar'         => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'avatar'         => $this->avatar ? asset('images/customers/' . $this->avatar) : null,
             'cart_count'     => $this->cartItems()->sum('quantity'),
             'order_count'    => $this->orders()->count(),
             'wishlist_count' => $this->wishlist()->count(),

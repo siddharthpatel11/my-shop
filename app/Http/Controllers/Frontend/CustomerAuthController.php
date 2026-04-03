@@ -119,6 +119,85 @@ class CustomerAuthController extends Controller
         return view('frontend.auth.profile', compact('customer', 'cartCount', 'orderCount', 'wishlistCount', 'addresses'));
     }
 
+    /* ================= UPDATE PROFILE ================= */
+
+    public function updateProfile(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        try {
+            $customer->name = $request->name;
+
+            if ($request->hasFile('avatar')) {
+                // Delete old avatar if exists
+                if ($customer->avatar && file_exists(public_path('images/customers/' . $customer->avatar))) {
+                    unlink(public_path('images/customers/' . $customer->avatar));
+                }
+
+                $image = $request->file('avatar');
+                $imageName = time() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('images/customers/'), $imageName);
+                $customer->avatar = $imageName;
+            }
+
+            $customer->save();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile updated successfully!',
+                    'avatar_url' => $customer->avatar ? asset('images/customers/' . $customer->avatar) : null,
+                    'name' => $customer->name
+                ]);
+            }
+
+            return back()->with('success', 'Profile updated successfully!');
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Error updating profile');
+        }
+    }
+
+    /* ================= REMOVE AVATAR ================= */
+
+    public function removeAvatar(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        try {
+            if ($customer->avatar) {
+                // Delete image file if exists
+                if (file_exists(public_path('images/customers/' . $customer->avatar))) {
+                    unlink(public_path('images/customers/' . $customer->avatar));
+                }
+
+                $customer->avatar = null;
+                $customer->save();
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Profile image removed successfully!'
+                    ]);
+                }
+            }
+
+            return back()->with('success', 'Profile image removed successfully!');
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Error removing profile image');
+        }
+    }
+
     /* ================= LOGOUT ================= */
 
     public function logout(Request $request)

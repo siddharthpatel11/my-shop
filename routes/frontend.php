@@ -140,6 +140,12 @@ Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
     Route::get('/customer/profile', [CustomerAuthController::class, 'profile'])
         ->name('customer.profile');
 
+    Route::post('/customer/profile/update', [CustomerAuthController::class, 'updateProfile'])
+        ->name('customer.profile.update');
+
+    Route::post('/customer/profile/remove-avatar', [CustomerAuthController::class, 'removeAvatar'])
+        ->name('customer.profile.remove-avatar');
+
     // Customer logout
     Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])
         ->name('customer.logout');

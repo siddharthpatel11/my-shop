@@ -90,6 +90,7 @@ Route::prefix('v1')->group(function () {
             Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
             Route::get('profile', [CustomerAuthController::class, 'profile'])->name('profile');
             Route::post('profile/update', [CustomerAuthController::class, 'updateProfile'])->name('profile.update');
+            Route::post('profile/remove-avatar', [CustomerAuthController::class, 'removeAvatar'])->name('profile.remove-avatar');
 
             // ── Google 2FA Management ────────────────────────
             Route::prefix('2fa')->group(function () {
