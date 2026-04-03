@@ -18,7 +18,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category'])
+        $query = Product::with(['category', 'images'])
             ->where('status', 'active');
 
         // Optional filtering by category
@@ -75,6 +75,21 @@ class ProductController extends Controller
             // Stock logic
             $product->setAttribute('stock_status', $this->getStockStatus($product->stock));
 
+            // Legacy image field to full URL
+            $product->setAttribute('image_url', $product->image ? asset('images/products/' . $product->image) : asset('images/no-image.png'));
+
+            // Map gallery images with full URLs and color_id
+            $gallery = $product->images->map(function($img) {
+                return [
+                    'id' => $img->id,
+                    'image_url' => asset('images/products/' . $img->image),
+                    'color_id' => $img->color_id,
+                    'sort_order' => $img->sort_order
+                ];
+            });
+            $product->setAttribute('gallery_images', $gallery);
+            $product->makeHidden(['images']); // Hide the raw relationship
+
             return $product;
         });
 
@@ -90,7 +105,7 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        $product = Product::with(['category'])
+        $product = Product::with(['category', 'images'])
             ->where('status', 'active')
             ->find($id);
 
@@ -129,6 +144,21 @@ class ProductController extends Controller
 
         // Stock logic
         $product->setAttribute('stock_status', $this->getStockStatus($product->stock));
+
+        // Legacy image field to full URL
+        $product->setAttribute('image_url', $product->image ? asset('images/products/' . $product->image) : asset('images/no-image.png'));
+
+        // Map gallery images with full URLs and color_id
+        $gallery = $product->images->map(function($img) {
+            return [
+                'id' => $img->id,
+                'image_url' => asset('images/products/' . $img->image),
+                'color_id' => $img->color_id,
+                'sort_order' => $img->sort_order
+            ];
+        });
+        $product->setAttribute('gallery_images', $gallery);
+        $product->makeHidden(['images']); // Hide the raw relationship
 
         return response()->json([
             'status' => 'success',
