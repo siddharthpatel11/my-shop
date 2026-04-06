@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use Intervention\Image\Laravel\Facades\Image;
 
 class AdminContactController extends Controller
 {
@@ -68,7 +69,11 @@ class AdminContactController extends Controller
         if ($request->hasFile('reply_image')) {
             $image = $request->file('reply_image');
             $imageName = time() . '_reply_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images/contacts'), $imageName);
+            
+            // RESIZE and SAVE via Intervention
+            $path = public_path('images/contacts/' . $imageName);
+            Image::read($image)->scale(width: 1200)->save($path);
+            
             $data['reply_image'] = $imageName;
         }
 

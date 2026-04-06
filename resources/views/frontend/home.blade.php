@@ -423,13 +423,16 @@
             aspect-ratio: 1;
             overflow: hidden;
             position: relative;
-            background: var(--pale);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .pc-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
             transition: transform 0.6s ease;
         }
 

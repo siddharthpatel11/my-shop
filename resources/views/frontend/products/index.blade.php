@@ -37,11 +37,9 @@
                     <div class="card h-100 border-0 shadow-sm product-card">
 
                         {{-- Product Image --}}
-                        <div class="product-image-wrapper position-relative">
-                            <div class="product-img-wrapper">
-                                <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
-                                    alt="{{ $product->name }}" class="product-img">
-                            </div>
+                        <div class="product-image-wrapper position-relative text-center">
+                            <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
+                                alt="{{ $product->name }}" class="product-image">
 
                             {{--  <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
                                 class="card-img-top product-image" alt="{{ $product->name }}">  --}}

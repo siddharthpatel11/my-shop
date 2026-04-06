@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\Laravel\Facades\Image;
 
 class ProductApiController extends Controller
 {
@@ -105,7 +106,11 @@ class ProductApiController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $name = time() . '_' . uniqid() . '.' . $image->extension();
-                    $image->move(public_path('images/products'), $name);
+                    
+                    // RESIZE and SAVE via Intervention
+                    $path = public_path('images/products/' . $name);
+                    Image::read($image)->scale(width: 1200)->save($path);
+                    
                     $images[] = $name;
                 }
             }
@@ -190,7 +195,11 @@ class ProductApiController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $name = time() . '_' . uniqid() . '.' . $image->extension();
-                    $image->move(public_path('images/products'), $name);
+                    
+                    // RESIZE and SAVE via Intervention
+                    $path = public_path('images/products/' . $name);
+                    Image::read($image)->scale(width: 1200)->save($path);
+                    
                     $existingImages[] = $name;
                 }
             }

@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\Color;
 use App\Models\Size;
 use App\Models\ProductImage;
+use Intervention\Image\Laravel\Facades\Image;
 
 class ProductController extends Controller
 {
@@ -109,7 +110,11 @@ class ProductController extends Controller
                 if (isset($variant['files']) && is_array($variant['files'])) {
                     foreach ($variant['files'] as $file) {
                         $name = time() . '_' . uniqid() . '.' . $file->extension();
-                        $file->move(public_path('images/products'), $name);
+
+                        // RESIZE and SAVE via Intervention
+                        $path = public_path('images/products/' . $name);
+                        Image::read($file)->scale(width: 1200)->save($path);
+
                         $allStoredNames[] = $name;
 
                         ProductImage::create([
@@ -130,13 +135,15 @@ class ProductController extends Controller
 
         if ($request->hasFile('seo_meta_image')) {
             $name = 'seo_' . time() . '_' . uniqid() . '.' . $request->seo_meta_image->extension();
-            $request->seo_meta_image->move(public_path('images/products'), $name);
+            $path = public_path('images/products/' . $name);
+            Image::read($request->seo_meta_image)->scale(width: 1200)->save($path);
             $data['seo_meta_image'] = $name;
         }
 
         if ($request->hasFile('og_meta_image')) {
             $name = 'og_' . time() . '_' . uniqid() . '.' . $request->og_meta_image->extension();
-            $request->og_meta_image->move(public_path('images/products'), $name);
+            $path = public_path('images/products/' . $name);
+            Image::read($request->og_meta_image)->scale(width: 1200)->save($path);
             $data['og_meta_image'] = $name;
         }
 
@@ -225,7 +232,11 @@ class ProductController extends Controller
                 if (isset($variant['files']) && is_array($variant['files'])) {
                     foreach ($variant['files'] as $file) {
                         $name = time() . '_' . uniqid() . '.' . $file->extension();
-                        $file->move(public_path('images/products'), $name);
+
+                        // RESIZE and SAVE via Intervention
+                        $path = public_path('images/products/' . $name);
+                        Image::read($file)->scale(width: 1200)->save($path);
+
                         $allStoredNames[] = $name;
 
                         ProductImage::create([
@@ -258,7 +269,8 @@ class ProductController extends Controller
                 unlink(public_path('images/products/' . $product->seo_meta_image));
             }
             $name = 'seo_' . time() . '_' . uniqid() . '.' . $request->seo_meta_image->extension();
-            $request->seo_meta_image->move(public_path('images/products'), $name);
+            $path = public_path('images/products/' . $name);
+            Image::read($request->seo_meta_image)->scale(width: 1200)->save($path);
             $data['seo_meta_image'] = $name;
         }
 
@@ -274,7 +286,8 @@ class ProductController extends Controller
                 unlink(public_path('images/products/' . $product->og_meta_image));
             }
             $name = 'og_' . time() . '_' . uniqid() . '.' . $request->og_meta_image->extension();
-            $request->og_meta_image->move(public_path('images/products'), $name);
+            $path = public_path('images/products/' . $name);
+            Image::read($request->og_meta_image)->scale(width: 1200)->save($path);
             $data['og_meta_image'] = $name;
         }
 

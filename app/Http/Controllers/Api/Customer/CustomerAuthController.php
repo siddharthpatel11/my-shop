@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use Intervention\Image\Laravel\Facades\Image;
 
 class CustomerAuthController extends Controller
 {
@@ -264,7 +265,11 @@ class CustomerAuthController extends Controller
 
                 $image = $request->file('avatar');
                 $imageName = time() . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('images/customers/'), $imageName);
+                
+                // RESIZE and SAVE via Intervention
+                $path = public_path('images/customers/' . $imageName);
+                Image::read($image)->scale(width: 500)->save($path);
+                
                 $customer->avatar = $imageName;
             }
 

@@ -7,6 +7,7 @@ use App\Models\MetaTag;
 use App\Models\Page;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Intervention\Image\Laravel\Facades\Image;
 
 class MetaTagController extends Controller
 {
@@ -101,7 +102,11 @@ class MetaTagController extends Controller
             }
             $seoImage = $request->file('seo_image');
             $seoImageName = time() . '_seo_' . uniqid() . '.' . $seoImage->getClientOriginalExtension();
-            $seoImage->move(public_path('images/seo'), $seoImageName);
+
+            // RESIZE and SAVE via Intervention
+            $path = public_path('images/seo/' . $seoImageName);
+            Image::read($seoImage)->scale(width: 1200)->save($path);
+
             $data['seo_image'] = $seoImageName;
         }
 
@@ -117,7 +122,11 @@ class MetaTagController extends Controller
             }
             $ogImage = $request->file('og_image');
             $ogImageName = time() . '_og_' . uniqid() . '.' . $ogImage->getClientOriginalExtension();
-            $ogImage->move(public_path('images/seo'), $ogImageName);
+
+            // RESIZE and SAVE via Intervention
+            $path = public_path('images/seo/' . $ogImageName);
+            Image::read($ogImage)->scale(width: 1200)->save($path);
+
             $data['og_image'] = $ogImageName;
         }
 
