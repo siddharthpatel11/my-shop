@@ -150,8 +150,8 @@
                                     </div>
                                     <div class="card-body p-2">
                                         <div class="mb-2">
-                                            <label class="small fw-bold">Image Color:</label>
-                                            <select name="existing_image_colors[{{ $img->image }}]"
+                                            <label class="small fw-bold">Color:</label>
+                                            <select name="existing_image_data[{{ $img->id }}][color_id]"
                                                 class="form-select form-select-sm color-selector">
                                                 <option value="">No Color (General)</option>
                                                 @foreach ($colors as $color)
@@ -163,6 +163,37 @@
                                                     @endif
                                                 @endforeach
                                             </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="small fw-bold">Size:</label>
+                                            <select name="existing_image_data[{{ $img->id }}][size_id]"
+                                                class="form-select form-select-sm size-selector">
+                                                <option value="">No Size (General)</option>
+                                                @foreach ($sizes as $size)
+                                                    @if (in_array($size->id, $selectedSizes))
+                                                        <option value="{{ $size->id }}"
+                                                            {{ $img->size_id == $size->id ? 'selected' : '' }}>
+                                                            {{ $size->name }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="small fw-bold">Price:</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">₹</span>
+                                                <input type="number" step="0.01"
+                                                    name="existing_image_data[{{ $img->id }}][price]"
+                                                    class="form-control" value="{{ $img->price }}"
+                                                    placeholder="Price">
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="small fw-bold">Stock:</label>
+                                            <input type="number" name="existing_image_data[{{ $img->id }}][stock]"
+                                                class="form-control form-control-sm" value="{{ $img->stock ?? 0 }}"
+                                                min="0">
                                         </div>
                                         <div class="form-check">
                                             <input type="checkbox" name="remove_images[]" value="{{ $img->image }}"
@@ -182,16 +213,23 @@
                     <label class="form-label"><strong>Add New Images:</strong></label>
 
                     <div id="imageRepeater">
-                        <div class="row mb-2 image-row align-items-end">
+                        <div class="row mb-1 image-row align-items-center shadow-sm p-1 border rounded bg-light mx-0"
+                            data-index="0">
                             <div class="col-md-4">
-                                <label class="small fw-bold">Image:</label>
-                                <input type="file" name="images[]" class="form-control image-input" accept="image/*">
+                                <label class="small fw-bold">Image(s):</label>
+                                <div class="input-group input-group-sm">
+                                    <button type="button" class="btn btn-success trigger-file-input" title="Browse Images">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+                                    <input type="file" name="image_data[0][files][]" class="form-control image-input"
+                                        accept="image/*" multiple>
+                                </div>
+                                <div class="mt-2 preview-container d-flex flex-wrap gap-2" style="min-height: 50px; border: 1px dashed #ddd; border-radius: 5px; padding: 5px;"></div>
                             </div>
 
-                            <div class="col-md-3">
-                                <label class="small fw-bold">Color:</label>
-                                <select name="image_colors[]" class="form-select color-selector">
-                                    <option value="">No Color (General)</option>
+                            <div class="col-md-2 p-1">
+                                <select name="image_data[0][color_id]" class="form-select form-select-sm color-selector">
+                                    <option value="">No Color</option>
                                     @foreach ($colors as $color)
                                         @if (in_array($color->id, $selectedColors))
                                             <option value="{{ $color->id }}">
@@ -202,13 +240,34 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-3 text-center">
-                                <img src="" class="img-preview d-none shadow-sm"
-                                    style="width:60px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
+                            <div class="col-md-2 p-1">
+                                <select name="image_data[0][size_id]" class="form-select form-select-sm size-selector">
+                                    <option value="">No Size</option>
+                                    @foreach ($sizes as $size)
+                                        @if (in_array($size->id, $selectedSizes))
+                                            <option value="{{ $size->id }}">
+                                                {{ $size->name }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
                             </div>
 
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger remove-image d-none">
+                            <div class="col-md-2 p-1">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text p-1">₹</span>
+                                    <input type="number" step="0.01" name="image_data[0][price]"
+                                        class="form-control" placeholder="Price">
+                                </div>
+                            </div>
+
+                            <div class="col-md-1 p-1">
+                                <input type="number" name="image_data[0][stock]" class="form-control form-control-sm"
+                                    value="0" min="0" placeholder="Stk">
+                            </div>
+
+                            <div class="col-md-1 p-1 text-end">
+                                <button type="button" class="btn btn-sm btn-danger remove-image">
                                     <i class="fa fa-trash"></i>
                                 </button>
                             </div>
@@ -252,7 +311,8 @@
                     <div class="row mb-2 seo-image-row">
                         <div class="col-md-5">
                             <input type="file" name="seo_meta_image"
-                                class="form-control seo-image-input @error('seo_meta_image') is-invalid @enderror" accept="image/*">
+                                class="form-control seo-image-input @error('seo_meta_image') is-invalid @enderror"
+                                accept="image/*">
                             @if ($product->seo_meta_image)
                                 <div class="mt-2 text-center" style="width:max-content;">
                                     <img src="{{ asset('images/products/' . $product->seo_meta_image) }}" alt="SEO Image"
@@ -260,7 +320,8 @@
                                     <div class="form-check mt-1 text-start">
                                         <input type="checkbox" name="remove_seo_image" value="1"
                                             class="form-check-input" id="removeExistingSeoImage">
-                                        <label class="form-check-label" for="removeExistingSeoImage">Remove Existing</label>
+                                        <label class="form-check-label" for="removeExistingSeoImage">Remove
+                                            Existing</label>
                                     </div>
                                 </div>
                             @endif
@@ -302,7 +363,8 @@
                     <div class="row mb-2 og-image-row">
                         <div class="col-md-5">
                             <input type="file" name="og_meta_image"
-                                class="form-control og-image-input @error('og_meta_image') is-invalid @enderror" accept="image/*">
+                                class="form-control og-image-input @error('og_meta_image') is-invalid @enderror"
+                                accept="image/*">
                             @if ($product->og_meta_image)
                                 <div class="mt-2 text-center" style="width:max-content;">
                                     <img src="{{ asset('images/products/' . $product->og_meta_image) }}" alt="OG Image"
@@ -310,7 +372,8 @@
                                     <div class="form-check mt-1 text-start">
                                         <input type="checkbox" name="remove_og_image" value="1"
                                             class="form-check-input" id="removeExistingOgImage">
-                                        <label class="form-check-label" for="removeExistingOgImage">Remove Existing</label>
+                                        <label class="form-check-label" for="removeExistingOgImage">Remove
+                                            Existing</label>
                                     </div>
                                 </div>
                             @endif
@@ -348,9 +411,7 @@
 
     <script>
         $(document).ready(function() {
-
-            /* ========== SELECT2 ========== */
-
+            // Initialize Select2
             $('#inputSize').select2({
                 theme: 'bootstrap-5',
                 placeholder: 'Select size',
@@ -389,41 +450,6 @@
 
             /* ========== IMAGE REPEATER ========== */
 
-            $('#addImage').on('click', function() {
-                // Get all selected colors from Select2
-                let selectedOptions = $('#inputColor').select2('data');
-                let colorOptions = '<option value="">No Color (General)</option>';
-                selectedOptions.forEach(function(opt) {
-                    colorOptions += `<option value="${opt.id}">${opt.text}</option>`;
-                });
-
-                let row = `
-        <div class="row mb-2 image-row align-items-end">
-            <div class="col-md-4">
-                <label class="small fw-bold">Image:</label>
-                <input type="file" name="images[]" class="form-control image-input" accept="image/*">
-            </div>
-
-            <div class="col-md-3">
-                <label class="small fw-bold">Color:</label>
-                <select name="image_colors[]" class="form-select color-selector">
-                    ${colorOptions}
-                </select>
-            </div>
-
-            <div class="col-md-3 text-center">
-                <img src="" class="img-preview d-none shadow-sm"
-                    style="width:60px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
-            </div>
-
-            <div class="col-md-2">
-                <button type="button" class="btn btn-danger remove-image">
-                    <i class="fa fa-trash"></i>
-                </button>
-            </div>
-        </div>`;
-                $('#imageRepeater').append(row);
-            });
 
             // Update color options in all selectors when main color select changes
             $('#inputColor').on('change', function() {
@@ -437,31 +463,160 @@
                 $('.color-selector').each(function() {
                     let currentVal = $(this).val();
                     $(this).html(colorOptions);
-                    // Try to preserve value if it still exists in new options
                     if ($(this).find(`option[value="${currentVal}"]`).length > 0) {
                         $(this).val(currentVal);
                     }
                 });
             });
 
-            $(document).on('click', '.remove-image', function() {
-                $(this).closest('.image-row').remove();
+            // Update size options in all selectors when main size select changes
+            $('#inputSize').on('change', function() {
+                let selectedOptions = $(this).select2('data');
+                let sizeOptions = '<option value="">No Size</option>';
+                selectedOptions.forEach(opt => sizeOptions +=
+                    `<option value="${opt.id}">${opt.text}</option>`);
+
+                $('.size-selector').each(function() {
+                    let currentVal = $(this).val();
+                    $(this).html(sizeOptions);
+                    if ($(this).find(`option[value="${currentVal}"]`).length > 0) $(this).val(
+                        currentVal);
+                });
             });
 
-            $(document).on('change', '.image-input', function() {
-                let preview = $(this).closest('.image-row').find('.img-preview');
-                let removeBtn = $(this).closest('.image-row').find('.remove-image');
+            // Update color options in all selectors when main color select changes
+            $('#inputColor').on('change', function() {
+                let selectedOptions = $(this).select2('data');
+                let colorOptions = '<option value="">No Color</option>';
+                selectedOptions.forEach(opt => colorOptions +=
+                    `<option value="${opt.id}">${opt.text}</option>`);
 
-                if (this.files && this.files[0]) {
-                    let reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.attr('src', e.target.result)
-                            .removeClass('d-none');
-                        removeBtn.removeClass('d-none');
-                    };
-                    reader.readAsDataURL(this.files[0]);
+                $('.color-selector').each(function() {
+                    let currentVal = $(this).val();
+                    $(this).html(colorOptions);
+                    if ($(this).find(`option[value="${currentVal}"]`).length > 0) $(this).val(
+                        currentVal);
+                });
+            });
+
+            // Clone Row inside each row (Plus Button)
+            $(document).on('click', '.clone-row', function() {
+                $('#addImage').click();
+            });
+
+            // Add More Image (Smart Clone)
+            let rowIndex = 1;
+            $('#addImage').on('click', function() {
+                let lastRow = $('.image-row').last();
+                let newRow = lastRow.clone();
+                let idx = rowIndex++;
+
+                newRow.attr('data-index', idx);
+
+                // Update names with unique index
+                newRow.find('.image-input').attr('name', `image_data[${idx}][files][]`).val('');
+                newRow.find('.color-selector').attr('name', `image_data[${idx}][color_id]`).val(lastRow
+                    .find('.color-selector').val());
+                newRow.find('.size-selector').attr('name', `image_data[${idx}][size_id]`).val(lastRow.find(
+                    '.size-selector').val());
+                newRow.find('input[placeholder="Price"]').attr('name', `image_data[${idx}][price]`).val(
+                    lastRow.find('input[placeholder="Price"]').val());
+                newRow.find('input[min="0"]').attr('name', `image_data[${idx}][stock]`).val(lastRow.find(
+                    'input[min="0"]').val());
+
+                // Clear previews
+                newRow.find('.preview-container').html('');
+                newRow.find('.remove-image').removeClass('d-none');
+
+                $('#imageRepeater').append(newRow);
+            });
+
+            $(document).on('click', '.remove-image', function() {
+                if ($('.image-row').length > 1) {
+                    $(this).closest('.image-row').remove();
                 }
             });
+
+            // Trigger file input via (+) button
+            $(document).on('click', '.trigger-file-input', function() {
+                $(this).next('.image-input').click();
+            });
+
+            const rowFiles = {}; // Stores DataTransfer objects for each row index
+
+            $(document).on('change', '.image-input', function() {
+                let input = this;
+                let files = input.files;
+                if (!files || files.length === 0) return;
+
+                let row = $(input).closest('.image-row');
+                let idx = row.attr('data-index');
+
+                if (!rowFiles[idx]) {
+                    rowFiles[idx] = new DataTransfer();
+                }
+
+                // Add newly selected files to our persistent DataTransfer
+                Array.from(files).forEach(file => {
+                    rowFiles[idx].items.add(file);
+                });
+
+                // Update the actual input.files so the form sends everything
+                input.files = rowFiles[idx].files;
+                
+                renderRowGallery(row, idx);
+            });
+
+            $(document).on('click', '.remove-thumbnail', function() {
+                let thumb = $(this);
+                let row = thumb.closest('.image-row');
+                let idx = row.attr('data-index');
+                let fileIdx = thumb.attr('data-file-index');
+
+                if (rowFiles[idx]) {
+                    let dt = new DataTransfer();
+                    let files = rowFiles[idx].files;
+                    for (let i = 0; i < files.length; i++) {
+                        if (i != fileIdx) {
+                            dt.items.add(files[i]);
+                        }
+                    }
+                    rowFiles[idx] = dt;
+                    row.find('.image-input')[0].files = dt.files;
+                    renderRowGallery(row, idx);
+                }
+            });
+
+            function renderRowGallery(row, idx) {
+                let container = row.find('.preview-container');
+                container.html('');
+                
+                if (rowFiles[idx] && rowFiles[idx].files.length > 0) {
+                    Array.from(rowFiles[idx].files).forEach((file, fIdx) => {
+                        let reader = new FileReader();
+                        reader.onload = e => {
+                            container.append(`
+                                <div class="position-relative remove-thumbnail me-2 mb-2" data-file-index="${fIdx}" style="cursor:pointer;" title="Click to remove">
+                                    <img src="${e.target.result}" style="width:50px;height:50px;object-fit:cover;border:1px solid #ddd;border-radius:5px;">
+                                    <div class="position-absolute top-0 end-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width:15px;height:15px;font-size:10px;margin-top:-5px;margin-right:-5px;">
+                                        <i class="fa fa-times"></i>
+                                    </div>
+                                </div>
+                            `);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }
+
+            function updateRemoveButtons() {
+                if ($('.image-row').length > 1) {
+                    $('.remove-image').removeClass('d-none');
+                } else {
+                    $('.remove-image').addClass('d-none');
+                }
+            }
+            updateRemoveButtons();
 
             /* ================= REAL-TIME NAME VALIDATION ================= */
 
@@ -494,7 +649,7 @@
                                 input.addClass('is-invalid');
                                 input.after(
                                     `<div class="form-text text-danger">${response.message}</div>`
-                                    );
+                                );
                                 btn.prop('disabled', true);
                             } else {
                                 input.removeClass('is-invalid');

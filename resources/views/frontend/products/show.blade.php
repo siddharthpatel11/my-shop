@@ -69,6 +69,7 @@
                     {{-- Main Image --}}
                     <div class="card border-0 shadow-sm mb-3">
                         <div class="main-image-container">
+                            <div id="mainImageBadge" class="main-image-badge"></div>
                             <img id="mainImage"
                                 src="{{ asset('images/products/' . ($displayImages->first()->image ?? 'no-image.png')) }}"
                                 class="card-img-top main-product-image" alt="{{ $product->name }}">
@@ -80,7 +81,7 @@
                     </div>
 
                     {{-- Thumbnail Gallery --}}
-                    <div class="row g-2" id="thumbnailGallery">
+                    <div class="row g-2 mb-3" id="thumbnailGallery">
                         @foreach ($displayImages as $index => $img)
                             <div class="col-3">
                                 <img src="{{ asset('images/products/' . $img->image) }}"
@@ -89,6 +90,26 @@
                                     style="cursor: pointer; height: 100px; object-fit: contain;" alt="{{ $product->name }}">
                             </div>
                         @endforeach
+                    </div>
+
+                    {{-- Stock Status Display (Moved below image/thumbnails) --}}
+                    <div id="stockStatusDisplay" class="mt-2">
+                        @php $initialStock = (int)($displayImages->first()->stock ?? $product->stock); @endphp
+                        @if ($initialStock <= 0)
+                            <div class="text-danger fw-bold">
+                                <i class="fas fa-times-circle me-1"></i> Out Of Stock
+                            </div>
+                        @elseif($initialStock <= 5)
+                            <div class="stock-counter-wrapper">
+                                <div class="stock-count-text">
+                                    <i class="fas fa-fire me-2 text-danger"></i>
+                                    Hurry! Only {{ $initialStock }} left in stock
+                                </div>
+                                <div class="stock-progress">
+                                    <div class="stock-progress-bar" style="width: {{ ($initialStock / 5) * 100 }}%"></div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -110,13 +131,8 @@
 
                     {{-- Price --}}
                     <div class="mb-4">
-                        <h2 class="text-primary fw-bold mb-0">₹{{ number_format($product->price, 2) }}</h2>
-                        @if ($product->stock <= 0)
-                            <div class="text-danger fw-bold mt-1" style="color: #d81b60 !important;">Out Of Stock</div>
-                        @elseif($product->stock <= 5)
-                            <div class="text-danger fw-bold mt-1" style="color: #d81b60 !important;">Only
-                                {{ $product->stock }} left</div>
-                        @endif
+                        <h2 class="text-primary fw-bold mb-0" id="productPriceDisplay">₹{{ number_format($product->price, 2) }}</h2>
+                        {{-- Removed stockStatusDisplay from here (Upar ny) --}}
                         <small class="text-muted">{{ __('products.inclusive_taxes') }}</small>
                     </div>
 
@@ -141,12 +157,15 @@
                                         $color = $colors->firstWhere('id', (int) $cid);
                                         // Find first image for this color to show as thumbnail
                                         $colorImage = $allImages->firstWhere('color_id', (int) $cid);
+                                        // Calculate total stock for this color across all images
+                                        $colorStock = $allImages->where('color_id', (int) $cid)->sum('stock');
                                         // Fallback to product main if no specific color image
                                         $imageUrl = $colorImage ? asset('images/products/' . $colorImage->image) : asset('images/products/no-image.png');
                                     @endphp
                                     @if ($color)
-                                         <div class="color-option {{ $index === 0 ? 'selected' : '' }}"
+                                         <div class="color-option {{ $index === 0 ? 'selected' : '' }} {{ $colorStock <= 0 ? 'out-of-stock' : '' }}"
                                              data-color-id="{{ $color->id }}" data-color-name="{{ $color->name }}"
+                                             data-is-out-of-stock="{{ $colorStock <= 0 ? '1' : '0' }}"
                                              onclick="handleColorSelection(this)">
                                             @if ($colorImage)
                                                 <div class="color-image-thumb">
@@ -178,7 +197,7 @@
                                     @if ($size)
                                         <div class="size-option {{ $index === 0 ? 'selected' : '' }}"
                                             data-size-id="{{ $size->id }}"
-                                            data-size-name="{{ $size->code ?? $size->name }}" onclick="selectSize(this)">
+                                            data-size-name="{{ $size->code ?? $size->name }}" onclick="handleSizeSelection(this)">
                                             {{ $size->code ?? $size->name }}
                                         </div>
                                     @endif
@@ -208,7 +227,9 @@
                         </div>
                     </div>
 
-                    {{-- Action Buttons --}}
+                        {{-- Stock Status Display removed from here --}}
+
+                        {{-- Action Buttons --}}
                     <div class="d-flex gap-3 mb-4" id="main-product-actions">
                         @auth('customer')
                             @if ($product->stock > 0)
@@ -221,9 +242,9 @@
                                         <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
                                     </button>
                                 @endif
-                                <button class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
+                                 <button id="buyNowBtn" class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
                                     <i class="fas fa-bolt me-2"></i>
-                                    {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
+                                    <span id="buyNowText">{{ __('products.buy_now', ['price' => number_format($product->price)]) }}</span>
                                 </button>
                             @else
                                 <button class="btn btn-secondary btn-lg flex-fill disabled">
@@ -415,6 +436,19 @@
             font-size: 0.75rem;
         }
 
+        /* Out of Stock Overlay */
+        .color-option.out-of-stock {
+            position: relative;
+            cursor: not-allowed;
+            opacity: 0.9;
+            background: #fdfdfd;
+        }
+
+        .color-option.out-of-stock img, 
+        .color-option.out-of-stock .color-swatch {
+            filter: grayscale(1) opacity(0.5);
+        }
+
         .size-option {
             min-width: 50px;
             padding: 12px 16px;
@@ -435,6 +469,39 @@
             border-color: #667eea;
             background-color: #667eea;
             color: white;
+        }
+
+        /* Premium Stock Counter Stimulator */
+        .stock-counter-wrapper {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #fff5f5;
+            border-radius: 6px;
+            border-left: 4px solid #f56565;
+            display: inline-block;
+        }
+
+        .stock-count-text {
+            color: #c53030;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .stock-progress {
+            height: 4px;
+            background: #fed7d7;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+            width: 150px;
+        }
+
+        .stock-progress-bar {
+            height: 100%;
+            background: #f56565;
+            transition: width 0.5s ease;
         }
 
         .product-card {
@@ -487,6 +554,34 @@
             color: #dc3545;
         }
 
+        /* Main Image Floating Badge */
+        .main-image-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 6px 12px;
+            border-radius: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+            font-size: 0.85rem;
+            z-index: 10;
+            display: none;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .main-image-badge.out-of-stock {
+            color: #d81b60;
+            border-color: #ffd1e1;
+        }
+
+        .main-image-badge.low-stock {
+            color: #c53030;
+            background: #fff5f5;
+            border-color: #feb2b2;
+        }
+
         @media (max-width: 768px) {
             .main-image-container {
                 height: 550px;
@@ -513,6 +608,8 @@
         // Product images JSON for JS filtering (ensure sequential array)
         const productImages = {!! $allImages->values()->toJson() !!};
         const assetUrl = "{{ asset('images/products') }}"; // Internal path without trailing slash
+        const basePrice = "{{ $product->price }}";
+        const baseStock = "{{ $product->stock }}";
 
         // Select color handler
         function handleColorSelection(element) {
@@ -521,29 +618,71 @@
             if (!el) return;
 
             console.log('Color selection triggered:', el.dataset.colorName, 'ID:', el.dataset.colorId);
-            
+
             // UI Update: Selected state
             document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
             el.classList.add('selected');
 
             const colorId = el.dataset.colorId;
             selectedColor = colorId;
-            
+
             // Name display
             const nameEl = document.getElementById('selectedColorName');
             if (nameEl) nameEl.textContent = `(${el.dataset.colorName})`;
 
             // Filtering logic
             let filtered = productImages.filter(img => String(img.color_id || '') === String(colorId || ''));
-            
-            // Fallback to general images if specific color images not found
+
+            // Fallback to size-specific or general images if specific color images not found
             if (filtered.length === 0) {
-                filtered = productImages.filter(img => !img.color_id);
+                if (selectedSize) {
+                    filtered = productImages.filter(img => String(img.size_id || '') === String(selectedSize || ''));
+                }
+                if (filtered.length === 0) {
+                    filtered = productImages.filter(img => !img.color_id && !img.size_id);
+                }
             }
 
-            console.log('Images found:', filtered.length);
+            // DOM Updates
+            updateGalleryUI(filtered);
+        }
+
+        // Select size handler
+        function handleSizeSelection(element) {
+            const el = element.closest('.size-option');
+            if (!el) return;
+
+            console.log('Size selection triggered:', el.dataset.sizeName, 'ID:', el.dataset.sizeId);
+
+            // UI Update
+            document.querySelectorAll('.size-option').forEach(option => option.classList.remove('selected'));
+            el.classList.add('selected');
+
+            const sizeId = el.dataset.sizeId;
+            selectedSize = sizeId;
+
+            const nameEl = document.getElementById('selectedSizeName');
+            if (nameEl) nameEl.textContent = `(${el.dataset.sizeName})`;
+
+            // Filtering logic
+            let filtered = productImages.filter(img => String(img.size_id || '') === String(sizeId || ''));
+
+            // Fallback to color-specific or general images if specific size images not found
+            if (filtered.length === 0) {
+                if (selectedColor) {
+                    filtered = productImages.filter(img => String(img.color_id || '') === String(selectedColor || ''));
+                }
+                if (filtered.length === 0) {
+                    filtered = productImages.filter(img => !img.size_id && !img.color_id);
+                }
+            }
 
             // DOM Updates
+            updateGalleryUI(filtered);
+        }
+
+        // Shared function to update Gallery UI
+        function updateGalleryUI(filtered) {
             if (filtered.length > 0) {
                 const mainImg = document.getElementById('mainImage');
                 if (mainImg) {
@@ -568,16 +707,98 @@
                     });
                 }
             }
+            updateVariantInfo();
         }
 
-        // Select size
-        function selectSize(element) {
-            document.querySelectorAll('.size-option').forEach(option => {
-                option.classList.remove('selected');
+        // Update Price and Stock based on current selection
+        function updateVariantInfo() {
+            // Find the best matching image record
+            let match = productImages.find(img => {
+                const colorMatch = String(img.color_id || '') === String(selectedColor || '');
+                const sizeMatch = String(img.size_id || '') === String(selectedSize || '');
+                return colorMatch && sizeMatch;
             });
-            element.classList.add('selected');
-            selectedSize = element.dataset.sizeId;
-            document.getElementById('selectedSizeName').textContent = `(${element.dataset.sizeName})`;
+
+            // Fallback 1: Match only color (Color images usually carry the price/stock)
+            if (!match && selectedColor) {
+               match = productImages.find(img => String(img.color_id || '') === String(selectedColor || ''));
+            }
+
+            // Fallback 2: Match only size
+            if (!match && selectedSize) {
+               match = productImages.find(img => String(img.size_id || '') === String(selectedSize || ''));
+            }
+
+            const priceDisplay = document.getElementById('productPriceDisplay');
+            const stockDisplay = document.getElementById('stockStatusDisplay');
+            const mainBadge = document.getElementById('mainImageBadge');
+            const buyNowBtn = document.getElementById('buyNowBtn');
+            const buyNowText = document.getElementById('buyNowText');
+            const addToCartBtn = document.getElementById('addToCartBtn');
+
+            if (match) {
+                const price = match.price ? match.price : basePrice;
+                const formattedPrice = `₹${parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                // Update Price Display
+                if (priceDisplay) priceDisplay.textContent = formattedPrice;
+                
+                // Update Buy Now Button
+                if (buyNowText) buyNowText.textContent = `Buy Now at ${formattedPrice}`;
+
+                // Update Stock and Badge
+                const stock = parseInt(match.stock || 0);
+                
+                if (mainBadge) {
+                    if (stock <= 0) {
+                        mainBadge.innerHTML = '<i class="fas fa-times-circle me-1"></i> Out of Stock';
+                        mainBadge.className = 'main-image-badge out-of-stock';
+                        mainBadge.style.display = 'block';
+                    } else if (stock <= 5) {
+                        mainBadge.innerHTML = `<i class="fas fa-fire me-1"></i> Only ${stock} Left`;
+                        mainBadge.className = 'main-image-badge low-stock';
+                        mainBadge.style.display = 'block';
+                    } else {
+                        mainBadge.style.display = 'none';
+                    }
+                }
+
+                if (stockDisplay) {
+                    if (stock <= 0) {
+                        stockDisplay.innerHTML = `
+                            <div class="text-danger fw-bold">
+                                <i class="fas fa-times-circle me-1"></i> Out Of Stock
+                            </div>`;
+                        if (addToCartBtn) addToCartBtn.disabled = true;
+                        if (buyNowBtn) buyNowBtn.disabled = true;
+                    } else if (stock <= 5) {
+                        const progressWidth = (stock / 5) * 100;
+                        stockDisplay.innerHTML = `
+                            <div class="stock-counter-wrapper">
+                                <div class="stock-count-text">
+                                    <i class="fas fa-fire me-2 text-danger"></i>
+                                    Hurry! Only ${stock} left in stock
+                                </div>
+                                <div class="stock-progress">
+                                    <div class="stock-progress-bar" style="width: ${progressWidth}%"></div>
+                                </div>
+                            </div>`;
+                        if (addToCartBtn) addToCartBtn.disabled = false;
+                        if (buyNowBtn) buyNowBtn.disabled = false;
+                    } else {
+                        stockDisplay.innerHTML = '';
+                        if (addToCartBtn) addToCartBtn.disabled = false;
+                        if (buyNowBtn) buyNowBtn.disabled = false;
+                    }
+                }
+            } else {
+                if (mainBadge) mainBadge.style.display = 'none';
+                const formattedBasePrice = `₹${parseFloat(basePrice).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                if (priceDisplay) priceDisplay.textContent = formattedBasePrice;
+                if (buyNowText) buyNowText.textContent = `Buy Now at ${formattedBasePrice}`;
+                if (addToCartBtn) addToCartBtn.disabled = false;
+                if (buyNowBtn) buyNowBtn.disabled = false;
+            }
         }
 
         // Quantity controls
@@ -588,7 +809,7 @@
             if (currentValue < maxValue) {
                 input.value = currentValue + 1;
             }
-        }
+        }   
 
         function decrementQuantity() {
             const input = document.getElementById('quantity');

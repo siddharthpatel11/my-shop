@@ -24,10 +24,21 @@ class ProductUpdateRequest extends FormRequest
         return [
             'name' => 'required|string|max:255|unique:products,name,' . $this->product->id,
             'detail' => 'required|string',
-            'images'                => 'nullable|array',
-            'images.*'              => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'image_colors'          => 'nullable|array',
-            'existing_image_colors' => 'nullable|array',
+            // Existing variant updates
+            'existing_image_data'           => 'nullable|array',
+            'existing_image_data.*.color_id' => 'nullable|exists:colors,id',
+            'existing_image_data.*.size_id'  => 'nullable|exists:sizes,id',
+            'existing_image_data.*.price'    => 'nullable|numeric|min:0',
+            'existing_image_data.*.stock'    => 'nullable|integer|min:0',
+
+            // New variant images
+            'image_data'               => 'nullable|array',
+            'image_data.*.files'       => 'nullable|array',
+            'image_data.*.files.*'     => 'image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_data.*.color_id'    => 'nullable|exists:colors,id',
+            'image_data.*.size_id'     => 'nullable|exists:sizes,id',
+            'image_data.*.price'       => 'nullable|numeric|min:0',
+            'image_data.*.stock'       => 'nullable|integer|min:0',
             'status'                => 'required|in:active,inactive,deleted',
             'category_id'           => 'required|exists:categories,id',
             'size_id'               => 'nullable|array',

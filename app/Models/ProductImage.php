@@ -13,7 +13,10 @@ class ProductImage extends Model
     protected $fillable = [
         'product_id',
         'color_id',
+        'size_id',
         'image',
+        'price',
+        'stock',
         'sort_order'
     ];
 
@@ -25,5 +28,10 @@ class ProductImage extends Model
     public function color()
     {
         return $this->belongsTo(Color::class);
+    }
+
+    public function size()
+    {
+        return $this->belongsTo(Size::class);
     }
 }

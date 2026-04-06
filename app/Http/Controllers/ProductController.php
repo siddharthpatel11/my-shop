@@ -93,29 +93,40 @@ class ProductController extends Controller
         $data['size_id']  = implode(',', $request->size_id ?? []);
         $data['color_id'] = implode(',', $request->color_id ?? []);
 
-        /* ===== COLOR-WISE IMAGES ===== */
-        $images = [];
+        /* ===== COLOR-WISE IMAGES (NEW NESTED STRUCTURE) ===== */
+        $productImages = [];
+        $allStoredNames = [];
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $img) {
-                // Determine name and move file
-                $name = time() . '_' . uniqid() . '.' . $img->extension();
-                $img->move(public_path('images/products'), $name);
-                $images[] = $name;
+        if ($request->has('image_data')) {
+            foreach ($request->image_data as $index => $variant) {
+                // Get row-specific variant details
+                $colorId = $variant['color_id'] ?? null;
+                $sizeId  = $variant['size_id'] ?? null;
+                $price   = $variant['price'] ?? null;
+                $stock   = $variant['stock'] ?? 0;
 
-                // Create relationship
-                $colorId = isset($request->image_colors[$index]) ? $request->image_colors[$index] : null;
+                // Handle multiple files for this specific row
+                if (isset($variant['files']) && is_array($variant['files'])) {
+                    foreach ($variant['files'] as $file) {
+                        $name = time() . '_' . uniqid() . '.' . $file->extension();
+                        $file->move(public_path('images/products'), $name);
+                        $allStoredNames[] = $name;
 
-                ProductImage::create([
-                    'product_id' => null, // Will set after product create
-                    'color_id'   => $colorId,
-                    'image'      => $name,
-                    'sort_order' => $index
-                ]);
+                        ProductImage::create([
+                            'product_id' => null, // Will set after product create
+                            'color_id'   => $colorId,
+                            'size_id'    => $sizeId,
+                            'image'      => $name,
+                            'price'      => $price,
+                            'stock'      => $stock,
+                            'sort_order' => $index
+                        ]);
+                    }
+                }
             }
         }
 
-        $data['image'] = implode(',', $images);
+        $data['image'] = implode(',', $allStoredNames);
 
         if ($request->hasFile('seo_meta_image')) {
             $name = 'seo_' . time() . '_' . uniqid() . '.' . $request->seo_meta_image->extension();
@@ -132,7 +143,7 @@ class ProductController extends Controller
         $product = Product::create($data);
 
         // Update temp product_id in images
-        ProductImage::where('product_id', null)->whereIn('image', $images)->update(['product_id' => $product->id]);
+        ProductImage::where('product_id', null)->whereIn('image', $allStoredNames)->update(['product_id' => $product->id]);
 
         // Sync main image string with table to ensure consistency
         $allImages = ProductImage::where('product_id', $product->id)->pluck('image')->toArray();
@@ -186,35 +197,53 @@ class ProductController extends Controller
             }
         }
 
-        /* ===== UPDATE EXISTING IMAGE COLORS ===== */
+        /* ===== IMAGE UPDATE LOGIC (NESTED) ===== */
+        $allStoredNames = $existingImages; // Start with non-deleted existing images
+
+        // 1. Update EXISTING variant records
         if ($request->existing_image_colors) {
             foreach ($request->existing_image_colors as $imgName => $colorId) {
                 ProductImage::where('product_id', $product->id)
                     ->where('image', $imgName)
-                    ->update(['color_id' => $colorId ?: null]);
+                    ->update([
+                        'color_id' => $colorId ?: null,
+                        'size_id'  => $request->existing_image_sizes[$imgName] ?? null,
+                        'price'    => $request->existing_image_prices[$imgName] ?? null,
+                        'stock'    => $request->existing_image_stocks[$imgName] ?? 0,
+                    ]);
             }
         }
 
-        /* ===== ADD NEW COLOR-WISE IMAGES ===== */
-        if ($request->hasFile('images')) {
-            $lastSortOrder = ProductImage::where('product_id', $product->id)->max('sort_order') ?? -1;
-            foreach ($request->file('images') as $index => $img) {
-                $name = time() . '_' . uniqid() . '.' . $img->extension();
-                $img->move(public_path('images/products'), $name);
-                $existingImages[] = $name;
+        // 2. Process NEW images (potentially multiple per variant row)
+        if ($request->has('image_data')) {
+            foreach ($request->image_data as $index => $variant) {
+                $colorId = $variant['color_id'] ?? null;
+                $sizeId  = $variant['size_id'] ?? null;
+                $price   = $variant['price'] ?? null;
+                $stock   = $variant['stock'] ?? 0;
 
-                $colorId = isset($request->image_colors[$index]) ? $request->image_colors[$index] : null;
+                if (isset($variant['files']) && is_array($variant['files'])) {
+                    foreach ($variant['files'] as $file) {
+                        $name = time() . '_' . uniqid() . '.' . $file->extension();
+                        $file->move(public_path('images/products'), $name);
+                        $allStoredNames[] = $name;
 
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'color_id'   => $colorId,
-                    'image'      => $name,
-                    'sort_order' => ++$lastSortOrder
-                ]);
+                        ProductImage::create([
+                            'product_id' => $product->id,
+                            'color_id'   => $colorId,
+                            'size_id'    => $sizeId,
+                            'image'      => $name,
+                            'price'      => $price,
+                            'stock'      => $stock,
+                            'sort_order' => 100 + $index
+                        ]);
+                    }
+                }
             }
         }
 
-        $data['image'] = implode(',', $existingImages);
+        // 3. Sync product main image column
+        $product->update(['image' => implode(',', $allStoredNames)]);
 
         /* ===== SEO & OG IMAGES ===== */
         if ($request->remove_seo_image) {
