@@ -86,44 +86,69 @@ class ProductApiController extends Controller
                 'size_id.*' => 'exists:sizes,id',
                 'color_id' => 'nullable|array',
                 'color_id.*' => 'exists:colors,id',
-                'images' => 'nullable|array',
-                'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+
+                // Variant-based image data
+                'image_data' => 'nullable|array',
+                'image_data.*.files' => 'nullable|array',
+                'image_data.*.files.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'image_data.*.color_id' => 'nullable|exists:colors,id',
+                'image_data.*.size_id' => 'nullable|exists:sizes,id',
+                'image_data.*.price' => 'nullable|numeric|min:0',
+                'image_data.*.stock' => 'nullable|integer|min:0',
             ], [
                 'name.unique' => 'A product with this name already exists. Please choose a different name.',
             ]);
 
-            // Convert arrays to comma-separated strings
-            $validated['size_id'] = isset($validated['size_id'])
-                ? implode(',', $validated['size_id'])
-                : null;
+            // Convert core arrays to comma-separated strings
+            $validated['size_id'] = isset($validated['size_id']) ? implode(',', $validated['size_id']) : null;
+            $validated['color_id'] = isset($validated['color_id']) ? implode(',', $validated['color_id']) : null;
 
-            $validated['color_id'] = isset($validated['color_id'])
-                ? implode(',', $validated['color_id'])
-                : null;
+            $validated['status'] = 'active';
+            $product = Product::create($validated);
 
-            // Handle multiple image uploads
-            $images = [];
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $name = time() . '_' . uniqid() . '.' . $image->extension();
-                    
-                    // RESIZE and SAVE via Intervention
-                    $path = public_path('images/products/' . $name);
-                    Image::read($image)->scale(width: 1200)->save($path);
-                    
-                    $images[] = $name;
+            $allStoredNames = [];
+
+            // Handle multiple variant rows
+            if ($request->has('image_data')) {
+                foreach ($request->image_data as $index => $variant) {
+                    $colorId = $variant['color_id'] ?? null;
+                    $sizeId  = $variant['size_id'] ?? null;
+                    $price   = $variant['price'] ?? null;
+                    $stock   = $variant['stock'] ?? 0;
+
+                    if (isset($variant['files']) && is_array($variant['files'])) {
+                        foreach ($variant['files'] as $file) {
+                            $name = time() . '_' . uniqid() . '.' . $file->extension();
+
+                            // RESIZE and SAVE via Intervention
+                            $path = public_path('images/products/' . $name);
+                            Image::read($file)->scale(width: 1200)->save($path);
+
+                            $allStoredNames[] = $name;
+
+                            \App\Models\ProductImage::create([
+                                'product_id' => $product->id,
+                                'color_id'   => $colorId,
+                                'size_id'    => $sizeId,
+                                'image'      => $name,
+                                'price'      => $price,
+                                'stock'      => $stock,
+                                'sort_order' => $index
+                            ]);
+                        }
+                    }
                 }
             }
 
-            $validated['image'] = !empty($images) ? implode(',', $images) : null;
-            $validated['status'] = 'active';
-
-            $product = Product::create($validated);
+            // Update main product image column with full gallery string
+            if (!empty($allStoredNames)) {
+                $product->update(['image' => implode(',', $allStoredNames)]);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Product created successfully.',
-                'data' => new ProductResource($product->load('category'))
+                'data' => new ProductResource($product->load(['category', 'images', 'images.color', 'images.size']))
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -160,58 +185,119 @@ class ProductApiController extends Controller
                 'size_id.*' => 'exists:sizes,id',
                 'color_id' => 'nullable|array',
                 'color_id.*' => 'exists:colors,id',
-                'images' => 'nullable|array',
-                'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+
+                // Existing variant updates
+                'existing_image_data' => 'nullable|array',
+                'existing_image_data.*.color_id' => 'nullable|exists:colors,id',
+                'existing_image_data.*.size_id' => 'nullable|exists:sizes,id',
+                'existing_image_data.*.price' => 'nullable|numeric|min:0',
+                'existing_image_data.*.stock' => 'nullable|integer|min:0',
+
+                // Inline files for existing variants
+                'existing_variant_files' => 'nullable|array',
+                'existing_variant_files.*' => 'nullable|array',
+                'existing_variant_files.*.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+
+                // New variant images
+                'image_data' => 'nullable|array',
+                'image_data.*.files' => 'nullable|array',
+                'image_data.*.files.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'image_data.*.color_id' => 'nullable|exists:colors,id',
+                'image_data.*.size_id' => 'nullable|exists:sizes,id',
+                'image_data.*.price' => 'nullable|numeric|min:0',
+                'image_data.*.stock' => 'nullable|integer|min:0',
+
                 'remove_images' => 'nullable|array',
                 'remove_images.*' => 'string',
             ], [
                 'name.unique' => 'A product with this name already exists. Please choose a different name.',
             ]);
 
-            // Convert arrays to comma-separated strings
-            $validated['size_id'] = isset($validated['size_id'])
-                ? implode(',', $validated['size_id'])
-                : null;
+            // Convert core arrays to comma-separated strings
+            $validated['size_id'] = isset($validated['size_id']) ? implode(',', $validated['size_id']) : null;
+            $validated['color_id'] = isset($validated['color_id']) ? implode(',', $validated['color_id']) : null;
 
-            $validated['color_id'] = isset($validated['color_id'])
-                ? implode(',', $validated['color_id'])
-                : null;
-
-            // Handle existing images
-            $existingImages = $product->image ? explode(',', $product->image) : [];
-
-            // Remove selected images
+            // 1. Handle image removals
             if ($request->has('remove_images')) {
-                foreach ($request->remove_images as $img) {
-                    $path = public_path('images/products/' . $img);
-                    if (file_exists($path)) {
-                        unlink($path);
+                foreach ($request->remove_images as $imgName) {
+                    $path = public_path('images/products/' . $imgName);
+                    if (file_exists($path)) unlink($path);
+                    \App\Models\ProductImage::where('product_id', $product->id)->where('image', $imgName)->delete();
+                }
+            }
+
+            // 2. Update existing variant metadata & process inline files
+            if ($request->has('existing_image_data')) {
+                foreach ($request->existing_image_data as $imgId => $meta) {
+                    \App\Models\ProductImage::where('id', $imgId)->update([
+                        'color_id' => $meta['color_id'] ?: null,
+                        'size_id'  => $meta['size_id'] ?? null,
+                        'price'    => $meta['price'] ?? null,
+                        'original_price' => $meta['original_price'] ?? null,
+                        'stock'    => $meta['stock'] ?? 0,
+                    ]);
+
+                    // Add new files to this specific variant
+                    if ($request->hasFile("existing_variant_files.{$imgId}")) {
+                        $files = $request->file("existing_variant_files.{$imgId}");
+                        foreach ($files as $file) {
+                            $name = time() . '_' . uniqid() . '.' . $file->extension();
+                            $path = public_path('images/products/' . $name);
+                            Image::read($file)->scale(width: 1200)->save($path);
+
+                            \App\Models\ProductImage::create([
+                                'product_id' => $product->id,
+                                'color_id'   => $meta['color_id'] ?: null,
+                                'size_id'    => $meta['size_id'] ?? null,
+                                'image'      => $name,
+                                'price'      => $meta['price'] ?? null,
+                                'original_price' => $meta['original_price'] ?? null,
+                                'stock'      => $meta['stock'] ?? 0,
+                                'sort_order' => 110
+                            ]);
+                        }
                     }
-                    $existingImages = array_diff($existingImages, [$img]);
                 }
             }
 
-            // Add new images
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $name = time() . '_' . uniqid() . '.' . $image->extension();
-                    
-                    // RESIZE and SAVE via Intervention
-                    $path = public_path('images/products/' . $name);
-                    Image::read($image)->scale(width: 1200)->save($path);
-                    
-                    $existingImages[] = $name;
+            // 3. Process entirely new variant rows
+            if ($request->has('image_data')) {
+                foreach ($request->image_data as $index => $variant) {
+                    $colorId = $variant['color_id'] ?? null;
+                    $sizeId  = $variant['size_id'] ?? null;
+                    $price   = $variant['price'] ?? null;
+                    $stock   = $variant['stock'] ?? 0;
+
+                    if (isset($variant['files']) && is_array($variant['files'])) {
+                        foreach ($variant['files'] as $file) {
+                            $name = time() . '_' . uniqid() . '.' . $file->extension();
+                            $path = public_path('images/products/' . $name);
+                            Image::read($file)->scale(width: 1200)->save($path);
+
+                            \App\Models\ProductImage::create([
+                                'product_id' => $product->id,
+                                'color_id'   => $colorId,
+                                'size_id'    => $sizeId,
+                                'image'      => $name,
+                                'price'      => $price,
+                                'stock'      => $stock,
+                                'sort_order' => 200 + $index
+                            ]);
+                        }
+                    }
                 }
             }
 
-            $validated['image'] = !empty($existingImages) ? implode(',', $existingImages) : null;
+            // Sync main images column
+            $allImages = \App\Models\ProductImage::where('product_id', $product->id)->orderBy('sort_order')->pluck('image')->toArray();
+            $validated['image'] = implode(',', $allImages);
 
             $product->update($validated);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Product updated successfully.',
-                'data' => new ProductResource($product->load('category'))
+                'data' => new ProductResource($product->load(['category', 'images', 'images.color', 'images.size']))
             ]);
         } catch (ValidationException $e) {
             return response()->json([

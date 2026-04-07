@@ -71,7 +71,7 @@ class ProductController extends Controller
                 $size->makeHidden($this->hiddenLocalizationFields);
             });
             $product->setAttribute('available_sizes', $sizes);
-            
+
             // Stock logic
             $product->setAttribute('stock_status', $this->getStockStatus($product->stock));
 
@@ -79,12 +79,14 @@ class ProductController extends Controller
             $product->setAttribute('image_url', $product->image ? asset('images/products/' . $product->image) : asset('images/no-image.png'));
 
             // Map gallery images with full URLs and color_id/size_id
-            $gallery = $product->images->map(function($img) {
+            $gallery = $product->images->map(function ($img) {
                 return [
                     'id' => $img->id,
                     'image_url' => asset('images/products/' . $img->image),
                     'color_id' => $img->color_id,
                     'size_id' => $img->size_id,
+                    'price' => $img->price,
+                    'stock' => $img->stock,
                     'sort_order' => $img->sort_order
                 ];
             });
@@ -150,7 +152,7 @@ class ProductController extends Controller
         $product->setAttribute('image_url', $product->image ? asset('images/products/' . $product->image) : asset('images/no-image.png'));
 
         // Map gallery images with full URLs and variant data
-        $gallery = $product->images->map(function($img) {
+        $gallery = $product->images->map(function ($img) {
             return [
                 'id'         => $img->id,
                 'image_url'  => asset('images/products/' . $img->image),

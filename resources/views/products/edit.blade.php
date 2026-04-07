@@ -144,21 +144,26 @@
                         @foreach ($product->images as $img)
                             <div class="col-md-4 col-lg-3 mb-3">
                                 <div class="card shadow-sm border-0 h-100">
-                                    <div class="card-img-wrapper text-center p-2 position-relative" style="background:#f8f9fa; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="card-img-wrapper text-center p-2 position-relative"
+                                        style="background:#f8f9fa; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                         <img src="{{ asset('images/products/' . $img->image) }}"
                                             style="width:120px;height:120px;object-fit:contain;">
-                                        
+
                                         <!-- Add More Images Button -->
                                         <div class="position-absolute bottom-0 end-0 p-1">
-                                            <button type="button" class="btn btn-xs btn-success trigger-inline-file" title="Add more images for this variant">
+                                            <button type="button" class="btn btn-xs btn-success trigger-inline-file"
+                                                title="Add more images for this variant">
                                                 <i class="fa fa-plus"></i>
                                             </button>
-                                            <input type="file" name="existing_variant_files[{{ $img->id }}][]" class="d-none inline-image-input" accept="image/*" multiple data-img-id="{{ $img->id }}">
+                                            <input type="file" name="existing_variant_files[{{ $img->id }}][]"
+                                                class="d-none inline-image-input" accept="image/*" multiple
+                                                data-img-id="{{ $img->id }}">
                                         </div>
                                     </div>
                                     <div class="card-body p-2">
                                         <!-- Inline Preview Container -->
-                                        <div class="inline-preview-container d-flex flex-wrap gap-1 mb-2" id="inlinePreview{{ $img->id }}"></div>
+                                        <div class="inline-preview-container d-flex flex-wrap gap-1 mb-2"
+                                            id="inlinePreview{{ $img->id }}"></div>
                                         <div class="mb-2">
                                             <label class="small fw-bold">Color:</label>
                                             <select name="existing_image_data[{{ $img->id }}][color_id]"
@@ -228,13 +233,16 @@
                             <div class="col-md-4">
                                 <label class="small fw-bold">Image(s):</label>
                                 <div class="input-group input-group-sm">
-                                    <button type="button" class="btn btn-success trigger-file-input" title="Browse Images">
+                                    <button type="button" class="btn btn-success trigger-file-input"
+                                        title="Browse Images">
                                         <i class="fa fa-plus"></i>
                                     </button>
                                     <input type="file" name="image_data[0][files][]" class="form-control image-input"
                                         accept="image/*" multiple>
                                 </div>
-                                <div class="mt-2 preview-container d-flex flex-wrap gap-2" style="min-height: 50px; border: 1px dashed #ddd; border-radius: 5px; padding: 5px;"></div>
+                                <div class="mt-2 preview-container d-flex flex-wrap gap-2"
+                                    style="min-height: 50px; border: 1px dashed #ddd; border-radius: 5px; padding: 5px;">
+                                </div>
                             </div>
 
                             <div class="col-md-2 p-1">
@@ -573,7 +581,7 @@
 
                 // Update the actual input.files so the form sends everything
                 input.files = rowFiles[idx].files;
-                
+
                 renderRowGallery(row, idx);
             });
 
@@ -654,7 +662,7 @@
                     }
                     inlineFiles[imgId] = dt;
                     let input = document.querySelector(`.inline-image-input[data-img-id="${imgId}"]`);
-                    if(input) input.files = dt.files;
+                    if (input) input.files = dt.files;
                     renderInlineGallery(imgId);
                 }
             };
@@ -680,7 +688,9 @@
                     if (existingVariants.includes(combo) && (c || s)) {
                         row.addClass('border-warning').css('background', '#fff3cd');
                         if (!row.find('.dup-warning').length) {
-                            row.find('.col-md-4').append('<div class="dup-warning text-warning small fw-bold">Note: This variant matches an existing one above. Add images directly above for best results!</div>');
+                            row.find('.col-md-4').append(
+                                '<div class="dup-warning text-warning small fw-bold">Note: This variant matches an existing one above. Add images directly above for best results!</div>'
+                            );
                         }
                     } else {
                         row.removeClass('border-warning').css('background', '');
@@ -699,7 +709,7 @@
             function renderRowGallery(row, idx) {
                 let container = row.find('.preview-container');
                 container.html('');
-                
+
                 if (rowFiles[idx] && rowFiles[idx].files.length > 0) {
                     Array.from(rowFiles[idx].files).forEach((file, fIdx) => {
                         let reader = new FileReader();

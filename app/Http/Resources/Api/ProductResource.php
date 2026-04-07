@@ -31,12 +31,8 @@ class ProductResource extends JsonResource
                 ];
             }),
 
-            //Images (array)
-            'images' => $this->image
-                ? array_map(function ($img) {
-                    return url('images/products/' . $img);
-                }, explode(',', $this->image))
-                : [],
+            //Images (Detailed Variant Collection)
+            'images' => ProductImageResource::collection($this->whenLoaded('images')),
 
             //Sizes (array of Ids)
             'size_ids' => $this->sizeIds(),

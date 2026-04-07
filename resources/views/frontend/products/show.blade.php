@@ -57,7 +57,9 @@
                 // Filter images by color or show all if no color selected/general images exist
                 // Initially, we show either general images (color_id null) or images of the first selected color
                 $initialColorId = $colorIds[0] ?? null;
-                $displayImages = $allImages->filter(fn($img) => $img->color_id == $initialColorId || $img->color_id === null);
+                $displayImages = $allImages->filter(
+                    fn($img) => $img->color_id == $initialColorId || $img->color_id === null,
+                );
                 if ($displayImages->isEmpty() && !$allImages->isEmpty()) {
                     $displayImages = collect([$allImages->first()]);
                 }
@@ -87,7 +89,8 @@
                                 <img src="{{ asset('images/products/' . $img->image) }}"
                                     class="img-thumbnail thumbnail-image {{ $index === 0 ? 'active' : '' }}"
                                     onclick="changeMainImage('{{ asset('images/products/' . $img->image) }}', this)"
-                                    style="cursor: pointer; height: 100px; object-fit: contain;" alt="{{ $product->name }}">
+                                    style="cursor: pointer; height: 100px; object-fit: contain;"
+                                    alt="{{ $product->name }}">
                             </div>
                         @endforeach
                     </div>
@@ -131,7 +134,8 @@
 
                     {{-- Price --}}
                     <div class="mb-4">
-                        <h2 class="text-primary fw-bold mb-0" id="productPriceDisplay">₹{{ number_format($product->price, 2) }}</h2>
+                        <h2 class="text-primary fw-bold mb-0" id="productPriceDisplay">
+                            ₹{{ number_format($product->price, 2) }}</h2>
                         {{-- Removed stockStatusDisplay from here (Upar ny) --}}
                         <small class="text-muted">{{ __('products.inclusive_taxes') }}</small>
                     </div>
@@ -160,20 +164,21 @@
                                         // Calculate total stock for this color across all images
                                         $colorStock = $allImages->where('color_id', (int) $cid)->sum('stock');
                                         // Fallback to product main if no specific color image
-                                        $imageUrl = $colorImage ? asset('images/products/' . $colorImage->image) : asset('images/products/no-image.png');
+                                        $imageUrl = $colorImage
+                                            ? asset('images/products/' . $colorImage->image)
+                                            : asset('images/products/no-image.png');
                                     @endphp
                                     @if ($color)
-                                         <div class="color-option {{ $index === 0 ? 'selected' : '' }} {{ $colorStock <= 0 ? 'out-of-stock' : '' }}"
-                                             data-color-id="{{ $color->id }}" data-color-name="{{ $color->name }}"
-                                             data-is-out-of-stock="{{ $colorStock <= 0 ? '1' : '0' }}"
-                                             onclick="handleColorSelection(this)">
+                                        <div class="color-option {{ $index === 0 ? 'selected' : '' }} {{ $colorStock <= 0 ? 'out-of-stock' : '' }}"
+                                            data-color-id="{{ $color->id }}" data-color-name="{{ $color->name }}"
+                                            data-is-out-of-stock="{{ $colorStock <= 0 ? '1' : '0' }}"
+                                            onclick="handleColorSelection(this)">
                                             @if ($colorImage)
                                                 <div class="color-image-thumb">
                                                     <img src="{{ $imageUrl }}" alt="{{ $color->name }}">
                                                 </div>
                                             @else
-                                                <div class="color-swatch"
-                                                    style="background-color: {{ $color->hex_code }}">
+                                                <div class="color-swatch" style="background-color: {{ $color->hex_code }}">
                                                 </div>
                                             @endif
                                             <small class="color-label">{{ $color->name }}</small>
@@ -197,7 +202,8 @@
                                     @if ($size)
                                         <div class="size-option {{ $index === 0 ? 'selected' : '' }}"
                                             data-size-id="{{ $size->id }}"
-                                            data-size-name="{{ $size->code ?? $size->name }}" onclick="handleSizeSelection(this)">
+                                            data-size-name="{{ $size->code ?? $size->name }}"
+                                            onclick="handleSizeSelection(this)">
                                             {{ $size->code ?? $size->name }}
                                         </div>
                                     @endif
@@ -227,9 +233,9 @@
                         </div>
                     </div>
 
-                        {{-- Stock Status Display removed from here --}}
+                    {{-- Stock Status Display removed from here --}}
 
-                        {{-- Action Buttons --}}
+                    {{-- Action Buttons --}}
                     <div class="d-flex gap-3 mb-4" id="main-product-actions">
                         @auth('customer')
                             @if ($product->stock > 0)
@@ -242,9 +248,10 @@
                                         <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
                                     </button>
                                 @endif
-                                 <button id="buyNowBtn" class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
+                                <button id="buyNowBtn" class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
                                     <i class="fas fa-bolt me-2"></i>
-                                    <span id="buyNowText">{{ __('products.buy_now', ['price' => number_format($product->price)]) }}</span>
+                                    <span
+                                        id="buyNowText">{{ __('products.buy_now', ['price' => number_format($product->price)]) }}</span>
                                 </button>
                             @else
                                 <button class="btn btn-secondary btn-lg flex-fill disabled">
@@ -444,7 +451,7 @@
             background: #fdfdfd;
         }
 
-        .color-option.out-of-stock img, 
+        .color-option.out-of-stock img,
         .color-option.out-of-stock .color-swatch {
             filter: grayscale(1) opacity(0.5);
         }
@@ -568,7 +575,7 @@
             z-index: 10;
             display: none;
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .main-image-badge.out-of-stock {
@@ -721,12 +728,12 @@
 
             // Fallback 1: Match only color (Color images usually carry the price/stock)
             if (!match && selectedColor) {
-               match = productImages.find(img => String(img.color_id || '') === String(selectedColor || ''));
+                match = productImages.find(img => String(img.color_id || '') === String(selectedColor || ''));
             }
 
             // Fallback 2: Match only size
             if (!match && selectedSize) {
-               match = productImages.find(img => String(img.size_id || '') === String(selectedSize || ''));
+                match = productImages.find(img => String(img.size_id || '') === String(selectedSize || ''));
             }
 
             const priceDisplay = document.getElementById('productPriceDisplay');
@@ -738,17 +745,15 @@
 
             if (match) {
                 const price = match.price ? match.price : basePrice;
-                const formattedPrice = `₹${parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                
+                const formattedPrice =
+                    `₹${parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 // Update Price Display
                 if (priceDisplay) priceDisplay.textContent = formattedPrice;
-                
                 // Update Buy Now Button
                 if (buyNowText) buyNowText.textContent = `Buy Now at ${formattedPrice}`;
 
                 // Update Stock and Badge
                 const stock = parseInt(match.stock || 0);
-                
                 if (mainBadge) {
                     if (stock <= 0) {
                         mainBadge.innerHTML = '<i class="fas fa-times-circle me-1"></i> Out of Stock';
@@ -793,7 +798,8 @@
                 }
             } else {
                 if (mainBadge) mainBadge.style.display = 'none';
-                const formattedBasePrice = `₹${parseFloat(basePrice).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                const formattedBasePrice =
+                    `₹${parseFloat(basePrice).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 if (priceDisplay) priceDisplay.textContent = formattedBasePrice;
                 if (buyNowText) buyNowText.textContent = `Buy Now at ${formattedBasePrice}`;
                 if (addToCartBtn) addToCartBtn.disabled = false;
@@ -809,7 +815,7 @@
             if (currentValue < maxValue) {
                 input.value = currentValue + 1;
             }
-        }   
+        }
 
         function decrementQuantity() {
             const input = document.getElementById('quantity');
@@ -1012,38 +1018,38 @@
                     })
                 })
                 .then(async response => {
-                        if (response.status === 401) {
-                            window.location.href = "{{ route('customer.login') }}";
-                            return;
-                        }
+                    if (response.status === 401) {
+                        window.location.href = "{{ route('customer.login') }}";
+                        return;
+                    }
 
-                        const data = await response.json();
+                    const data = await response.json();
 
-                        if (data.status === 'success') {
-                            showNotification(data.message, 'success');
+                    if (data.status === 'success') {
+                        showNotification(data.message, 'success');
 
-                            if (data.action === 'added') {
-                                icon.classList.remove('far');
-                                icon.classList.add('fas');
-                                element.classList.add('active');
-                            } else {
-                                icon.classList.remove('fas');
-                                icon.classList.add('far');
-                                element.classList.remove('active');
-                            }
-
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
+                        if (data.action === 'added') {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                            element.classList.add('active');
                         } else {
-                            showNotification(data.message || 'Error updating wishlist', 'error');
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                            element.classList.remove('active');
                         }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        showNotification('Something went wrong', 'error');
-                    });
-            }
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification(data.message || 'Error updating wishlist', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    showNotification('Something went wrong', 'error');
+                });
+        }
     </script>
 
     {{-- Font Awesome for icons --}}
