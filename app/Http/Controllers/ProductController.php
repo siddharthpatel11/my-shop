@@ -207,17 +207,36 @@ class ProductController extends Controller
         /* ===== IMAGE UPDATE LOGIC (NESTED) ===== */
         $allStoredNames = $existingImages; // Start with non-deleted existing images
 
-        // 1. Update EXISTING variant records
-        if ($request->existing_image_colors) {
-            foreach ($request->existing_image_colors as $imgName => $colorId) {
-                ProductImage::where('product_id', $product->id)
-                    ->where('image', $imgName)
-                    ->update([
-                        'color_id' => $colorId ?: null,
-                        'size_id'  => $request->existing_image_sizes[$imgName] ?? null,
-                        'price'    => $request->existing_image_prices[$imgName] ?? null,
-                        'stock'    => $request->existing_image_stocks[$imgName] ?? 0,
-                    ]);
+        // 1. Update EXISTING variant records & Process NEW images for them
+        if ($request->has('existing_image_data')) {
+            foreach ($request->existing_image_data as $imgId => $meta) {
+                // Update basic metadata for the existing record
+                ProductImage::where('id', $imgId)->update([
+                    'color_id' => $meta['color_id'] ?: null,
+                    'size_id'  => $meta['size_id'] ?? null,
+                    'price'    => $meta['price'] ?? null,
+                    'stock'    => $meta['stock'] ?? 0,
+                ]);
+
+                // Process any new files uploaded specifically for THIS variant
+                if ($request->hasFile("existing_variant_files.{$imgId}")) {
+                    $files = $request->file("existing_variant_files.{$imgId}");
+                    foreach ($files as $file) {
+                        $name = time() . '_' . uniqid() . '.' . $file->extension();
+                        $path = public_path('images/products/' . $name);
+                        Image::read($file)->scale(width: 1200)->save($path);
+
+                        ProductImage::create([
+                            'product_id' => $product->id,
+                            'color_id'   => $meta['color_id'] ?: null,
+                            'size_id'    => $meta['size_id'] ?? null,
+                            'image'      => $name,
+                            'price'      => $meta['price'] ?? null,
+                            'stock'      => $meta['stock'] ?? 0,
+                            'sort_order' => 110 // Add slightly later in order
+                        ]);
+                    }
+                }
             }
         }
 

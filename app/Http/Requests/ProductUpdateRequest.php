@@ -30,6 +30,9 @@ class ProductUpdateRequest extends FormRequest
             'existing_image_data.*.size_id'  => 'nullable|exists:sizes,id',
             'existing_image_data.*.price'    => 'nullable|numeric|min:0',
             'existing_image_data.*.stock'    => 'nullable|integer|min:0',
+            'existing_variant_files'         => 'nullable|array',
+            'existing_variant_files.*'       => 'nullable|array',
+            'existing_variant_files.*.*'     => 'image|mimes:jpeg,png,jpg,webp|max:2048',
 
             // New variant images
             'image_data'               => 'nullable|array',

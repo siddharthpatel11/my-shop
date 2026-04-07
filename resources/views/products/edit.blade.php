@@ -144,11 +144,21 @@
                         @foreach ($product->images as $img)
                             <div class="col-md-4 col-lg-3 mb-3">
                                 <div class="card shadow-sm border-0 h-100">
-                                    <div class="card-img-wrapper text-center p-2" style="background:#f8f9fa;">
+                                    <div class="card-img-wrapper text-center p-2 position-relative" style="background:#f8f9fa; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                         <img src="{{ asset('images/products/' . $img->image) }}"
                                             style="width:120px;height:120px;object-fit:contain;">
+                                        
+                                        <!-- Add More Images Button -->
+                                        <div class="position-absolute bottom-0 end-0 p-1">
+                                            <button type="button" class="btn btn-xs btn-success trigger-inline-file" title="Add more images for this variant">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                            <input type="file" name="existing_variant_files[{{ $img->id }}][]" class="d-none inline-image-input" accept="image/*" multiple data-img-id="{{ $img->id }}">
+                                        </div>
                                     </div>
                                     <div class="card-body p-2">
+                                        <!-- Inline Preview Container -->
+                                        <div class="inline-preview-container d-flex flex-wrap gap-1 mb-2" id="inlinePreview{{ $img->id }}"></div>
                                         <div class="mb-2">
                                             <label class="small fw-bold">Color:</label>
                                             <select name="existing_image_data[{{ $img->id }}][color_id]"
@@ -586,6 +596,105 @@
                     renderRowGallery(row, idx);
                 }
             });
+
+            /* ================= INLINE IMAGE ADDITION (FOR EXISTING VARIANTS) ================= */
+
+            $(document).on('click', '.trigger-inline-file', function() {
+                $(this).next('.inline-image-input').click();
+            });
+
+            const inlineFiles = {}; // DataTransfer for each existing image ID
+
+            $(document).on('change', '.inline-image-input', function() {
+                let input = this;
+                let files = input.files;
+                if (!files || files.length === 0) return;
+
+                let imgId = $(input).data('img-id');
+
+                if (!inlineFiles[imgId]) {
+                    inlineFiles[imgId] = new DataTransfer();
+                }
+
+                Array.from(files).forEach(file => {
+                    inlineFiles[imgId].items.add(file);
+                });
+
+                input.files = inlineFiles[imgId].files;
+                renderInlineGallery(imgId);
+            });
+
+            function renderInlineGallery(imgId) {
+                let container = $(`#inlinePreview${imgId}`);
+                container.html('');
+                let files = inlineFiles[imgId].files;
+
+                Array.from(files).forEach((file, fIdx) => {
+                    let reader = new FileReader();
+                    reader.onload = e => {
+                        container.append(`
+                            <div class="position-relative me-1 mb-1" style="cursor:pointer;" title="Remove" onclick="removeInlineThumb(${imgId}, ${fIdx})">
+                                <img src="${e.target.result}" style="width:35px;height:35px;object-fit:cover;border:1px solid #28a745;border-radius:3px;">
+                                <div class="position-absolute top-0 end-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width:12px;height:12px;font-size:8px;margin-top:-3px;margin-right:-3px;">
+                                    <i class="fa fa-times"></i>
+                                </div>
+                            </div>
+                        `);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            window.removeInlineThumb = function(imgId, fIdx) {
+                if (inlineFiles[imgId]) {
+                    let dt = new DataTransfer();
+                    let files = inlineFiles[imgId].files;
+                    for (let i = 0; i < files.length; i++) {
+                        if (i != fIdx) dt.items.add(files[i]);
+                    }
+                    inlineFiles[imgId] = dt;
+                    let input = document.querySelector(`.inline-image-input[data-img-id="${imgId}"]`);
+                    if(input) input.files = dt.files;
+                    renderInlineGallery(imgId);
+                }
+            };
+
+            /* ================= PREVENT DUPLICATE VARIANTS ================= */
+
+            function checkDuplicateVariant() {
+                // Get all existing color-size combinations
+                let existingVariants = [];
+                $('.card-body').each(function() {
+                    let c = $(this).find('.color-selector').val();
+                    let s = $(this).find('.size-selector').val();
+                    if (c || s) existingVariants.push(`${c}-${s}`);
+                });
+
+                // Check new rows
+                $('.image-row').each(function() {
+                    let row = $(this);
+                    let c = row.find('.color-selector').val();
+                    let s = row.find('.size-selector').val();
+                    let combo = `${c}-${s}`;
+
+                    if (existingVariants.includes(combo) && (c || s)) {
+                        row.addClass('border-warning').css('background', '#fff3cd');
+                        if (!row.find('.dup-warning').length) {
+                            row.find('.col-md-4').append('<div class="dup-warning text-warning small fw-bold">Note: This variant matches an existing one above. Add images directly above for best results!</div>');
+                        }
+                    } else {
+                        row.removeClass('border-warning').css('background', '');
+                        row.find('.dup-warning').remove();
+                    }
+                });
+            }
+
+            $(document).on('change', '.color-selector, .size-selector', function() {
+                checkDuplicateVariant();
+            });
+
+            // Initial check
+            checkDuplicateVariant();
 
             function renderRowGallery(row, idx) {
                 let container = row.find('.preview-container');
