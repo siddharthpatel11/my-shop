@@ -457,9 +457,14 @@
 
     {{-- Firebase Messaging --}}
     @auth
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
-        <script>
+        @php
+            $is2faPending = auth()->user()->google2fa_enabled && !session('2fa_verified');
+        @endphp
+
+        @if (!$is2faPending)
+            <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+            <script>
             const firebaseConfig = {
                 apiKey: "AIzaSyASbdtKoxsgRTkvos2oNn4PMAIYidlXYz0",
                 authDomain: "my-shop-a2caf.firebaseapp.com",
@@ -526,6 +531,7 @@
 
             initFirebaseMessagingRegistration();
         </script>
+        @endif
     @endauth
 
     {{-- Global Alert Handler --}}
@@ -578,6 +584,30 @@
                 confirmButtonText: 'Yes, delete it!'
             });
         }
+
+        // --- Real-time Session synchronization (Multi-Browser Support) ---
+        @if (auth()->check() && (!(auth()->user()->google2fa_enabled) || session('2fa_verified')))
+        (function() {
+            // --- Multi-Browser Heartbeat (Polling) ---
+            setInterval(async () => {
+                try {
+                    const response = await fetch('{{ route('admin.auth-check') }}', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    // If 401 Unauthenticated, the session was likely invalidated.
+                    if (response.status === 401) {
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    // Ignore connectivity errors during background heartbeat
+                }
+            }, 5000); // Check every 5 seconds
+        })();
+        @endif
     </script>
 </body>
 

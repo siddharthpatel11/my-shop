@@ -1,13 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="UTF-8">
 
     @php
-        $layoutSettings = $layoutSettings ?? new \App\Models\LayoutSetting();
-        $appName = $layoutSettings->frontend_app_name ?? config('app.name', 'MyShop');
+        $layoutSettings = $layoutSettings ?? \App\Models\LayoutSetting::getActive();
+        $appName = $layoutSettings->frontend_app_name ?: config('app.name', 'MyShop');
     @endphp
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- Universal Theme Detection (Prevent Flicker) --}}
+    <script>
+        (function() {
+            const themeMode = @json(auth('customer')->check() ? auth('customer')->user()->theme_mode : 'system');
+            const htmlElement = document.documentElement;
+
+            if (themeMode === 'dark' || (themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)')
+                    .matches)) {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+            } else {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+            }
+        })();
+    </script>
 
     @if (isset($globalMetaTag) && $globalMetaTag)
         {{-- Display Global SEO/OG Tags --}}
@@ -42,16 +60,25 @@
         <meta property="og:url" content="{{ request()->url() }}">
         <meta property="og:type" content="website">
     @else
-        <title>@yield('title', $appName)</title>
+        <title>
+            @hasSection('title')
+                @yield('title') | {{ $appName }}@else{{ $appName }}
+            @endif
+        </title>
+        @yield('title_and_meta')
+        @yield('meta')
     @endif
-
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Favicon -->
     @if (isset($layoutSettings) && $layoutSettings->frontend_favicon_url)
         <link rel="icon" type="image/x-icon" href="{{ $layoutSettings->frontend_favicon_url }}">
+    @else
+        <link rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 640 512%22 fill=%22%23667eea%22><path d=%22M36.8 192H603.2c20.3 0 36.8-16.5 36.8-36.8c0-7.3-2.2-14.4-6.2-20.4L558.2 21.4C549.3 8 534.4 0 518.3 0H121.7c-16 0-31 8-39.9 21.4L6.2 134.7c-4 6.1-6.2 13.2-6.2 20.4C0 175.5 16.5 192 36.8 192zM64 224V464c0 26.5 21.5 48 48 48H528c26.5 0 48-21.5 48-48V224H64zM288 312v112c0 13.3-10.7 24-24 24H168c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24zm208 112c0 13.3-10.7 24-24 24H376c-13.3 0-24-10.7-24-24V312c0-13.3 10.7-24 24-24h96c13.3 0 24 10.7 24 24v112z%22/></svg>">
     @endif
+
+    {{-- jQuery --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     {{-- Bootstrap --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -187,6 +214,137 @@
         .no-caret::after {
             display: none !important;
         }
+
+        /* Fix for z-index issues with sticky elements */
+        .navbar.sticky-top {
+            z-index: 1050 !important;
+        }
+
+        .dropdown-menu {
+            z-index: 1060 !important;
+        }
+
+        /* Dark Mode Aesthetic Adjustments */
+        [data-bs-theme="dark"] .bg-white {
+            background-color: var(--bs-body-bg) !important;
+        }
+
+        [data-bs-theme="dark"] .card {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .bg-light {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        [data-bs-theme="dark"] .text-muted {
+            color: #adb5bd !important;
+        }
+
+        [data-bs-theme="dark"] .navbar {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Fix for gradient text in dark mode */
+        [data-bs-theme="dark"] .navbar-brand-text {
+            background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        [data-bs-theme="dark"] .navbar .nav-link,
+        [data-bs-theme="dark"] .navbar .navbar-toggler-icon,
+        [data-bs-theme="dark"] .navbar .cart-icon-wrapper i,
+        [data-bs-theme="dark"] .navbar .lang-selector-box,
+        [data-bs-theme="dark"] .navbar .lang-selector-caret {
+            color: #f8f9fa !important;
+        }
+
+        [data-bs-theme="dark"] .navbar .lang-selector-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        [data-bs-theme="dark"] .navbar .nav-link:hover {
+            color: #667eea !important;
+        }
+
+        [data-bs-theme="dark"] .navbar .nav-link.active {
+            color: #a5b4fc !important;
+            border-bottom-color: #a5b4fc;
+        }
+
+        /* High-Fidelity Theme Switcher */
+        .theme-switcher-group {
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 80px;
+            position: relative;
+            display: flex;
+            width: 100%;
+            height: 48px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        [data-bs-theme="dark"] .theme-switcher-group {
+            background: #1e293b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .theme-switcher-group label {
+            flex: 1;
+            z-index: 2;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin: 0;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+            user-select: none;
+        }
+
+        .theme-switcher-group input:checked + label {
+            color: #fff;
+        }
+
+        [data-bs-theme="dark"] .theme-switcher-group label {
+            color: #94a3b8;
+        }
+
+        [data-bs-theme="dark"] .theme-switcher-group input:checked + label {
+            color: #fff;
+        }
+
+        .theme-switcher-group .theme-bubble {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(33.333% - 4px);
+            height: calc(100% - 8px);
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border-radius: 80px;
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Bubble Positioning */
+        #theme-light:checked ~ .theme-bubble { transform: translateX(0); }
+        #theme-dark:checked ~ .theme-bubble { transform: translateX(100%); }
+        #theme-system:checked ~ .theme-bubble { transform: translateX(200%); }
+
+        /* Icon Animation */
+        .theme-switcher-group label i {
+            transition: transform 0.3s ease;
+        }
+        .theme-switcher-group input:checked + label i {
+            transform: scale(1.15);
+        }
     </style>
 
     @stack('styles')
@@ -259,9 +417,10 @@
                     @auth('customer')
                         {{-- My Panel Consolidated into Profile --}}
                     @endauth
-                    <li class="nav-item ms-lg-3">
-                        <a class="nav-link position-relative {{ request()->routeIs('frontend.cart') || request()->routeIs('checkout.*') ? 'active' : '' }}"
-                            href="{{ route('frontend.cart') }}" title="Cart">
+                    <li class="nav-item dropdown ms-lg-3">
+                        <a class="nav-link position-relative dropdown-toggle no-caret {{ request()->routeIs('frontend.cart') || request()->routeIs('checkout.*') ? 'active' : '' }}"
+                            href="#" id="cartDropdown" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="Cart">
                             <div class="cart-icon-wrapper">
                                 <i class="fas fa-shopping-cart fa-lg"></i>
                                 @auth('customer')
@@ -270,6 +429,11 @@
                                             'customer_id',
                                             auth('customer')->id(),
                                         )->sum('quantity');
+                                        $cartItemsPreview = \App\Models\CartItem::with('product')
+                                            ->where('customer_id', auth('customer')->id())
+                                            ->latest()
+                                            ->take(5)
+                                            ->get();
                                     @endphp
                                     @if ($cartCount > 0)
                                         <span class="cart-badge">{{ $cartCount }}</span>
@@ -277,6 +441,83 @@
                                 @endauth
                             </div>
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-3" aria-labelledby="cartDropdown"
+                            style="width: 320px; border-radius: 12px;">
+                            <h6 class="dropdown-header px-0 mb-3 fw-bold text-dark">
+                                <i class="fas fa-shopping-cart text-primary me-2"></i>My Cart Preview
+                            </h6>
+                            @auth('customer')
+                                @forelse($cartItemsPreview as $item)
+                                    <li class="mb-3">
+                                        <div class="d-flex align-items-center">
+                                            @php $images = $item->product->image ? explode(',', $item->product->image) : []; @endphp
+                                            <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                                class="text-decoration-none d-flex align-items-center flex-grow-1 overflow-hidden">
+                                                <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
+                                                    alt="{{ $item->product->name }}"
+                                                    style="width: 50px; height: 50px; object-fit: contain;"
+                                                    class="me-3 rounded border bg-light">
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <div class="text-truncate fw-bold text-dark small mb-1">
+                                                        {{ $item->product->name }}</div>
+                                                    <div class="text-primary fw-bold small">
+                                                        {{ $item->quantity }} x ₹{{ number_format($item->price, 2) }}
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            <a href="{{ route('frontend.cart') }}?buy_item_id={{ $item->id }}"
+                                                class="btn btn-sm btn-primary ms-1 px-2" title="Buy This">
+                                                <i class="fas fa-bolt"></i>
+                                            </a>
+                                            <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                                class="btn btn-sm btn-outline-primary ms-1 px-2" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                @empty
+                                    <li class="text-center py-3 text-muted">
+                                        <i class="fas fa-shopping-cart fa-2x mb-2 d-block opacity-25"></i>
+                                        <small>Your cart is empty</small>
+                                    </li>
+                                @endforelse
+
+                                @if ($cartCount > 0)
+                                    <li>
+                                        <hr class="dropdown-divider my-3">
+                                    </li>
+                                    <li>
+                                        <div class="d-grid gap-2">
+                                            <a class="btn btn-outline-primary btn-sm py-2"
+                                                href="{{ route('frontend.cart') }}">
+                                                View Shopping Cart
+                                            </a>
+                                            <a class="btn btn-primary btn-sm py-2"
+                                                href="{{ route('frontend.cart') }}?checkout=1">
+                                                Proceed to Checkout
+                                            </a>
+                                        </div>
+                                    </li>
+                                @else
+                                    <li>
+                                        <hr class="dropdown-divider my-3">
+                                    </li>
+                                    <li>
+                                        <a class="btn btn-outline-primary btn-sm w-100 py-2"
+                                            href="{{ route('frontend.products.index') }}">
+                                            Go to Shop
+                                        </a>
+                                    </li>
+                                @endif
+                            @else
+                                <li class="text-center py-3">
+                                    <p class="small text-muted mb-3">Please login to view your cart</p>
+                                    <a href="{{ route('customer.login') }}" class="btn btn-primary btn-sm w-100">
+                                        Login Now
+                                    </a>
+                                </li>
+                            @endauth
+                        </ul>
                     </li>
                     @auth('customer')
                         <li class="nav-item dropdown ms-lg-3">
@@ -355,6 +596,103 @@
                             </ul>
                         </li>
                     @endauth
+                    {{-- Styled Language Switcher --}}
+                    <li class="nav-item dropdown ms-lg-3 d-flex align-items-center">
+                        @php
+                            $locales = [
+                                'en' => 'English',
+                                'hi' => 'Hindi',
+                                'gu' => 'Gujarati',
+                                'sa' => 'Sanskrit',
+                                'bn' => 'Bengali',
+                            ];
+                            $current = session('locale', config('app.locale', 'en'));
+                        @endphp
+                        <style>
+                            .lang-selector-box {
+                                border: 1px solid #e2e8f0;
+                                border-radius: 8px;
+                                padding: 6px 14px;
+                                background-color: #fff;
+                                color: #4a5568 !important;
+                                display: flex;
+                                align-items: center;
+                                font-size: 0.95rem;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                white-space: nowrap;
+                            }
+
+                            .lang-selector-box:hover {
+                                border-color: #cbd5e1;
+                                background-color: #f8fafc;
+                            }
+
+                            .lang-selector-divider {
+                                color: #cbd5e1;
+                                margin: 0 10px;
+                                font-size: 0.9rem;
+                            }
+
+                            .lang-selector-caret {
+                                color: #94a3b8;
+                                font-size: 0.8rem;
+                            }
+                        </style>
+                        <a class="nav-link p-0 no-caret" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="Language">
+                            <div class="lang-selector-box shadow-sm">
+                                <span class="fw-medium">{{ $locales[$current] ?? 'Select Language' }}</span>
+                                <span class="lang-selector-divider">|</span>
+                                <i class="fas fa-caret-down lang-selector-caret"></i>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
+                            style="min-width: 130px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;">
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="en">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'en' ? 'active bg-primary text-white' : '' }}">English</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="hi">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'hi' ? 'active bg-primary text-white' : '' }}">Hindi</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="gu">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'gu' ? 'active bg-primary text-white' : '' }}">Gujarati</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="sa">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'sa' ? 'active bg-primary text-white' : '' }}">Sanskrit</button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('language.switch') }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <input type="hidden" name="locale" value="bn">
+                                    <button type="submit"
+                                        class="dropdown-item py-2 {{ $current == 'bn' ? 'active bg-primary text-white' : '' }}">Bengali</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+
+                    {{-- Profile Menu --}}
                     @auth('customer')
                         <li class="nav-item dropdown ms-lg-3">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
@@ -529,12 +867,13 @@
                             @endif
                         @endif
 
-                        {{-- Contact Modal Trigger in Footer - Moved up and outside conditional details --}}
+                        {{-- Contact Modal Trigger in Footer --}}
                         <div class="mt-3">
                             <button type="button"
                                 class="btn btn-primary btn-sm rounded-pill px-4 py-2 shadow-sm border-0"
                                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
                                 data-bs-toggle="modal" data-bs-target="#contactModal">
+                                {{--  <i class="fas fa-paper-plane me-2"></i> Contact Us  --}}
                                 <i class="fas fa-comment-dots fa-lg me-2"></i>
                                 <span class="fw-bold">Contact Us</span>
                             </button>
@@ -575,7 +914,6 @@
         </div>
     </footer>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     {{-- Cart Count Update Script --}}
@@ -594,6 +932,50 @@
 
         // Update on page load
         document.addEventListener('DOMContentLoaded', updateCartCount);
+
+        // Update when storage changes (for multi-tab support)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'shoppingCart') {
+                updateCartCount();
+            }
+        });
+
+        // Global Theme Manager
+        window.ThemeManager = {
+            currentMode: @json(auth('customer')->check() ? auth('customer')->user()->theme_mode : 'system'),
+
+            init() {
+                this.applyTheme(this.currentMode);
+
+                // Listen for system theme changes if in system mode
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    if (this.currentMode === 'system') {
+                        this.applyTheme('system');
+                    }
+                });
+            },
+
+            applyTheme(mode) {
+                const html = document.documentElement;
+                this.currentMode = mode;
+
+                if (mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)')
+                    .matches)) {
+                    html.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    html.setAttribute('data-bs-theme', 'light');
+                }
+            },
+
+            setTheme(mode) {
+                this.applyTheme(mode);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCount();
+            window.ThemeManager.init();
+        });
 
         // Update when storage changes (for multi-tab support)
         window.addEventListener('storage', function(e) {
@@ -656,11 +1038,12 @@
     </div>
 
     <!-- Contact Us Modal -->
-    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true"
+        style="z-index: 10000;">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white border-0">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+                <div class="modal-header text-white border-0 py-3"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <h5 class="modal-title fw-bold" id="contactModalLabel">
                         <i class="fas fa-envelope me-2"></i> Send us a Message
                     </h5>
@@ -672,28 +1055,34 @@
                     <div class="modal-body p-4">
                         <div class="mb-3">
                             <label for="name" class="form-label small fw-bold text-muted">Full Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required
-                                placeholder="Enter your name">
+                            <input type="text" class="form-control border-light-subtle" id="name"
+                                name="name" required placeholder="Enter your name"
+                                style="border-radius: 8px; padding: 10px;">
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label small fw-bold text-muted">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" required
-                                placeholder="name@example.com">
+                            <input type="email" class="form-control border-light-subtle" id="email"
+                                name="email" required placeholder="name@example.com"
+                                style="border-radius: 8px; padding: 10px;">
                         </div>
                         <div class="mb-3">
                             <label for="number" class="form-label small fw-bold text-muted">Phone Number</label>
-                            <input type="text" class="form-control" id="number" name="number" required
-                                placeholder="Your phone number">
+                            <input type="text" class="form-control border-light-subtle" id="number"
+                                name="number" required placeholder="Your phone number"
+                                style="border-radius: 8px; padding: 10px;">
                         </div>
                         <div class="mb-3">
                             <label for="message" class="form-label small fw-bold text-muted">Your Message</label>
-                            <textarea class="form-control" id="message" name="message" rows="4" required
-                                placeholder="How can we help you?"></textarea>
+                            <textarea class="form-control border-light-subtle" id="message" name="message" rows="4" required
+                                placeholder="How can we help you?" style="border-radius: 8px; padding: 10px;"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer border-0 p-4 pt-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 py-2" id="submitContactBtn">
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 border-0"
+                            id="submitContactBtn"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                             <span class="spinner-border spinner-border-sm d-none me-2" role="status"
                                 aria-hidden="true"></span>
                             Send Message
@@ -724,8 +1113,9 @@
                     data: form.serialize(),
                     success: function(response) {
                         // Close modal
-                        bootstrap.Modal.getInstance(document.getElementById('contactModal'))
-                            .hide();
+                        const modal = bootstrap.Modal.getInstance(document.getElementById(
+                            'contactModal'));
+                        if (modal) modal.hide();
 
                         // Show success message
                         Swal.fire({

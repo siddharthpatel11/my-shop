@@ -27,6 +27,8 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
+        Auth::logoutOtherDevices($request->password);
+
         $user = $request->user();
         \Illuminate\Support\Facades\Log::info('User logged in: ' . $user->email . ', 2FA enabled: ' . ($user->google2fa_enabled ? 'Yes' : 'No'));
 

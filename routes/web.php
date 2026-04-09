@@ -138,6 +138,11 @@ Route::middleware(['auth', 'prevent-back', '2fa'])->prefix('admin')->name('admin
     Route::get('/meta-tags', [MetaTagController::class, 'index'])->name('meta-tags.index');
     Route::get('/meta-tags/{identifier}/edit', [MetaTagController::class, 'edit'])->name('meta-tags.edit');
     Route::put('/meta-tags/{identifier}', [MetaTagController::class, 'update'])->name('meta-tags.update');
+
+    // Authentication Heartbeat (for multi-browser session sync)
+    Route::get('/auth-check', function () {
+        return response()->json(['authenticated' => true]);
+    })->name('auth-check');
 });
 
 require __DIR__ . '/auth.php';

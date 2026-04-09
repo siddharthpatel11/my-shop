@@ -1153,8 +1153,31 @@
             });
         });
     </script>
-
+    
     @stack('scripts')
+
+    @auth('customer')
+    <script>
+        setInterval(() => {
+            fetch('/auth-check', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = "/customer/login";
+                }
+            })
+            .catch(() => {
+                console.log('Session check failed');
+            });
+        }, 5000);
+    </script>
+    @endauth
+
+    
 
 </body>
 

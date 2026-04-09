@@ -102,7 +102,9 @@ Route::post('/language/switch', function (Illuminate\Http\Request $request) {
 // Cart routes - some require authentication
 // [GOOGLE 2FA] ADD 'customer.2fa' to the middleware array below to enable 2FA for customers.
 // Remove it or comment it out to disable 2FA.
-Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
+Route::middleware(['customer.auth', 'customer.2fa', 'single.session'])->group(function () {
+    // Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
+    //
 
     // ── Customer 2FA Routes ────────────────────────────────
     Route::get('/customer/2fa/verify', [CustomerTwoFactorController::class, 'showVerifyForm'])->name('customer.2fa.verify');
@@ -218,8 +220,17 @@ Route::middleware(['customer.auth', 'customer.2fa'])->group(function () {
     // My Panel Dashboard
     Route::get('/my-panel', [MyPanelController::class, 'index'])
         ->name('frontend.my-panel');
-});
 
+        // Authentication Heartbeat (for customer session sync)
+        Route::get('/auth-check', function () {
+            if (!auth('customer')->check()) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
+            
+            return response()->json(['authenticated' => true]);
+        });
+        
+    });
 // Customer-facing page route (NO auth required)
 Route::get('/page/{page}', [PageController::class, 'show'])
     ->name('page.show');

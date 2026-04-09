@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Lang;
 use Intervention\Image\Laravel\Facades\Image;
+use Illuminate\Support\Facades\Session;
 
 class CustomerAuthController extends Controller
 {
@@ -84,6 +85,13 @@ class CustomerAuthController extends Controller
             // Login the customer
             Auth::guard('customer')->login($customer, $request->has('remember'));
 
+            // Generate a unique token for single-session tracking that survives regenerate()
+            $singleSessionToken = \Illuminate\Support\Str::random(40);
+            session()->put('customer_single_session_token', $singleSessionToken);
+
+            $customer->session_id = $singleSessionToken;
+            $customer->save();
+
             // ✅ Store login data in session
             session()->put([
                 'customer_id'    => $customer->id,
@@ -110,7 +118,7 @@ class CustomerAuthController extends Controller
         $cartCount = \App\Models\CartItem::where('customer_id', $customer->id)->sum('quantity');
         $orderCount = \App\Models\Order::where('customer_id', $customer->id)->count();
         $wishlistCount = \App\Models\Wishlist::where('customer_id', $customer->id)->count();
-        
+
         $addresses = \App\Models\CustomerAddress::active()
             ->where('customer_id', $customer->id)
             ->orderByDesc('is_default')
@@ -147,11 +155,11 @@ class CustomerAuthController extends Controller
 
                 $image = $request->file('avatar');
                 $imageName = time() . '.' . $image->getClientOriginalExtension();
-                
+
                 // RESIZE and SAVE via Intervention
                 $path = public_path('images/customers/' . $imageName);
                 Image::read($image)->scale(width: 500)->save($path);
-                
+
                 $customer->avatar = $imageName;
             }
 
@@ -220,24 +228,6 @@ class CustomerAuthController extends Controller
         return redirect()
             ->route('customer.login')
             ->with('success', 'Logged out successfully');
-    }
-    public function handle($request, Closure $next)
-    {
-        if (!auth('customer')->check()) {
-            // For AJAX requests, return JSON
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated',
-                    'redirect' => route('customer.login')
-                ], 401);
-            }
-
-            // For regular requests, redirect to login
-            return redirect()->route('customer.login');
-        }
-
-        return $next($request);
     }
 
     /* ================= EMAIL CHANGE ================= */
