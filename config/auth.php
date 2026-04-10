@@ -45,7 +45,7 @@ return [
             'provider' => 'customers',
         ],
         'customer-api' => [
-            'driver'   => 'sanctum',       // API uses sanctum tokens
+            'driver' => 'sanctum',       // API uses sanctum tokens
             'provider' => 'customers',
         ],
     ],

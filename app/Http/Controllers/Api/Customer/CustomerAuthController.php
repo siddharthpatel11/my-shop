@@ -4,20 +4,20 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\Customer\CustomerResource;
-use App\Models\Customer;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailChangeOTPMail;
-use Carbon\Carbon;
+use App\Models\Customer;
 use App\Services\SmsService;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Str;
+use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Intervention\Image\Laravel\Facades\Image;
 
 class CustomerAuthController extends Controller
@@ -28,26 +28,26 @@ class CustomerAuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'         => 'required|string|max:255',
-            'email'        => 'required|email|unique:customers,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:customers,email',
             'phone_number' => 'required|digits_between:10,15|unique:customers,phone_number',
-            'password'     => 'required|min:6|confirmed',
+            'password' => 'required|min:6|confirmed',
         ]);
 
         $customer = Customer::create([
-            'name'         => $request->name,
-            'email'        => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'phone_number' => $request->phone_number,
-            'password'     => Hash::make($request->password),
-            'status'       => 'active',
+            'password' => Hash::make($request->password),
+            'status' => 'active',
         ]);
 
         $token = $customer->createToken('customer-api-token')->plainTextToken;
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'Registration successful',
-            'token'    => $token,
+            'success' => true,
+            'message' => 'Registration successful',
+            'token' => $token,
             'customer' => new CustomerResource($customer),
         ], 201);
     }
@@ -58,35 +58,68 @@ class CustomerAuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
         $customer = Customer::where('email', $request->email)->first();
 
-        if (!$customer || !Hash::check($request->password, $customer->password)) {
+        if (! $customer || ! Hash::check($request->password, $customer->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['Invalid credentials'],
             ]);
         }
 
-        $token = $customer->createToken('customer-api-token')->plainTextToken;
+        //  SINGLE SESSION (remove old tokens)
+        // $customer->tokens()->delete();
 
-        // If 2FA is enabled, don't return the token yet, or mark it as unverified
-        if ($customer->google2fa_enabled) {
-            return response()->json([
-                'success'  => true,
-                'message'  => '2FA verification required',
-                '2fa_required' => true,
-                'customer' => new CustomerResource($customer),
-            ]);
-        }
+        //  ACCESS TOKEN (30 min logic handled client-side expiry)
+        $accessToken = $customer->createToken('access-token')->plainTextToken;
+
+        //  REFRESH TOKEN
+        $refreshToken = Str::random(80);
+
+        $customer->refresh_token = hash('sha256', $refreshToken);
+        $customer->refresh_token_expires_at = now()->addDays(7); // addMinutes(30);
+        $customer->save();
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'Login successful',
-            'token'    => $token,
+            'success' => true,
+            'message' => 'Login successful',
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in' => 1800, // 30 min
             'customer' => new CustomerResource($customer),
+        ]);
+    }
+
+    public function refreshToken(Request $request)
+    {
+        $request->validate([
+            'refresh_token' => 'required',
+        ]);
+
+        $hashedToken = hash('sha256', $request->refresh_token);
+
+        $customer = Customer::where('refresh_token', $hashedToken)->first();
+
+        if (! $customer) {
+            return response()->json(['message' => 'Invalid refresh token'], 401);
+        }
+
+        if (! $customer->refresh_token_expires_at || now()->gt($customer->refresh_token_expires_at)) {
+            return response()->json(['message' => 'Refresh token expired'], 401);
+        }
+
+        //  delete old access tokens
+        // $customer->tokens()->delete();
+
+        //  new access token
+        $newAccessToken = $customer->createToken('access-token')->plainTextToken;
+
+        return response()->json([
+            'access_token' => $newAccessToken,
+            'expires_in' => 1800,
         ]);
     }
 
@@ -103,7 +136,7 @@ class CustomerAuthController extends Controller
 
         $customer = Customer::where('email', $request->email)->first();
 
-        if (!$customer || !Hash::check($request->password, $customer->password)) {
+        if (! $customer || ! Hash::check($request->password, $customer->password)) {
             return response()->json(['success' => false, 'message' => 'Invalid credentials'], 401);
         }
 
@@ -113,16 +146,17 @@ class CustomerAuthController extends Controller
             'customer_id' => $customer->id,
             'secret' => $customer->google2fa_secret,
             'otp' => $request->one_time_password,
-            'window' => 4
+            'window' => 4,
         ]);
 
         // Increase window to 4 (allows 2 minutes drift) for better user experience
         if ($google2fa->verifyKey($customer->google2fa_secret, $request->one_time_password, 4)) {
             $token = $customer->createToken('customer-api-token')->plainTextToken;
+
             return response()->json([
-                'success'  => true,
-                'message'  => '2FA verification successful',
-                'token'    => $token,
+                'success' => true,
+                'message' => '2FA verification successful',
+                'token' => $token,
                 'customer' => new CustomerResource($customer),
             ]);
         }
@@ -138,7 +172,15 @@ class CustomerAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        // delete all tokens
+        // $user->tokenFs()->delete();
+
+        // clear refresh token
+        $user->refresh_token = null;
+        $user->refresh_token_expires_at = null;
+        $user->save();
 
         return response()->json([
             'success' => true,
@@ -152,7 +194,7 @@ class CustomerAuthController extends Controller
     public function profile(Request $request)
     {
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'customer' => new CustomerResource($request->user()),
         ]);
     }
@@ -165,13 +207,13 @@ class CustomerAuthController extends Controller
         $customer = $request->user();
         $google2fa = app('pragmarx.google2fa');
 
-        if (!$customer->google2fa_secret) {
+        if (! $customer->google2fa_secret) {
             $customer->google2fa_secret = $google2fa->generateSecretKey();
             $customer->save();
         }
 
         $qrCodeUrl = $google2fa->getQRCodeUrl(
-            config('app.name') . ' (Customer API)',
+            config('app.name').' (Customer API)',
             $customer->email,
             $customer->google2fa_secret
         );
@@ -180,7 +222,7 @@ class CustomerAuthController extends Controller
             'success' => true,
             'qr_code_url' => $qrCodeUrl,
             'secret' => $customer->google2fa_secret,
-            'is_enabled' => (bool)$customer->google2fa_enabled
+            'is_enabled' => (bool) $customer->google2fa_enabled,
         ]);
     }
 
@@ -200,7 +242,7 @@ class CustomerAuthController extends Controller
             'customer_id' => $customer->id,
             'secret' => $customer->google2fa_secret,
             'otp' => $request->one_time_password,
-            'window' => 4
+            'window' => 4,
         ]);
 
         // Increase window to 4
@@ -228,7 +270,7 @@ class CustomerAuthController extends Controller
         $customer = $request->user();
         $customer->update([
             'google2fa_enabled' => false,
-            'google2fa_secret' => null
+            'google2fa_secret' => null,
         ]);
 
         return response()->json([
@@ -243,8 +285,8 @@ class CustomerAuthController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'name'       => 'required|string|max:255',
-            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'name' => 'required|string|max:255',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'theme_mode' => 'nullable|in:light,dark,system',
         ]);
 
@@ -259,31 +301,31 @@ class CustomerAuthController extends Controller
 
             if ($request->hasFile('avatar')) {
                 // Delete old avatar if exists
-                if ($customer->avatar && file_exists(public_path('images/customers/' . $customer->avatar))) {
-                    unlink(public_path('images/customers/' . $customer->avatar));
+                if ($customer->avatar && file_exists(public_path('images/customers/'.$customer->avatar))) {
+                    unlink(public_path('images/customers/'.$customer->avatar));
                 }
 
                 $image = $request->file('avatar');
-                $imageName = time() . '.' . $image->getClientOriginalExtension();
-                
+                $imageName = time().'.'.$image->getClientOriginalExtension();
+
                 // RESIZE and SAVE via Intervention
-                $path = public_path('images/customers/' . $imageName);
+                $path = public_path('images/customers/'.$imageName);
                 Image::read($image)->scale(width: 500)->save($path);
-                
+
                 $customer->avatar = $imageName;
             }
 
             $customer->save();
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Profile updated successfully',
+                'success' => true,
+                'message' => 'Profile updated successfully',
                 'customer' => new CustomerResource($customer),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -298,8 +340,8 @@ class CustomerAuthController extends Controller
         try {
             if ($customer->avatar) {
                 // Delete image file if exists
-                if (file_exists(public_path('images/customers/' . $customer->avatar))) {
-                    unlink(public_path('images/customers/' . $customer->avatar));
+                if (file_exists(public_path('images/customers/'.$customer->avatar))) {
+                    unlink(public_path('images/customers/'.$customer->avatar));
                 }
 
                 $customer->avatar = null;
@@ -314,12 +356,12 @@ class CustomerAuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'No profile image to remove.'
+                'message' => 'No profile image to remove.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -341,6 +383,7 @@ class CustomerAuthController extends Controller
         // Send OTP via email
         try {
             Mail::to($customer->email)->send(new EmailChangeOTPMail($otp));
+
             return response()->json(['success' => true, 'message' => 'OTP sent successfully to your current email.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to send OTP. Please try again.'], 500);
@@ -357,7 +400,8 @@ class CustomerAuthController extends Controller
 
         if ($customer->email_otp === $request->otp && Carbon::now()->isBefore($customer->email_otp_expires_at)) {
             // Store verification in Cache (stateless)
-            Cache::put('email_otp_verified_' . $customer->id, true, now()->addMinutes(10));
+            Cache::put('email_otp_verified_'.$customer->id, true, now()->addMinutes(10));
+
             return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
         }
 
@@ -373,7 +417,7 @@ class CustomerAuthController extends Controller
         $customer = $request->user();
 
         // Check verification in Cache
-        if (!Cache::get('email_otp_verified_' . $customer->id)) {
+        if (! Cache::get('email_otp_verified_'.$customer->id)) {
             return response()->json(['success' => false, 'message' => 'Please verify your current email first.'], 403);
         }
 
@@ -389,7 +433,7 @@ class CustomerAuthController extends Controller
             'email_otp_expires_at' => null,
         ]);
 
-        Cache::forget('email_otp_verified_' . $customer->id);
+        Cache::forget('email_otp_verified_'.$customer->id);
 
         return response()->json(['success' => true, 'message' => 'Email updated successfully.']);
     }
@@ -410,7 +454,7 @@ class CustomerAuthController extends Controller
 
         // Send OTP via SMS
         try {
-            $smsService = new SmsService();
+            $smsService = new SmsService;
             $messageTemplate = config('services.twilio.otp_message', 'Your verification code for phone change is: [OTP]');
             $message = str_replace('[OTP]', $otp, $messageTemplate);
             $smsSent = $smsService->sendSms($customer->phone_number, $message);
@@ -435,7 +479,8 @@ class CustomerAuthController extends Controller
 
         if ($customer->phone_otp === $request->otp && Carbon::now()->isBefore($customer->phone_otp_expires_at)) {
             // Store verification in Cache (stateless)
-            Cache::put('phone_otp_verified_' . $customer->id, true, now()->addMinutes(10));
+            Cache::put('phone_otp_verified_'.$customer->id, true, now()->addMinutes(10));
+
             return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
         }
 
@@ -451,7 +496,7 @@ class CustomerAuthController extends Controller
         $customer = $request->user();
 
         // Check verification in Cache
-        if (!Cache::get('phone_otp_verified_' . $customer->id)) {
+        if (! Cache::get('phone_otp_verified_'.$customer->id)) {
             return response()->json(['success' => false, 'message' => 'Please verify your current phone number first.'], 403);
         }
 
@@ -467,7 +512,7 @@ class CustomerAuthController extends Controller
             'phone_otp_expires_at' => null,
         ]);
 
-        Cache::forget('phone_otp_verified_' . $customer->id);
+        Cache::forget('phone_otp_verified_'.$customer->id);
 
         return response()->json(['success' => true, 'message' => 'Phone number updated successfully.']);
     }
@@ -478,15 +523,15 @@ class CustomerAuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email'
+            'email' => 'required|email',
         ]);
 
         $customer = Customer::where('email', $request->email)->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return response()->json([
                 'success' => false,
-                'message' => 'Customer not found with this email'
+                'message' => 'Customer not found with this email',
             ], 404);
         }
 
@@ -498,11 +543,11 @@ class CustomerAuthController extends Controller
         return $status === Password::RESET_LINK_SENT
             ? response()->json([
                 'success' => true,
-                'message' => Lang::get($status)
+                'message' => Lang::get($status),
             ])
             : response()->json([
                 'success' => false,
-                'message' => Lang::get($status)
+                'message' => Lang::get($status),
             ], 500);
     }
 
@@ -512,9 +557,9 @@ class CustomerAuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'email'                 => 'required|email',
-            'token'                 => 'required',
-            'password'              => 'required|min:6|confirmed',
+            'email' => 'required|email',
+            'token' => 'required',
+            'password' => 'required|min:6|confirmed',
         ]);
 
         $customer = Customer::where('email', $request->email)->first();
@@ -523,7 +568,7 @@ class CustomerAuthController extends Controller
         if ($customer && Hash::check($request->password, $customer->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'New password cannot be same as old password'
+                'message' => 'New password cannot be same as old password',
             ], 422);
         }
 
@@ -531,7 +576,7 @@ class CustomerAuthController extends Controller
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($customer, $password) {
                 $customer->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->setRememberToken(Str::random(60));
 
                 $customer->save();
@@ -543,12 +588,11 @@ class CustomerAuthController extends Controller
         return $status === Password::PASSWORD_RESET
             ? response()->json([
                 'success' => true,
-                'message' => Lang::get($status)
+                'message' => Lang::get($status),
             ])
             : response()->json([
                 'success' => false,
-                'message' => Lang::get($status)
+                'message' => Lang::get($status),
             ], 400);
     }
-
 }

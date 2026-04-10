@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\Api\ColorApiController;
-use App\Http\Controllers\Api\SizeApiController;
 use App\Http\Controllers\Api\CategoryApiController;
-use App\Http\Controllers\Api\ProductApiController;
-use App\Http\Controllers\Api\Customer\CustomerAuthController;
-use App\Http\Controllers\Api\Customer\CartController;
+use App\Http\Controllers\Api\ColorApiController;
 use App\Http\Controllers\Api\Customer\AddressController;
+use App\Http\Controllers\Api\Customer\CartController;
 use App\Http\Controllers\Api\Customer\ClearOldCartItemsController;
+use App\Http\Controllers\Api\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\Customer\OrderController;
-use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\DatabaseBackupApiController;
+use App\Http\Controllers\Api\ProductApiController;
+use App\Http\Controllers\Api\SizeApiController;
+use App\Http\Controllers\Api\TranslationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -74,17 +74,20 @@ Route::prefix('v1')->group(function () {
         // ── Auth (Public) ─────────────────────────────────────
         Route::post('register', [CustomerAuthController::class, 'register'])->name('register');
         Route::post('login', [CustomerAuthController::class, 'login'])->name('login');
+        Route::post('refresh-token', [CustomerAuthController::class, 'refreshToken'])->name('refresh-token');
         Route::post('verify-2fa', [CustomerAuthController::class, 'verify2FA'])->name('verify-2fa');
         // Forgot Password API
         Route::post('forgot-password', [CustomerAuthController::class, 'forgotPassword']);
         Route::post('reset-password', [CustomerAuthController::class, 'resetPassword']);
 
         // ── Products (Public Customer Facing) ─────────────────
-        Route::get('products', [\App\Http\Controllers\Api\Customer\ProductController::class, 'index'])->name('products.index');
-        Route::get('products/{id}', [\App\Http\Controllers\Api\Customer\ProductController::class, 'show'])->name('products.show');
 
         // ── Protected Customer Routes ─────────────────────────
-        Route::middleware('auth:customer-api')->group(function () {
+        // Route::middleware('auth:customer-api', 'validate.session')->group(function () {
+        Route::middleware('auth:sanctum', 'validate.session')->group(function () {
+
+            Route::get('products', [\App\Http\Controllers\Api\Customer\ProductController::class, 'index'])->name('products.index');
+            Route::get('products/{id}', [\App\Http\Controllers\Api\Customer\ProductController::class, 'show'])->name('products.show');
 
             // Auth
             Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');

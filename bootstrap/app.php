@@ -7,11 +7,11 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: [
-            __DIR__ . '/../routes/web.php',
-            __DIR__ . '/../routes/frontend.php',
+            __DIR__.'/../routes/web.php',
+            __DIR__.'/../routes/frontend.php',
         ],
-        api: __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     //     web: __DIR__ . '/../routes/web.php',
@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
             'setlocale' => \App\Http\Middleware\SetLocale::class,
             'single.session' => \App\Http\Middleware\CheckSingleSession::class,
+            'validate.session' => \App\Http\Middleware\Api\ValidateCustomerSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -50,8 +51,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json(['message' => 'Unauthenticated.'], 401);
                 }
+
                 return redirect()->guest(route('login'))->with('status', 'Your session has expired due to login from another device or inactivity.');
             }
+
             return $response;
         });
     })->create();
