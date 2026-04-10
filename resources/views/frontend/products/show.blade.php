@@ -130,14 +130,20 @@
                     @endif
 
                     {{-- Product Name --}}
-                    <h1 class="display-5 fw-bold mb-3">{{ $product->name }}</h1>
+                    <h1 class="display-5 fw-extrabold mb-3 product-title-animated">{{ $product->name }}</h1>
 
                     {{-- Price --}}
-                    <div class="mb-4">
-                        <h2 class="text-primary fw-bold mb-0" id="productPriceDisplay">
+                    <div class="mb-4 d-flex align-items-center gap-3">
+                        <h2 class="price-gradient fw-bold mb-0" id="productPriceDisplay">
                             ₹{{ number_format($product->price, 2) }}</h2>
-                        {{-- Removed stockStatusDisplay from here (Upar ny) --}}
-                        <small class="text-muted">{{ __('products.inclusive_taxes') }}</small>
+                        <span
+                            class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill shadow-sm">
+                            <i class="fas fa-tag me-1"></i> Special Price
+                        </span>
+                    </div>
+                    <div class="mb-4">
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>
+                            {{ __('products.inclusive_taxes') }}</small>
                     </div>
 
                     {{-- Description --}}
@@ -218,17 +224,18 @@
                             <i class="fas fa-sort-numeric-up me-2"></i> {{ __('products.quantity') }}
                         </label>
                         <div class="input-group" style="width: 150px;">
-                            <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity()"
-                                {{ $product->stock <= 0 ? 'disabled' : '' }}>
-                                <i class="fas fa-minus"></i>
+                            <button class="btn btn-light border-0 shadow-sm quantity-btn" type="button"
+                                onclick="decrementQuantity()" {{ $product->stock <= 0 ? 'disabled' : '' }}>
+                                <i class="fas fa-minus text-muted"></i>
                             </button>
-                            <input type="number" class="form-control text-center" id="quantity"
+                            <input type="number"
+                                class="form-control text-center quantity-input border-0 bg-light fw-bold" id="quantity"
                                 value="{{ $product->stock <= 0 ? '0' : '1' }}"
                                 min="{{ $product->stock <= 0 ? '0' : '1' }}" max="10"
                                 {{ $product->stock <= 0 ? 'disabled' : '' }}>
-                            <button class="btn btn-outline-secondary" type="button" onclick="incrementQuantity()"
-                                {{ $product->stock <= 0 ? 'disabled' : '' }}>
-                                <i class="fas fa-plus"></i>
+                            <button class="btn btn-light border-0 shadow-sm quantity-btn" type="button"
+                                onclick="incrementQuantity()" {{ $product->stock <= 0 ? 'disabled' : '' }}>
+                                <i class="fas fa-plus text-muted"></i>
                             </button>
                         </div>
                     </div>
@@ -236,65 +243,85 @@
                     {{-- Stock Status Display removed from here --}}
 
                     {{-- Action Buttons --}}
-                    <div class="d-flex gap-3 mb-4" id="main-product-actions">
+                    <div class="d-flex gap-3 mb-4 flex-wrap" id="main-product-actions">
                         @auth('customer')
                             @if ($product->stock > 0)
                                 @if (in_array($product->id, $cartProductIds ?? []))
-                                    <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
-                                        <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
+                                    <a href="{{ route('frontend.cart') }}" class="btn action-btn btn-go-cart flex-fill">
+                                        <div class="btn-content">
+                                            <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
+                                        </div>
                                     </a>
                                 @else
-                                    <button class="btn btn-primary btn-lg flex-fill" id="addToCartBtn" onclick="addToCart()">
-                                        <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
+                                    <button class="btn action-btn btn-add-cart flex-fill" id="addToCartBtn"
+                                        onclick="addToCart()">
+                                        <div class="btn-content">
+                                            <i class="fas fa-shopping-cart me-2"></i> {{ __('products.add_to_cart') }}
+                                        </div>
                                     </button>
                                 @endif
-                                <button id="buyNowBtn" class="btn btn-success btn-lg flex-fill" onclick="buyNow()">
-                                    <i class="fas fa-bolt me-2"></i>
-                                    <span
-                                        id="buyNowText">{{ __('products.buy_now', ['price' => number_format($product->price)]) }}</span>
+                                <button id="buyNowBtn" class="btn action-btn btn-buy-now flex-fill" onclick="buyNow()">
+                                    <div class="btn-content">
+                                        <i class="fas fa-bolt text-warning me-2"></i>
+                                        <span
+                                            id="buyNowText">{{ __('products.buy_now', ['price' => number_format($product->price)]) }}</span>
+                                    </div>
+                                    <div class="btn-glow"></div>
                                 </button>
                             @else
-                                <button class="btn btn-secondary btn-lg flex-fill disabled">
-                                    <i class="fas fa-ban me-2"></i> Currently Unavailable
+                                <button class="btn btn-secondary action-btn flex-fill disabled" style="opacity: 0.6;">
+                                    <div class="btn-content">
+                                        <i class="fas fa-ban me-2"></i> Currently Unavailable
+                                    </div>
                                 </button>
                             @endif
-                            <button class="btn {{ $inWishlist ? 'btn-danger' : 'btn-outline-danger' }} btn-lg"
+                            <button class="btn action-btn btn-wishlist {{ $inWishlist ? 'active' : '' }}" title="Wishlist"
                                 onclick="toggleWishlist()">
-                                <i class="{{ $inWishlist ? 'fas' : 'far' }} fa-heart"></i>
+                                <i class="{{ $inWishlist ? 'fas text-danger' : 'far text-muted' }} fa-heart fa-lg"></i>
                             </button>
                         @else
-                            <a href="{{ route('customer.login') }}" class="btn btn-primary btn-lg flex-fill">
-                                <i class="fas fa-sign-in-alt me-2"></i> {{ __('products.login_to_buy') }}
+                            <a href="{{ route('customer.login') }}" class="btn action-btn btn-add-cart flex-fill">
+                                <div class="btn-content">
+                                    <i class="fas fa-sign-in-alt me-2"></i> {{ __('products.login_to_buy') }}
+                                </div>
                             </a>
                         @endauth
                     </div>
 
                     {{-- Product Features --}}
-                    <div class="card bg-light border-0">
+                    <div class="card premium-feature-card border-0 shadow-sm mt-4">
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-6">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-truck text-primary me-2"></i>
-                                        <small>{{ __('products.free_shipping') }}</small>
+                                    <div class="feature-item p-2 rounded d-flex align-items-center">
+                                        <div class="feature-icon-wrapper me-3">
+                                            <i class="fas fa-truck text-primary"></i>
+                                        </div>
+                                        <span class="fw-medium text-dark small">{{ __('products.free_shipping') }}</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-undo text-primary me-2"></i>
-                                        <small>{{ __('products.easy_returns') }}</small>
+                                    <div class="feature-item p-2 rounded d-flex align-items-center">
+                                        <div class="feature-icon-wrapper me-3">
+                                            <i class="fas fa-undo text-primary"></i>
+                                        </div>
+                                        <span class="fw-medium text-dark small">{{ __('products.easy_returns') }}</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-shield-alt text-primary me-2"></i>
-                                        <small>{{ __('products.secure_payment') }}</small>
+                                    <div class="feature-item p-2 rounded d-flex align-items-center">
+                                        <div class="feature-icon-wrapper me-3">
+                                            <i class="fas fa-shield-alt text-primary"></i>
+                                        </div>
+                                        <span class="fw-medium text-dark small">{{ __('products.secure_payment') }}</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-headset text-primary me-2"></i>
-                                        <small>{{ __('products.support') }}</small>
+                                    <div class="feature-item p-2 rounded d-flex align-items-center">
+                                        <div class="feature-icon-wrapper me-3">
+                                            <i class="fas fa-headset text-primary"></i>
+                                        </div>
+                                        <span class="fw-medium text-dark small">{{ __('products.support') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -351,247 +378,489 @@
 
     {{-- Styles --}}
     <style>
+        .fw-extrabold {
+            font-weight: 800;
+        }
+
+        .product-title-animated {
+            background: linear-gradient(to right, #1e293b, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        .price-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.2rem;
+            letter-spacing: -0.5px;
+        }
+
         .main-image-container {
             position: relative;
-            background: #f8f9fa;
-            border-radius: 12px;
+            background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
+            border-radius: 20px;
             overflow: hidden;
             height: auto;
-            /* ✅ Remove fixed height */
             min-height: 400px;
-            /* ✅ Minimum height only */
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
 
         .main-product-image {
             width: auto;
             height: auto;
-            max-height: 550px;
+            max-height: 520px;
             object-fit: contain;
-            padding: 15px;
-            background: #fff;
+            padding: 20px;
+            background: transparent;
+            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.1));
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-            /* Add these lines to improve rendering of low-res images */
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-            filter: sharpen(1);
+        .main-image-container:hover .main-product-image {
+            transform: scale(1.05) translateY(-5px);
         }
 
         .thumbnail-image {
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             border: 2px solid transparent;
             width: 100%;
-            height: 100px;
+            height: 90px;
             object-fit: contain;
-            /* ✅ Fix thumbnails too */
-            background: #f8f9fa;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
         }
 
         .thumbnail-image.active,
         .thumbnail-image:hover {
-            border-color: #667eea;
+            border-color: #6366f1;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(99, 102, 241, 0.15);
         }
 
         .color-option {
             text-align: center;
             cursor: pointer;
-            padding: 8px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+            padding: 6px;
+            border: 2px solid transparent;
+            background: #ffffff;
+            border-radius: 12px;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            min-width: 60px;
         }
 
         .color-option:hover {
-            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
+            border-color: #e2e8f0;
         }
 
         .color-option.selected {
-            border-color: #667eea;
-            background-color: #f8f9ff;
-            box-shadow: 0 0 0 1px #667eea;
+            border-color: #6366f1;
+            background-color: #eef2ff;
+            box-shadow: 0 0 0 1px #6366f1, 0 4px 10px rgba(99, 102, 241, 0.15);
         }
 
         .color-swatch {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: 2px solid #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            margin: 0 auto 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 6px;
+            transition: transform 0.2s ease;
+        }
+
+        .color-option:hover .color-swatch {
+            transform: scale(1.1);
         }
 
         .color-image-thumb {
-            width: 50px;
-            height: 50px;
+            width: 44px;
+            height: 44px;
             border-radius: 8px;
             overflow: hidden;
-            border: 1px solid #ddd;
-            margin: 0 auto 4px;
+            border: 1px solid #e2e8f0;
+            margin: 0 auto 6px;
+            background: #fff;
         }
 
         .color-image-thumb img {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            background: #fff;
         }
 
         .color-label {
             display: block;
             font-size: 0.75rem;
+            font-weight: 600;
+            color: #475569;
         }
 
-        /* Out of Stock Overlay */
         .color-option.out-of-stock {
             position: relative;
             cursor: not-allowed;
-            opacity: 0.9;
-            background: #fdfdfd;
-        }
-
-        .color-option.out-of-stock img,
-        .color-option.out-of-stock .color-swatch {
-            filter: grayscale(1) opacity(0.5);
+            opacity: 0.6;
         }
 
         .size-option {
-            min-width: 50px;
-            padding: 12px 16px;
+            min-width: 55px;
+            padding: 10px 16px;
             text-align: center;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #ffffff;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            color: #475569;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
         .size-option:hover {
-            border-color: #667eea;
-            background-color: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
+            color: #1e293b;
         }
 
         .size-option.selected {
-            border-color: #667eea;
-            background-color: #667eea;
+            border-color: #6366f1;
+            background-color: #6366f1;
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Quantity Input */
+        .quantity-input {
+            width: 60px !important;
+            font-size: 1.1rem;
+        }
+
+        .quantity-btn {
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover:not(:disabled) {
+            background: #e2e8f0 !important;
+            color: #1e293b;
+        }
+
+        /* Modern Custom Action Buttons */
+        .action-btn {
+            position: relative;
+            overflow: hidden;
+            border: none;
+            border-radius: 14px;
+            padding: 14px 24px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.3px;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-add-cart {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #4338ca;
+            box-shadow: 0 4px 10px rgba(199, 210, 254, 0.5);
+        }
+
+        .btn-add-cart:hover {
+            background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%);
+            color: #3730a3;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(165, 180, 252, 0.6);
+        }
+
+        .btn-go-cart {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #b45309;
+            box-shadow: 0 4px 10px rgba(253, 230, 138, 0.5);
+        }
+
+        .btn-buy-now {
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            color: white;
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-buy-now:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5);
             color: white;
         }
 
-        /* Premium Stock Counter Stimulator */
+        .btn-glow {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.4s, transform 0.6s;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .btn-buy-now:hover .btn-glow {
+            opacity: 1;
+            transform: scale(1);
+            animation: rotateGlow 4s linear infinite;
+        }
+
+        @keyframes rotateGlow {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(360deg);
+            }
+        }
+
+        .btn-wishlist {
+            background: #ffffff;
+            border: 2px solid #f1f5f9;
+            color: #94a3b8;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            width: 60px;
+            padding: 0;
+            border-radius: 14px;
+        }
+
+        .btn-wishlist:hover {
+            border-color: #ffe4e6;
+            background: #fff1f2;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(225, 29, 72, 0.1);
+        }
+
+        .btn-wishlist.active {
+            background: #fff1f2;
+            border-color: #fecdd3;
+            animation: heartbeat 1.5s ease-in-out infinite both;
+        }
+
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.1);
+            }
+
+            28% {
+                transform: scale(1);
+            }
+
+            42% {
+                transform: scale(1.1);
+            }
+
+            70% {
+                transform: scale(1);
+            }
+        }
+
+        /* Premium Stock Counter Box */
         .stock-counter-wrapper {
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: #fff5f5;
-            border-radius: 6px;
-            border-left: 4px solid #f56565;
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffeded 100%);
+            border-radius: 12px;
+            border: 1px solid #fed7d7;
             display: inline-block;
+            box-shadow: 0 4px 10px rgba(245, 101, 101, 0.08);
         }
 
         .stock-count-text {
             color: #c53030;
-            font-weight: 700;
-            font-size: 0.9rem;
+            font-weight: 800;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
         }
 
         .stock-progress {
-            height: 4px;
+            height: 6px;
             background: #fed7d7;
-            border-radius: 2px;
-            margin-top: 6px;
+            border-radius: 3px;
+            margin-top: 8px;
             overflow: hidden;
-            width: 150px;
+            width: 100%;
         }
 
         .stock-progress-bar {
             height: 100%;
-            background: #f56565;
-            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #fc8181 0%, #e53e3e 100%);
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Features Section */
+        .premium-feature-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+            border: 1px solid rgba(0, 0, 0, 0.02) !important;
+        }
+
+        .feature-item {
+            background: #f8fafc;
+            transition: background 0.3s;
+        }
+
+        .feature-item:hover {
+            background: #f1f5f9;
+        }
+
+        .feature-icon-wrapper {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #eef2ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .product-card {
-            transition: transform 0.3s ease;
-            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 16px;
             overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #f1f5f9 !important;
         }
 
         .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08) !important;
         }
 
         .related-product-image-wrapper {
-            height: 200px;
-            background: #f8f9fa;
+            height: 220px;
+            background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
             overflow: hidden;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .related-product-image-wrapper img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .related-product-image-wrapper img {
+            transform: scale(1.08);
         }
 
         /* Wishlist Button Top Right */
         .wishlist-btn-top {
-            background: white;
-            width: 32px;
-            height: 32px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .wishlist-btn-top:hover {
-            transform: scale(1.1);
+            transform: scale(1.15);
+            background: white;
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.15);
         }
 
         .wishlist-btn-top i {
-            color: #ccc;
+            color: #cbd5e1;
             font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .wishlist-btn-top:hover i {
+            color: #fca5a5;
         }
 
         .wishlist-btn-top.active i {
-            color: #dc3545;
+            color: #e11d48;
         }
 
         /* Main Image Floating Badge */
         .main-image-badge {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 6px 12px;
-            border-radius: 25px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            font-weight: 700;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            font-weight: 800;
             font-size: 0.85rem;
             z-index: 10;
             display: none;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 1);
         }
 
         .main-image-badge.out-of-stock {
-            color: #d81b60;
-            border-color: #ffd1e1;
+            color: #be123c;
+            background: rgba(255, 228, 230, 0.95);
+            border-color: #fecdd3;
         }
 
         .main-image-badge.low-stock {
-            color: #c53030;
-            background: #fff5f5;
-            border-color: #feb2b2;
+            color: #b45309;
+            background: rgba(254, 243, 199, 0.95);
+            border-color: #fde68a;
         }
 
         @media (max-width: 768px) {
             .main-image-container {
-                height: 550px;
+                height: 400px;
+            }
+
+            .action-btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .btn-wishlist {
+                width: 100%;
             }
         }
     </style>

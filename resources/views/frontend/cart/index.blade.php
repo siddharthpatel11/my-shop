@@ -30,11 +30,12 @@
                         @php
                             $images = $item->product->image ? explode(',', $item->product->image) : [];
                         @endphp
-                        <div class="card border-0 shadow-sm mb-3 cart-item-card" data-cart-id="{{ $item->id }}">
-                            <div class="card-body">
+                        <div class="card border-0 premium-shadow mb-4 cart-item-card" data-cart-id="{{ $item->id }}">
+                            <div class="card-body p-4">
                                 <div class="row align-items-center">
                                     <div class="col-md-2 col-3 mb-3 mb-md-0 text-center">
-                                        <a href="{{ route('frontend.products.show', $item->product->id) }}">
+                                        <a href="{{ route('frontend.products.show', $item->product->id) }}"
+                                            class="cart-image-wrapper">
                                             <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
                                                 class="cart-item-image" alt="{{ $item->product->name }}">
                                         </a>
@@ -87,15 +88,15 @@
                                             <small class="text-muted d-block mb-2">Quantity</small>
                                             <div
                                                 class="quantity-control {{ $item->product->stock <= 0 ? 'opacity-50' : '' }}">
-                                                <button
+                                                <button class="btn-qty"
                                                     onclick="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})"
                                                     {{ $item->quantity <= 1 || $item->product->stock <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-minus"></i>
                                                 </button>
-                                                <input type="number"
+                                                <input type="number" class="input-qty"
                                                     value="{{ $item->product->stock <= 0 ? 0 : $item->quantity }}"
                                                     readonly>
-                                                <button
+                                                <button class="btn-qty"
                                                     onclick="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})"
                                                     {{ $item->quantity >= $item->product->stock || $item->product->stock <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-plus"></i>
@@ -119,15 +120,15 @@
                                             <div class="fw-bold text-primary mb-2">
                                                 ₹{{ number_format($item->price * $item->quantity, 2) }}
                                             </div>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-sm btn-outline-danger text-nowrap"
+                                            <div class="d-grid gap-2 mt-2">
+                                                <button class="btn btn-sm btn-outline-danger text-nowrap btn-remove-item"
                                                     onclick="removeItem({{ $item->id }})">
                                                     <i class="fas fa-trash-alt me-1"></i> Remove
                                                 </button>
-                                                <button class="btn btn-sm btn-primary text-nowrap"
+                                                <button class="btn btn-sm btn-primary text-nowrap btn-buy-this"
                                                     onclick="checkoutSingleItem({{ $item->id }})"
                                                     {{ $item->product->stock <= 0 ? 'disabled' : '' }}>
-                                                    <i class="fas fa-bolt me-1"></i> Buy This
+                                                    <i class="fas fa-bolt me-1 text-warning"></i> Buy This
                                                 </button>
                                             </div>
                                         </div>
@@ -138,12 +139,14 @@
                     @endforeach
                 @else
                     {{-- Empty Cart Message --}}
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
-                            <h4 class="text-muted mb-3">Your cart is empty</h4>
-                            <p class="text-muted mb-4">Add some products to get started!</p>
-                            <a href="{{ route('frontend.products.index') }}" class="btn btn-primary">
+                    <div class="card border-0 premium-shadow">
+                        <div class="card-body text-center py-5 empty-cart-container">
+                            <div class="empty-cart-icon mb-4 mx-auto">
+                                <i class="fas fa-shopping-cart fa-3x text-primary"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">Your cart is empty</h4>
+                            <p class="text-muted mb-4">Looks like you haven't added any products to your cart yet.</p>
+                            <a href="{{ route('frontend.products.index') }}" class="btn btn-premium-checkout px-4 py-2">
                                 <i class="fas fa-arrow-left me-2"></i> Continue Shopping
                             </a>
                         </div>
@@ -153,8 +156,8 @@
 
             {{-- Cart Summary --}}
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
-                    <div class="card-body">
+                <div class="card border-0 premium-shadow sticky-top summary-card" style="top: 20px;">
+                    <div class="card-body p-4">
                         <h5 class="fw-bold mb-4">Order Summary</h5>
 
                         @php
@@ -230,12 +233,13 @@
                             </span>
                         </div>
 
-                        <button class="btn btn-primary w-100 mb-3" id="checkoutBtn" onclick="checkoutAllItems()"
+                        <button class="btn btn-premium-checkout w-100 mb-3" id="checkoutBtn" onclick="checkoutAllItems()"
                             {{ $cartItems->count() == 0 ? 'disabled' : '' }}>
                             <i class="fas fa-lock me-2"></i> Proceed to Checkout
                         </button>
 
-                        <a href="{{ route('frontend.products.index') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ route('frontend.products.index') }}"
+                            class="btn btn-outline-secondary w-100 btn-continue-shopping">
                             <i class="fas fa-arrow-left me-2"></i> Continue Shopping
                         </a>
                     </div>
@@ -389,50 +393,111 @@
 
     {{-- Styles --}}
     <style>
+        .premium-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+            border-radius: 16px;
+        }
+
         .cart-item-card {
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.02) !important;
         }
 
         .cart-item-card:hover {
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08) !important;
+            border-color: #f1f5f9 !important;
+        }
+
+        .cart-image-wrapper {
+            display: block;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px;
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        .cart-item-card:hover .cart-image-wrapper {
+            background: #f1f5f9;
         }
 
         .cart-item-image {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
+            width: 100%;
+            height: 100px;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+            transition: transform 0.4s;
         }
 
+        .cart-item-card:hover .cart-item-image {
+            transform: scale(1.05);
+        }
+
+        /* Quantity Control */
         .quantity-control {
             display: inline-flex;
             align-items: center;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            overflow: hidden;
+            background: #f8fafc;
+            border-radius: 30px;
+            padding: 4px;
+            border: 1px solid #e2e8f0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+            transition: border-color 0.3s;
         }
 
-        .quantity-control button {
+        .quantity-control:hover {
+            border-color: #cbd5e1;
+        }
+
+        .btn-qty {
             border: none;
-            background: #f8f9fa;
-            padding: 8px 12px;
+            background: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            color: #64748b;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .quantity-control button:hover {
-            background: #e9ecef;
+        .btn-qty:hover:not(:disabled) {
+            background: #6366f1;
+            color: #ffffff;
+            transform: scale(1.05);
         }
 
-        .quantity-control input {
+        .btn-qty:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .btn-qty:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .input-qty {
             border: none;
-            width: 50px;
+            background: transparent;
+            width: 40px;
             text-align: center;
-            padding: 8px 4px;
+            font-weight: 700;
+            color: #1e293b;
         }
 
-        .quantity-control input::-webkit-outer-spin-button,
-        .quantity-control input::-webkit-inner-spin-button {
+        .input-qty:focus {
+            outline: none;
+        }
+
+        .input-qty::-webkit-outer-spin-button,
+        .input-qty::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
@@ -442,74 +507,156 @@
             height: 28px;
             border-radius: 50%;
             border: 2px solid #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
             display: inline-block;
         }
 
         .size-badge {
             display: inline-block;
-            padding: 6px 12px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-weight: 500;
+            padding: 4px 10px;
+            background: #f1f5f9;
+            color: #475569;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* Order Summary Card */
+        .summary-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #f1f5f9;
+        }
+
+        .btn-premium-checkout {
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-premium-checkout:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5);
+            color: white;
+        }
+
+        .btn-premium-checkout:disabled {
+            opacity: 0.6;
+            background: #94a3b8;
+            box-shadow: none;
+        }
+
+        .btn-continue-shopping {
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-remove-item {
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-remove-item:hover {
+            background: #fff1f2;
+            color: #e11d48;
+            border-color: #fecdd3;
+        }
+
+        .btn-buy-this {
+            border-radius: 8px;
+            background: #eef2ff;
+            color: #4f46e5;
+            border-color: #eef2ff;
+            font-weight: 600;
+        }
+
+        .btn-buy-this:hover {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        /* Empty Cart */
+        .empty-cart-container {
+            background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+        }
+
+        .empty-cart-icon {
+            width: 100px;
+            height: 100px;
+            background: #eef2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .address-card {
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             padding: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
+            background: #fff;
         }
 
         .address-card:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #818cf8;
+            background: #f8fafc;
         }
 
         .address-card.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #6366f1;
+            background: #eef2ff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
         }
 
         .discount-card {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            background: #fff;
         }
 
         .discount-card:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #818cf8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
         }
 
         .discount-card.locked {
-            opacity: 0.8;
+            opacity: 0.7;
             cursor: not-allowed;
-            background: #fdfdfd;
+            background: #f8fafc;
         }
 
         .discount-card.locked:hover {
-            border-color: #dee2e6;
-            background: #fdfdfd;
+            border-color: #e2e8f0;
+            transform: none;
+            box-shadow: none;
         }
 
         .discount-badge {
-            background: #f0f2ff;
-            color: #667eea;
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: monospace;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: inherit;
         }
 
         @media (max-width: 768px) {
             .cart-item-image {
-                width: 80px;
                 height: 80px;
             }
         }

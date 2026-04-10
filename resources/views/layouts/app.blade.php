@@ -361,6 +361,12 @@
                                         <i class="fas fa-envelope me-2"></i> Contact-us
                                     </a>
                                 </li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('admin.banners.*') ? 'active' : '' }}"
+                                        href="{{ route('admin.banners.index') }}">
+                                        <i class="fas fa-images me-2"></i> Banners
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         {{-- <li class="nav-item">

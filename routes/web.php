@@ -139,6 +139,10 @@ Route::middleware(['auth', 'prevent-back', '2fa'])->prefix('admin')->name('admin
     Route::get('/meta-tags/{identifier}/edit', [MetaTagController::class, 'edit'])->name('meta-tags.edit');
     Route::put('/meta-tags/{identifier}', [MetaTagController::class, 'update'])->name('meta-tags.update');
 
+    // Banners Management
+    Route::resource('/banners', \App\Http\Controllers\BannerController::class);
+    Route::patch('/banners/{banner}/toggle-status', [\App\Http\Controllers\BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
+
     // Authentication Heartbeat (for multi-browser session sync)
     Route::get('/auth-check', function () {
         return response()->json(['authenticated' => true]);

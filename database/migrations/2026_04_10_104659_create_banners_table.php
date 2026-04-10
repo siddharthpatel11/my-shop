@@ -1,0 +1,35 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('banners', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('subtitle')->nullable();
+            $table->string('image')->nullable();
+            $table->string('link')->nullable();
+            $table->string('background_color')->default('linear-gradient(135deg, #fceabb 0%, #f8b500 100%)');
+            $table->string('text_color')->default('text-dark');
+            $table->integer('order')->default(0);
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('banners');
+    }
+};

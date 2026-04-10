@@ -3,22 +3,164 @@
 @section('title', 'Our Products')
 
 @section('content')
-    {{-- Hero Section --}}
-    <div class="bg-gradient-primary mb-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <h1 class="display-30 fw-bold text-white mb-1">{{ __('products.our_products') }}</h1>
-                    <p class="lead text-white-50">{{ __('products.discover_text') }}</p>
-                </div>
-                <div class="col-lg-4 text-end">
-                    <div class="text-white">
-                        <i class="fas fa-box-open fa-2x opacity-20"></i>
+    {{-- Flipkart Dashboard Layout --}}
+    @php
+        // Fetch categories for the top strip
+        $activeCategories = \App\Models\Category::where('status', 'active')->get();
+
+        // Fetch active banners for the dynamic ad banners
+        $featuredAds = \App\Models\Banner::where('status', 'active')->orderBy('order')->get();
+        $isProductFallback = false;
+
+        // Fallback to products if no banners exist
+        if ($featuredAds->isEmpty()) {
+            $featuredAds = \App\Models\Product::inRandomOrder()->take(4)->get();
+            $isProductFallback = true;
+        }
+
+        // Vibrant Gradient palettes for product fallback banners
+        $gradients = [
+            'linear-gradient(135deg, #fceabb 0%, #f8b500 100%)', // Yellow/Gold
+            'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', // Light Blue
+            'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', // Pink
+            'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)', // Mint Green
+        ];
+
+        // Function to guess icon based on category name
+        if (!function_exists('getCategoryIcon')) {
+            function getCategoryIcon($name)
+            {
+                $name = strtolower($name);
+                if (str_contains($name, 'mobile') || str_contains($name, 'phone')) {
+                    return 'fas fa-mobile-alt';
+                }
+                if (str_contains($name, 'laptop') || str_contains($name, 'computer')) {
+                    return 'fas fa-laptop';
+                }
+                if (str_contains($name, 'fashion') || str_contains($name, 'cloth')) {
+                    return 'fas fa-tshirt';
+                }
+                if (str_contains($name, 'beauty') || str_contains($name, 'cosmetic')) {
+                    return 'fas fa-magic';
+                }
+                if (str_contains($name, 'home') || str_contains($name, 'furniture')) {
+                    return 'fas fa-couch';
+                }
+                if (str_contains($name, 'electronic') || str_contains($name, 'appliance')) {
+                    return 'fas fa-tv';
+                }
+                if (str_contains($name, 'toy')) {
+                    return 'fas fa-gamepad';
+                }
+                if (str_contains($name, 'grocery') || str_contains($name, 'food')) {
+                    return 'fas fa-shopping-basket';
+                }
+                return 'fas fa-box';
+            }
+        }
+    @endphp
+
+    {{-- Category Strip --}}
+    <div class="bg-white shadow-sm mb-3">
+        <div class="container-fluid px-2 px-md-4">
+            <div
+                class="d-flex align-items-end justify-content-start justify-content-lg-center gap-3 gap-md-5 overflow-auto py-3 px-2 hide-scrollbar flipkart-category-strip">
+
+                {{-- 'For You' / 'All Products' Base Item --}}
+                <a href="{{ route('frontend.products.index') }}"
+                    class="category-item text-center flex-shrink-0 text-decoration-none {{ !request('category') ? 'active-cat' : '' }}">
+                    <div class="category-icon-wrapper mx-auto mb-1 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-gem fa-lg"></i>
                     </div>
-                </div>
+                    <span class="category-name fw-bold" style="font-size: 0.85rem;">For You</span>
+                </a>
+
+                @foreach ($activeCategories as $category)
+                    <a href="{{ route('frontend.products.index', ['category' => $category->id]) }}"
+                        class="category-item text-center flex-shrink-0 text-decoration-none {{ request('category') == $category->id ? 'active-cat' : '' }}">
+                        <div class="category-icon-wrapper mx-auto mb-1 d-flex align-items-center justify-content-center">
+                            <i class="{{ getCategoryIcon($category->name) }} fa-lg"></i>
+                        </div>
+                        <span class="category-name" style="font-size: 0.85rem;">{{ $category->name }}</span>
+                    </a>
+                @endforeach
+
             </div>
         </div>
     </div>
+
+    {{-- Horizontal Ad Banners --}}
+    @if ($featuredAds->count() > 0)
+        <div class="container-fluid px-2 px-md-4 mb-4">
+            <div class="d-flex gap-3 overflow-auto hide-scrollbar pb-3 snap-x">
+                @foreach ($featuredAds as $index => $ad)
+                    @php
+                        if ($isProductFallback) {
+                            $adImages = $ad->image ? explode(',', $ad->image) : [];
+                            $imageUrl = asset('images/products/' . ($adImages[0] ?? 'no-image.png'));
+                            $title = $ad->name;
+                            $subtitle = 'From ₹' . number_format($ad->price);
+                            $badgeText = $index === 0 ? 'SUMMER SALE' : 'Mega Deal';
+                            $link = route('frontend.products.show', $ad->id);
+                            $bgGradient = $gradients[$index % count($gradients)];
+                            $textColor = 'text-dark';
+                        } else {
+                            $imageUrl = $ad->image ? asset('images/banners/' . $ad->image) : '';
+                            $title = $ad->title;
+                            $subtitle = $ad->subtitle;
+                            $badgeText = ''; // Removed standard badges for custom banners; text handles it
+                            $link = $ad->link ?? '#';
+                            $bgGradient = $ad->background_color;
+                            $textColor = $ad->text_color;
+                        }
+                    @endphp
+                    <div class="banner-card flex-shrink-0 rounded-4 p-3 position-relative overflow-hidden snap-center"
+                        style="background: {{ $bgGradient }}; width: 85vw; max-width: 500px; min-height: 200px;">
+                        <a href="{{ $link }}" class="text-decoration-none">
+                            <div class="row h-100 align-items-center position-relative z-1">
+                                <div class="col-7 col-sm-7 ps-3 pe-0">
+                                    @if ($isProductFallback)
+                                        @if ($index === 0)
+                                            <h4 class="fw-black text-danger mb-1 fst-italic"
+                                                style="font-weight: 900; letter-spacing: 1px;">{{ $badgeText }}</h4>
+                                        @else
+                                            <span
+                                                class="badge bg-white text-dark mb-2 shadow-sm rounded-pill px-3 py-1 fw-bold"
+                                                style="font-size: 0.7rem;">
+                                                <i class="fas fa-bolt text-warning me-1"></i> {{ $badgeText }}
+                                            </span>
+                                        @endif
+                                    @endif
+
+                                    <h3 class="fw-bold {{ $textColor }} mb-2 text-truncate-2 mt-1"
+                                        style="font-size: 1.3rem; line-height: 1.2;">{{ $title }}</h3>
+
+                                    @if ($subtitle)
+                                        <div class="mb-3">
+                                            <span class="{{ $textColor }} fw-bold"
+                                                style="font-size: 1.1rem; opacity: 0.9;">{{ $subtitle }}</span>
+                                        </div>
+                                    @endif
+
+                                    <span class="btn btn-primary btn-sm rounded-1 px-4 fw-bold shadow-sm"
+                                        style="background-color: #2874f0; border-color: #2874f0;">
+                                        Shop Now
+                                    </span>
+                                </div>
+                                <div class="col-5 col-sm-5 text-center px-1">
+                                    @if ($imageUrl)
+                                        <img src="{{ $imageUrl }}" alt="{{ $title }}"
+                                            class="img-fluid banner-img"
+                                            style="max-height: 160px; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));">
+                                    @endif
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <div class="container mb-5">
 
@@ -38,16 +180,17 @@
 
                         {{-- Product Image --}}
                         <div class="product-image-wrapper position-relative text-center">
-                            <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
-                                alt="{{ $product->name }}" class="product-image">
-
-                            {{--  <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
-                                class="card-img-top product-image" alt="{{ $product->name }}">  --}}
+                            <a href="{{ route('frontend.products.show', $product->id) }}"
+                                class="d-block w-100 h-100 px-3 py-4">
+                                <img src="{{ asset('images/products/' . ($images[0] ?? 'no-image.png')) }}"
+                                    alt="{{ $product->name }}" class="product-image">
+                            </a>
 
                             {{-- Badges --}}
                             <div class="position-absolute top-0 start-0 p-2">
                                 @if ($product->created_at && $product->created_at->diffInDays(now()) < 7)
-                                    <span class="badge bg-success">{{ __('products.new_badge') }}</span>
+                                    <span
+                                        class="badge bg-success shadow-sm rounded-pill">{{ __('products.new_badge') }}</span>
                                 @endif
                             </div>
 
@@ -58,155 +201,89 @@
                                         data-product-id="{{ $product->id }}"
                                         class="wishlist-btn-top {{ in_array($product->id, $wishlistProductIds ?? []) ? 'active' : '' }}">
                                         <i
-                                            class="{{ in_array($product->id, $wishlistProductIds ?? []) ? 'fas' : 'far' }} fa-heart"></i>
+                                            class="{{ in_array($product->id, $wishlistProductIds ?? []) ? 'fas' : 'far' }} fa-heart text-danger"></i>
                                     </a>
                                 </div>
                             @endauth
-
-                            {{-- Quick View --}}
-                            <div class="product-overlay">
-                                <a href="{{ route('frontend.products.show', $product->id) }}"
-                                    class="btn btn-light btn-sm rounded-pill mb-1 pd-1">
-                                    <i class="fas fa-eye"></i> {{ __('products.quick_view') }}
-                                </a>
-                                @auth('customer')
-                                    @php $isInWishlist = in_array($product->id, $wishlistProductIds ?? []); @endphp
-                                    <button class="btn btn-light btn-sm rounded-pill add-to-wishlist"
-                                        data-product-id="{{ $product->id }}" onclick="addToWishlist(this)">
-                                        <i class="{{ $isInWishlist ? 'fas' : 'far' }} fa-heart"
-                                            style="{{ $isInWishlist ? 'color: #dc3545;' : '' }}"></i>
-                                        {{ $isInWishlist ? __('products.in_wishlist') : __('products.wishlist') }}
-                                    </button>
-                                @endauth
-                            </div>
                         </div>
 
-                        <div class="card-body d-flex flex-column">
-                            {{-- Wrap top content to push buttons to bottom --}}
+                        <div class="card-body d-flex flex-column p-3">
                             <div class="flex-grow-1">
                                 {{-- Product Name --}}
-                                <h5 class="card-title fw-bold mb-2 text-truncate" title="{{ $product->name }}">
-                                    {{ $product->name }}
-                                </h5>
+                                <a href="{{ route('frontend.products.show', $product->id) }}" class="text-decoration-none">
+                                    <h5 class="card-title fw-bold mb-2 text-dark title-clamp" title="{{ $product->name }}">
+                                        {{ $product->name }}
+                                    </h5>
+                                </a>
 
-                                {{-- Category --}}
-                                @if ($product->category)
-                                    <p class="text-muted small mb-2">
-                                        <i class="fas fa-tag"></i> {{ $product->category->name }}
-                                    </p>
-                                @endif
-
-                                {{-- Description --}}
-                                <p class="card-text text-muted small mb-3" style="min-height: 40px;">
-                                    {{ \Illuminate\Support\Str::limit($product->detail, 60) }}
-                                </p>
-
-                                {{-- Price & Stock --}}
-                                <div class="mb-3">
-                                    <h4 class="text-primary fw-bold mb-0">
-                                        ₹{{ number_format($product->price, 2) }}
-                                    </h4>
-                                    {{-- Stock Status with fixed height to prevent vertical shifting --}}
-                                    <div style="min-height: 24px;">
-                                        @if ($product->stock <= 0)
-                                            <div class="text-danger fw-bold mt-1"
-                                                style="color: #d81b60 !important; font-size: 0.85rem;">Out Of Stock
-                                            </div>
-                                        @elseif($product->stock <= 5)
-                                            <div class="text-danger fw-bold mt-1"
-                                                style="color: #d81b60 !important; font-size: 0.85rem;">Only
-                                                {{ $product->stock }} left</div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                {{-- Color Selection Dropdown --}}
+                                {{-- Passive Color Dots --}}
                                 @if (!empty($colorIds))
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted mb-1">
-                                            <i class="fas fa-palette"></i> {{ __('products.select_color') }}:
-                                        </label>
-                                        <select class="form-select form-select-sm color-select"
-                                            data-product-id="{{ $product->id }}">
-                                            <option value="">{{ __('products.choose_color') }}</option>
-                                            @foreach ($colorIds as $cid)
-                                                @php $color = $colors->firstWhere('id', (int) $cid); @endphp
-                                                @if ($color)
-                                                    <option value="{{ $color->id }}" data-hex="{{ $color->hex_code }}">
-                                                        {{ $color->name }}
-                                                    </option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                        {{-- Color Preview --}}
-                                        <div class="color-preview mt-2" id="colorPreview{{ $product->id }}"
-                                            style="display: none;">
-                                            <small class="text-muted">Selected: </small>
-                                            <span class="color-indicator" id="colorIndicator{{ $product->id }}"></span>
-                                            <small id="colorName{{ $product->id }}"></small>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                {{-- Size Selection Dropdown --}}
-                                @if (!empty($sizeIds))
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted mb-1">
-                                            <i class="fas fa-ruler"></i> {{ __('products.select_size') }}:
-                                        </label>
-                                        <select class="form-select form-select-sm size-select"
-                                            data-product-id="{{ $product->id }}">
-                                            <option value="">{{ __('products.choose_size') }}</option>
-                                            @foreach ($sizeIds as $sid)
-                                                @php $size = $sizes->firstWhere('id', (int) $sid); @endphp
-                                                @if ($size)
-                                                    <option value="{{ $size->id }}">
-                                                        {{ $size->code ?? $size->name }}
-                                                    </option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Action Buttons - pinned to bottom --}}
-                            <div class="mt-auto">
-
-                                @if (session()->has('customer_id'))
-                                    <div class="d-flex gap-2" id="product-actions-{{ $product->id }}">
-                                        @if ($product->stock > 0)
-                                            @if (in_array($product->id, $cartProductIds ?? []))
-                                                <a href="{{ route('frontend.cart') }}"
-                                                    class="btn btn-outline-warning btn-sm flex-fill text-nowrap">
-                                                    <i class="fas fa-arrow-right"></i> {{ __('products.go_to_cart') }}
-                                                </a>
-                                            @else
-                                                <button
-                                                    class="btn btn-outline-primary btn-sm flex-fill add-to-cart-btn text-nowrap"
-                                                    data-product-id="{{ $product->id }}"
-                                                    data-product-price="{{ $product->price }}" onclick="addToCart(this)">
-                                                    <i class="fas fa-shopping-cart"></i> {{ __('products.add_to_cart') }}
-                                                </button>
+                                    <div class="d-flex align-items-center gap-1 mb-2">
+                                        @foreach (array_slice($colorIds, 0, 4) as $cid)
+                                            @php $color = $colors->firstWhere('id', (int) $cid); @endphp
+                                            @if ($color)
+                                                <span class="passive-color-dot"
+                                                    style="background-color: {{ $color->hex_code }}; border: 1px solid #ddd;"
+                                                    title="{{ $color->name }}"></span>
                                             @endif
-                                            <button class="btn btn-outline-success btn-sm flex-fill text-nowrap"
-                                                data-product-id="{{ $product->id }}"
-                                                data-product-price="{{ $product->price }}" onclick="buyNow(this)">
-                                                <i class="fas fa-bolt"></i>
-                                                {{ __('products.buy_now', ['price' => number_format($product->price)]) }}
-                                            </button>
-                                        @else
-                                            <button class="btn btn-outline-secondary btn-sm w-100 disabled text-nowrap">
-                                                <i class="fas fa-ban"></i> Currently Unavailable
-                                            </button>
+                                        @endforeach
+                                        @if (count($colorIds) > 4)
+                                            <span class="text-muted small ms-1">+{{ count($colorIds) - 4 }}</span>
                                         @endif
                                     </div>
                                 @else
-                                    <a href="{{ route('customer.login') }}" class="btn btn-primary w-100">
-                                        {{ __('products.login_to_buy') }}
-                                    </a>
+                                    <div class="mb-2" style="height: 16px;"></div> {{-- Spacer --}}
                                 @endif
-                            </div> {{-- End mt-auto --}}
+
+                                {{-- Price --}}
+                                <div class="mb-2 d-flex align-items-baseline gap-2">
+                                    <h4 class="text-dark fw-bold mb-0" style="font-size: 1.25rem;">
+                                        ₹{{ number_format($product->price, 2) }}
+                                    </h4>
+                                </div>
+
+                                {{-- Stock Status --}}
+                                <div style="min-height: 20px;" class="mb-3">
+                                    @if ($product->stock <= 0)
+                                        <div class="text-danger fw-bold small" style="color: #b91c1c !important;">Out Of
+                                            Stock</div>
+                                    @elseif($product->stock <= 5)
+                                        <div class="text-warning fw-bold small" style="color: #b45309 !important;">Only
+                                            {{ $product->stock }} left</div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Action Buttons --}}
+                            <div class="mt-auto">
+                                @if ($product->stock > 0)
+                                    @if (!empty($colorIds) || !empty($sizeIds))
+                                        <a href="{{ route('frontend.products.show', $product->id) }}"
+                                            class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold">
+                                            See Options
+                                        </a>
+                                    @else
+                                        @if (in_array($product->id, $cartProductIds ?? []))
+                                            <a href="{{ route('frontend.cart') }}"
+                                                class="btn btn-warning btn-sm w-100 rounded-pill fw-semibold">
+                                                Go to Cart
+                                            </a>
+                                        @else
+                                            <button
+                                                class="btn btn-warning btn-sm w-100 rounded-pill fw-semibold add-to-cart-btn"
+                                                data-product-id="{{ $product->id }}"
+                                                data-product-price="{{ $product->price }}" onclick="addToCart(this)">
+                                                Add to Cart
+                                            </button>
+                                        @endif
+                                    @endif
+                                @else
+                                    <button class="btn btn-secondary btn-sm w-100 disabled rounded-pill"
+                                        style="opacity: 0.6;">
+                                        Unavailable
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -247,104 +324,153 @@
 
     {{-- Styles --}}
     <style>
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .title-clamp {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 1rem;
+            line-height: 1.3;
+            height: 2.6rem;
         }
 
-        .product-card {
-            transition: all 0.3s ease;
-            border-radius: 12px;
+        .passive-color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
+        /* Scrollbar styles for horizontal areas */
+        .hide-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .hide-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+        .hide-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .hide-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            .hide-scrollbar {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+            }
+        }
+
+        .flipkart-category-strip .category-item {
+            min-width: 65px;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .flipkart-category-strip .category-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f1f3f6;
+            transition: all 0.2s ease;
+        }
+
+        .flipkart-category-strip .category-item:hover .category-icon-wrapper,
+        .flipkart-category-strip .active-cat .category-icon-wrapper {
+            background: #2874f0;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(40, 116, 240, 0.3);
+        }
+
+        .flipkart-category-strip .category-item:hover .category-name,
+        .flipkart-category-strip .active-cat .category-name {
+            color: #2874f0;
+            font-weight: bold;
+        }
+
+        .active-cat .category-name {
+            border-bottom: 2px solid #2874f0;
+            padding-bottom: 2px;
+        }
+
+        .snap-x {
+            scroll-snap-type: x mandatory;
+        }
+
+        .snap-center {
+            scroll-snap-align: center;
+        }
+
+        .banner-card {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .banner-card:hover {
+            transform: scale(0.98);
+        }
+
+        .banner-img {
+            transition: transform 0.5s ease;
+        }
+
+        .banner-card:hover .banner-img {
+            transform: scale(1.1);
+        }
+
+        .product-card {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04) !important;
+        }
+
         .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+            border-color: #cbd5e1 !important;
+            z-index: 2;
         }
 
         .product-image-wrapper {
-            height: 250px;
-            background: #fff;
+            height: 220px;
+            background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            transition: background 0.3s;
+        }
+
+        .product-card:hover .product-image-wrapper {
+            background: #f8fafc;
         }
 
         .product-image {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            /* IMPORTANT */
+            transition: transform 0.4s ease;
         }
-
-
 
         .product-card:hover .product-image {
-            transform: scale(1.05);
+            transform: scale(1.08);
         }
 
-        .product-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
 
-        .product-card:hover .product-overlay {
-            opacity: 1;
-        }
-
-        .color-dot {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .color-dot:hover {
-            transform: scale(1.2);
-            border-color: #667eea;
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            line-height: 1.4;
-        }
-
-        .badge.bg-light {
-            font-weight: 500;
-            padding: 0.4em 0.6em;
-        }
-
-        .color-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .color-preview {
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 6px;
-        }
-
-        .form-select-sm {
-            font-size: 0.875rem;
-        }
 
         @media (max-width: 768px) {
             .product-image-wrapper {
@@ -371,12 +497,18 @@
         }
 
         .wishlist-btn-top:hover {
-            transform: scale(1.1);
+            transform: scale(1.15);
+            background: #fff0f2;
+            border-color: #ffe4e6;
         }
 
         .wishlist-btn-top i {
             color: #ccc;
             font-size: 16px;
+        }
+
+        .wishlist-btn-top:hover i {
+            color: #dc3545;
         }
 
         .wishlist-btn-top.active i {
@@ -398,41 +530,13 @@
             ];
         @endphp
         window.AppLang = @json($appLang);
-
         // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
-
-            // Initialize color select change handlers
-            initializeColorSelects();
         });
-
-        // Initialize color select dropdowns
-        function initializeColorSelects() {
-            document.querySelectorAll('.color-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const productId = this.dataset.productId;
-                    const selectedOption = this.options[this.selectedIndex];
-                    const colorHex = selectedOption.dataset.hex;
-                    const colorName = selectedOption.text;
-
-                    const preview = document.getElementById('colorPreview' + productId);
-                    const indicator = document.getElementById('colorIndicator' + productId);
-                    const nameSpan = document.getElementById('colorName' + productId);
-
-                    if (this.value) {
-                        preview.style.display = 'block';
-                        indicator.style.backgroundColor = colorHex;
-                        nameSpan.textContent = colorName;
-                    } else {
-                        preview.style.display = 'none';
-                    }
-                });
-            });
-        }
 
         // Handle Add to Cart with selected options
         function addToCart(button, mode = 'increment', callback = null) {
