@@ -193,6 +193,7 @@ class CartController extends Controller
             'price'      => 'required|numeric',
             'color_id'   => 'nullable|exists:colors,id',
             'size_id'    => 'nullable|exists:sizes,id',
+            'variant'    => 'nullable|string|max:255',
             'mode'       => 'nullable|string|in:increment,replace',
         ]);
 
@@ -211,6 +212,7 @@ class CartController extends Controller
             'product_id'  => $productId,
             'color_id'    => $request->color_id,
             'size_id'     => $request->size_id,
+            'variant'     => $request->variant,
         ])->first();
 
         // Calculate total requested quantity
@@ -241,15 +243,19 @@ class CartController extends Controller
                 'product_id'  => $productId,
                 'color_id'    => $request->color_id,
                 'size_id'     => $request->size_id,
+                'variant'     => $request->variant,
                 'quantity'    => $quantity,
                 'price'       => $request->price,
             ]);
         }
 
+        $cartCount = CartItem::where('customer_id', $customerId)->sum('quantity');
+
         return response()->json([
             'success' => true,
             'message' => 'Product added to cart',
             'cart_item_id' => $item->id,
+            'cart_count' => $cartCount,
         ]);
     }
 
@@ -313,5 +319,30 @@ class CartController extends Controller
 
         CartItem::where('customer_id', auth('customer')->id())->delete();
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get updated cart preview items HTML
+     */
+    public function getPreviewItems()
+    {
+        if (!auth('customer')->check()) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $cartCount = CartItem::where('customer_id', auth('customer')->id())->sum('quantity');
+        $cartItemsPreview = CartItem::with(['product.category', 'color', 'size'])
+            ->where('customer_id', auth('customer')->id())
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $html = view('layouts.frontend.partials.cart-preview-items', compact('cartItemsPreview', 'cartCount'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $html,
+            'cart_count' => $cartCount
+        ]);
     }
 }

@@ -195,6 +195,13 @@
                                             </select>
                                         </div>
                                         <div class="mb-2">
+                                            <label class="small fw-bold">Variant:</label>
+                                            <input type="text"
+                                                name="existing_image_data[{{ $img->id }}][variant]"
+                                                class="form-control form-control-sm" value="{{ $img->variant }}"
+                                                placeholder="e.g. 256GB">
+                                        </div>
+                                        <div class="mb-2">
                                             <label class="small fw-bold">Price:</label>
                                             <div class="input-group input-group-sm">
                                                 <span class="input-group-text">₹</span>
@@ -230,7 +237,7 @@
                     <div id="imageRepeater">
                         <div class="row mb-1 image-row align-items-center shadow-sm p-1 border rounded bg-light mx-0"
                             data-index="0">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="small fw-bold">Image(s):</label>
                                 <div class="input-group input-group-sm">
                                     <button type="button" class="btn btn-success trigger-file-input"
@@ -246,6 +253,7 @@
                             </div>
 
                             <div class="col-md-2 p-1">
+                                <label class="small fw-bold">Color:</label>
                                 <select name="image_data[0][color_id]" class="form-select form-select-sm color-selector">
                                     <option value="">No Color</option>
                                     @foreach ($colors as $color)
@@ -258,7 +266,8 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-2 p-1">
+                            <div class="col-md-1 p-1">
+                                <label class="small fw-bold">Size:</label>
                                 <select name="image_data[0][size_id]" class="form-select form-select-sm size-selector">
                                     <option value="">No Size</option>
                                     @foreach ($sizes as $size)
@@ -272,6 +281,13 @@
                             </div>
 
                             <div class="col-md-2 p-1">
+                                <label class="small fw-bold">Variant:</label>
+                                <input type="text" name="image_data[0][variant]"
+                                    class="form-control form-control-sm variant-input" placeholder="e.g. 256GB">
+                            </div>
+
+                            <div class="col-md-2 p-1">
+                                <label class="small fw-bold">Price:</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text p-1">₹</span>
                                     <input type="number" step="0.01" name="image_data[0][price]"
@@ -280,6 +296,7 @@
                             </div>
 
                             <div class="col-md-1 p-1">
+                                <label class="small fw-bold">Stock:</label>
                                 <input type="number" name="image_data[0][stock]" class="form-control form-control-sm"
                                     value="0" min="0" placeholder="Stk">
                             </div>
@@ -537,6 +554,8 @@
                     .find('.color-selector').val());
                 newRow.find('.size-selector').attr('name', `image_data[${idx}][size_id]`).val(lastRow.find(
                     '.size-selector').val());
+                newRow.find('.variant-input').attr('name', `image_data[${idx}][variant]`).val(lastRow.find(
+                    '.variant-input').val());
                 newRow.find('input[placeholder="Price"]').attr('name', `image_data[${idx}][price]`).val(
                     lastRow.find('input[placeholder="Price"]').val());
                 newRow.find('input[min="0"]').attr('name', `image_data[${idx}][stock]`).val(lastRow.find(

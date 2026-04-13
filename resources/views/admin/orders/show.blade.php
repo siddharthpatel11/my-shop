@@ -146,6 +146,13 @@
                                                             {{ $item->size->code ?? $item->size->name }}
                                                         </small>
                                                     @endif
+                                                    @if (!empty($item->variant))
+                                                          <div class="mt-1">
+                                                            <small class="badge bg-light text-dark border border-secondary">
+                                                                {{ $item->variant }}
+                                                            </small>
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td class="text-center">
                                                     <span class="badge bg-secondary">{{ $item->quantity }}</span>

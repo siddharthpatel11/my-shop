@@ -113,6 +113,14 @@
                                                     class="badge bg-light text-dark border">{{ $item->size->code ?? $item->size->name }}</span>
                                             </div>
                                         @endif
+
+                                        @if (!empty($item->variant))
+                                            <div class="d-flex align-items-center gap-1">
+                                                <small class="text-muted">Variant:</small>
+                                                <span
+                                                    class="badge bg-light text-dark border border-secondary">{{ $item->variant }}</span>
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">

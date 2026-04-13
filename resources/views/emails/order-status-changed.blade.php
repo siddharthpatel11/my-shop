@@ -193,6 +193,9 @@
                     @if ($item->size)
                         <span style="color: #666;"> - Size: {{ $item->size->code ?? $item->size->name }}</span>
                     @endif
+                    @if (!empty($item->variant))
+                        <span style="color: #666;"> - Variant: {{ $item->variant }}</span>
+                    @endif
                     <br>
                     <small style="color: #666;">Quantity: {{ $item->quantity }} ×
                         ₹{{ number_format($item->price, 2) }} = ₹{{ number_format($item->subtotal, 2) }}</small>

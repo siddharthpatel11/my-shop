@@ -103,6 +103,7 @@ class ProductController extends Controller
                 // Get row-specific variant details
                 $colorId = $variant['color_id'] ?? null;
                 $sizeId  = $variant['size_id'] ?? null;
+                $variantStr = $variant['variant'] ?? null;
                 $price   = $variant['price'] ?? null;
                 $stock   = $variant['stock'] ?? 0;
 
@@ -121,6 +122,7 @@ class ProductController extends Controller
                             'product_id' => null, // Will set after product create
                             'color_id'   => $colorId,
                             'size_id'    => $sizeId,
+                            'variant'    => $variantStr,
                             'image'      => $name,
                             'price'      => $price,
                             'stock'      => $stock,
@@ -214,6 +216,7 @@ class ProductController extends Controller
                 ProductImage::where('id', $imgId)->update([
                     'color_id' => $meta['color_id'] ?: null,
                     'size_id'  => $meta['size_id'] ?? null,
+                    'variant'  => $meta['variant'] ?? null,
                     'price'    => $meta['price'] ?? null,
                     'stock'    => $meta['stock'] ?? 0,
                 ]);
@@ -230,6 +233,7 @@ class ProductController extends Controller
                             'product_id' => $product->id,
                             'color_id'   => $meta['color_id'] ?: null,
                             'size_id'    => $meta['size_id'] ?? null,
+                            'variant'    => $meta['variant'] ?? null,
                             'image'      => $name,
                             'price'      => $meta['price'] ?? null,
                             'stock'      => $meta['stock'] ?? 0,
@@ -245,6 +249,7 @@ class ProductController extends Controller
             foreach ($request->image_data as $index => $variant) {
                 $colorId = $variant['color_id'] ?? null;
                 $sizeId  = $variant['size_id'] ?? null;
+                $variantStr = $variant['variant'] ?? null;
                 $price   = $variant['price'] ?? null;
                 $stock   = $variant['stock'] ?? 0;
 
@@ -262,6 +267,7 @@ class ProductController extends Controller
                             'product_id' => $product->id,
                             'color_id'   => $colorId,
                             'size_id'    => $sizeId,
+                            'variant'    => $variantStr,
                             'image'      => $name,
                             'price'      => $price,
                             'stock'      => $stock,

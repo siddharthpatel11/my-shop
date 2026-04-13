@@ -299,6 +299,7 @@ class CheckoutController extends Controller
                     'product_id' => $cartItem->product_id,
                     'color_id' => $cartItem->color_id,
                     'size_id' => $cartItem->size_id,
+                    'variant' => $cartItem->variant,
                     'quantity' => $cartItem->quantity,
                     'price' => $cartItem->price,
                     'subtotal' => $cartItem->price * $cartItem->quantity,

@@ -352,13 +352,16 @@
         .hide-scrollbar::-webkit-scrollbar {
             height: 6px;
         }
+
         .hide-scrollbar::-webkit-scrollbar-track {
             background: transparent;
         }
+
         .hide-scrollbar::-webkit-scrollbar-thumb {
             background-color: rgba(0, 0, 0, 0.15);
             border-radius: 10px;
         }
+
         .hide-scrollbar::-webkit-scrollbar-thumb:hover {
             background-color: rgba(0, 0, 0, 0.3);
         }
@@ -367,9 +370,12 @@
             .hide-scrollbar::-webkit-scrollbar {
                 display: none;
             }
+
             .hide-scrollbar {
-                -ms-overflow-style: none; /* IE and Edge */
-                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none;
+                /* IE and Edge */
+                scrollbar-width: none;
+                /* Firefox */
             }
         }
 
@@ -653,6 +659,27 @@
                     }
 
                     if (data.success) {
+                        // Update cart count badge
+                        const cartBadges = document.querySelectorAll('.cart-badge');
+                        if (data.cart_count !== undefined) {
+                            if (cartBadges.length > 0) {
+                                cartBadges.forEach(badge => {
+                                    badge.textContent = data.cart_count;
+                                });
+                            } else {
+                                const cartIconWrapper = document.querySelector('.cart-icon-wrapper');
+                                if (cartIconWrapper) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'cart-badge';
+                                    badge.textContent = data.cart_count;
+                                    cartIconWrapper.appendChild(badge);
+                                }
+                            }
+                        }
+
+                        // Refresh Cart Dropdown Preview HTML
+                        refreshCartPreview();
+
                         if (callback) {
                             callback(data);
                         } else {
@@ -680,6 +707,20 @@
                         text: window.AppLang.something_went_wrong
                     });
                 });
+        }
+
+        function refreshCartPreview() {
+            fetch("{{ route('cart.preview-items') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const previewContainer = document.getElementById('cartPreviewDropdown');
+                        if (previewContainer) {
+                            previewContainer.innerHTML = data.html;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error refreshing cart preview:', error));
         }
 
         // Buy Now function for listing page

@@ -14,6 +14,7 @@ class ProductImage extends Model
         'product_id',
         'color_id',
         'size_id',
+        'variant',
         'image',
         'price',
         'stock',

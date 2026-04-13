@@ -167,6 +167,10 @@
                                 <br><small style="color: #666;">Size:
                                     {{ $item->size->code ?? $item->size->name }}</small>
                             @endif
+                            @if (!empty($item->variant))
+                                <br><small style="color: #666;">Variant:
+                                    {{ $item->variant }}</small>
+                            @endif
                         </td>
                         <td>{{ $item->quantity }}</td>
                         <td>
@@ -200,6 +204,9 @@
                         @if ($item->size)
                             - {{ $item->size->code ?? $item->size->name }}
                         @endif
+                        @if (!empty($item->variant))
+                            - {{ $item->variant }}
+                        @endif
                         - Qty: {{ $item->quantity }}<br>
                     @endif
                 @endforeach
@@ -219,6 +226,9 @@
                         @endif
                         @if ($item->size)
                             - {{ $item->size->code ?? $item->size->name }}
+                        @endif
+                        @if (!empty($item->variant))
+                            - {{ $item->variant }}
                         @endif
                         - Qty: {{ $item->quantity }}<br>
                         @if ($item->notes)

@@ -73,6 +73,13 @@
                                                         class="size-badge">{{ $item->size->code ?? $item->size->name }}</span>
                                                 </div>
                                             @endif
+
+                                            @if (!empty($item->variant))
+                                                <div class="d-flex align-items-center gap-2 mt-1">
+                                                    <small class="text-muted">Variant:</small>
+                                                    <span class="size-badge">{{ $item->variant }}</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
 

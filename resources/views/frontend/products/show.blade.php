@@ -63,6 +63,14 @@
                 if ($displayImages->isEmpty() && !$allImages->isEmpty()) {
                     $displayImages = collect([$allImages->first()]);
                 }
+
+                $variants = $allImages
+                    ->pluck('variant')
+                    ->filter(function ($value) {
+                        return !is_null($value) && $value !== '';
+                    })
+                    ->unique()
+                    ->values();
             @endphp
 
             {{-- Image Gallery --}}
@@ -211,6 +219,27 @@
                                             data-size-name="{{ $size->code ?? $size->name }}"
                                             onclick="handleSizeSelection(this)">
                                             {{ $size->code ?? $size->name }}
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Variant Selection --}}
+                    @if ($variants->isNotEmpty() && $variants->filter(fn($v) => !empty($v))->isNotEmpty())
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold d-flex align-items-center">
+                                <i class="fas fa-layer-group me-2"></i> Select Variant
+                                <span class="ms-2 text-muted small" id="selectedVariantName"></span>
+                            </label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @foreach ($variants as $index => $variantStr)
+                                    @if (!empty($variantStr))
+                                        <div class="variant-option {{ $index === 0 ? 'selected' : '' }}"
+                                            data-variant-name="{{ $variantStr }}"
+                                            onclick="handleVariantSelection(this)">
+                                            {{ $variantStr }}
                                         </div>
                                     @endif
                                 @endforeach
@@ -515,31 +544,35 @@
             opacity: 0.6;
         }
 
-        .size-option {
-            min-width: 55px;
-            padding: 10px 16px;
-            text-align: center;
-            border: 2px solid transparent;
-            background: #ffffff;
-            border-radius: 10px;
+        .size-option,
+        .variant-option {
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 600;
+            font-size: 0.9rem;
             color: #475569;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+            min-width: 60px;
+            text-align: center;
         }
 
-        .size-option:hover {
+        .size-option:hover,
+        .variant-option:hover {
+            border-color: #667eea;
+            background: #f8fafc;
+            color: #667eea;
             transform: translateY(-2px);
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
-            color: #1e293b;
         }
 
-        .size-option.selected {
-            border-color: #6366f1;
-            background-color: #6366f1;
-            color: white;
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+        .size-option.selected,
+        .variant-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         /* Quantity Input */
@@ -868,8 +901,10 @@
 
     {{-- Scripts --}}
     <script>
-        let selectedColor = null;
-        let selectedSize = null;
+        // Use standard selection logic on page load
+        let selectedColor = document.querySelector('.color-option.selected')?.dataset.colorId || null;
+        let selectedSize = document.querySelector('.size-option.selected')?.dataset.sizeId || null;
+        let selectedVariant = document.querySelector('.variant-option.selected')?.dataset.variantName || null;
 
         // Change main image
         function changeMainImage(imageSrc, element) {
@@ -958,6 +993,32 @@
             updateGalleryUI(filtered);
         }
 
+        // Select variant handler
+        function handleVariantSelection(element) {
+            const el = element.closest('.variant-option');
+            if (!el) return;
+
+            // UI Update
+            document.querySelectorAll('.variant-option').forEach(option => option.classList.remove('selected'));
+            el.classList.add('selected');
+
+            selectedVariant = el.dataset.variantName;
+
+            const nameEl = document.getElementById('selectedVariantName');
+            if (nameEl) nameEl.textContent = `(${el.dataset.variantName})`;
+
+            // Filtering logic prioritizing color then fallback
+            let filtered = productImages.filter(img => img.variant === selectedVariant);
+
+            if (selectedColor) {
+                let colorFiltered = filtered.filter(img => String(img.color_id || '') === String(selectedColor));
+                if (colorFiltered.length > 0) filtered = colorFiltered;
+            }
+
+            // DOM Updates
+            updateGalleryUI(filtered);
+        }
+
         // Shared function to update Gallery UI
         function updateGalleryUI(filtered) {
             if (filtered.length > 0) {
@@ -993,15 +1054,25 @@
             let match = productImages.find(img => {
                 const colorMatch = String(img.color_id || '') === String(selectedColor || '');
                 const sizeMatch = String(img.size_id || '') === String(selectedSize || '');
+                const variantMatch = String(img.variant || '') === String(selectedVariant || '');
+                // If variant is active, require all three matches if applicable, or at least variant + size/color.
+                if (selectedVariant) {
+                    return colorMatch && sizeMatch && variantMatch;
+                }
                 return colorMatch && sizeMatch;
             });
 
-            // Fallback 1: Match only color (Color images usually carry the price/stock)
+            // Fallback 1: Match only variant
+            if (!match && selectedVariant) {
+                match = productImages.find(img => String(img.variant || '') === String(selectedVariant || ''));
+            }
+
+            // Fallback 2: Match only color (Color images usually carry the price/stock)
             if (!match && selectedColor) {
                 match = productImages.find(img => String(img.color_id || '') === String(selectedColor || ''));
             }
 
-            // Fallback 2: Match only size
+            // Fallback 3: Match only size
             if (!match && selectedSize) {
                 match = productImages.find(img => String(img.size_id || '') === String(selectedSize || ''));
             }
@@ -1142,25 +1213,53 @@
                         price: {{ $product->price }},
                         color_id: selectedColor,
                         size_id: selectedSize,
+                        variant: selectedVariant,
                         mode: mode
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // Update cart count badge
+                        const cartBadges = document.querySelectorAll('.cart-badge');
+                        if (data.cart_count !== undefined) {
+                            if (cartBadges.length > 0) {
+                                cartBadges.forEach(badge => {
+                                    badge.textContent = data.cart_count;
+                                });
+                            } else {
+                                const cartIconWrapper = document.querySelector('.cart-icon-wrapper');
+                                if (cartIconWrapper) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'cart-badge';
+                                    badge.textContent = data.cart_count;
+                                    cartIconWrapper.appendChild(badge);
+                                }
+                            }
+                        }
+
+                        // Refresh Cart Dropdown Preview HTML
+                        refreshCartPreview();
+
                         if (callback) {
                             callback(data);
                         } else {
                             showNotification('{{ __('products.added_to_cart') }}', 'success');
-                            // Dynamic button switch
-                            const addToCartBtn = document.getElementById('addToCartBtn');
-                            if (addToCartBtn) {
-                                const goCartHtml = `
-                                <a href="{{ route('frontend.cart') }}" class="btn btn-warning btn-lg flex-fill">
-                                    <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
-                                </a>
-                            `;
-                                addToCartBtn.outerHTML = goCartHtml;
+
+                            // Dynamic button switch - find the container
+                            const actionContainer = document.getElementById('main-product-actions');
+                            if (actionContainer) {
+                                const addToCartBtn = actionContainer.querySelector('.btn-add-cart');
+                                if (addToCartBtn) {
+                                    const goCartHtml = `
+                                        <a href="{{ route('frontend.cart') }}" class="btn action-btn btn-go-cart flex-fill">
+                                            <div class="btn-content">
+                                                <i class="fas fa-arrow-right me-2"></i> {{ __('products.go_to_cart') }}
+                                            </div>
+                                        </a>
+                                    `;
+                                    addToCartBtn.outerHTML = goCartHtml;
+                                }
                             }
                         }
                     } else {
@@ -1171,6 +1270,20 @@
                     console.error('Error:', error);
                     showNotification('Error connecting to server', 'error');
                 });
+        }
+
+        function refreshCartPreview() {
+            fetch("{{ route('cart.preview-items') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const previewContainer = document.getElementById('cartPreviewDropdown');
+                        if (previewContainer) {
+                            previewContainer.innerHTML = data.html;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error refreshing cart preview:', error));
         }
 
         // Buy Now function
@@ -1269,6 +1382,12 @@
                     sizeNameEl.textContent = `(${firstSize.dataset.sizeName})`;
                 }
                 firstSize.classList.add('selected');
+            }
+
+            const firstVariant = document.querySelector('.variant-option.selected');
+            if (firstVariant) {
+                // Trigger initial selection logic
+                handleVariantSelection(firstVariant);
             }
         });
 

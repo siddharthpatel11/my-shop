@@ -139,6 +139,9 @@ Route::middleware(['customer.auth', 'customer.2fa', 'single.session'])->group(fu
     Route::post('/cart/remove-discount', [CartController::class, 'removeDiscount'])
         ->name('cart.remove-discount');
 
+    Route::get('/cart/preview-items', [CartController::class, 'getPreviewItems'])
+        ->name('cart.preview-items');
+
     Route::get('/customer/profile', [CustomerAuthController::class, 'profile'])
         ->name('customer.profile');
 

@@ -124,7 +124,7 @@
                     <div id="imageRepeater">
                         <div class="row mb-2 image-row align-items-end shadow-sm p-2 border rounded bg-light mx-0"
                             data-index="0">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="small fw-bold">Image(s):</label>
                                 <div class="input-group input-group-sm">
                                     <button type="button" class="btn btn-success trigger-file-input" title="Browse Images">
@@ -145,15 +145,20 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <label class="small fw-bold">Size:</label>
                                 <select name="image_data[0][size_id]" class="form-select size-selector">
                                     <option value="">No Size</option>
                                 </select>
                             </div>
+                            
+                            <div class="col-md-2">
+                                <label class="small fw-bold">Variant:</label>
+                                <input type="text" name="image_data[0][variant]" class="form-control form-control-sm variant-input" placeholder="e.g. 256GB">
+                            </div>
 
                             <div class="col-md-2">
-                                <label class="small fw-bold">Price (Optional):</label>
+                                <label class="small fw-bold">Price:</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">₹</span>
                                     <input type="number" step="0.01" name="image_data[0][price]"
@@ -346,6 +351,8 @@
                     .find('.color-selector').val());
                 newRow.find('.size-selector').attr('name', `image_data[${idx}][size_id]`).val(lastRow.find(
                     '.size-selector').val());
+                newRow.find('.variant-input').attr('name', `image_data[${idx}][variant]`).val(lastRow.find(
+                    '.variant-input').val());
                 newRow.find('input[placeholder="Price"]').attr('name', `image_data[${idx}][price]`).val(
                     lastRow.find('input[placeholder="Price"]').val());
                 newRow.find('input[min="0"]').attr('name', `image_data[${idx}][stock]`).val(lastRow.find(

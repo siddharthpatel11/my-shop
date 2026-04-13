@@ -293,6 +293,9 @@
                                     @if ($item->size)
                                         <span class="mx-1">|</span> Size: {{ $item->size->name }}
                                     @endif
+                                    @if (!empty($item->variant))
+                                        <span class="mx-1">|</span> Variant: {{ $item->variant }}
+                                    @endif
                                 </div>
                             </td>
                             <td class="text-center fw-bold">{{ $item->quantity }}</td>
