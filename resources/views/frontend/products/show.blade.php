@@ -74,7 +74,7 @@
                             <div id="mainImageBadge" class="main-image-badge"></div>
                             <img id="mainImage"
                                 src="{{ asset('images/products/' . ($displayImages->first()->image ?? 'no-image.png')) }}"
-                                class="card-img-top main-product-image" alt="{{ $product->name }}">
+                                class="main-product-image" alt="{{ $product->name }}">
                             @if ($product->created_at && $product->created_at->diffInDays(now()) < 7)
                                 <span
                                     class="badge bg-success position-absolute top-0 start-0 m-3">{{ __('products.new_badge') }}</span>
@@ -414,6 +414,7 @@
 
         .main-product-image {
             width: auto;
+            max-width: 100%;
             height: auto;
             max-height: 520px;
             object-fit: contain;

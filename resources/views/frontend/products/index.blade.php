@@ -61,7 +61,7 @@
     @endphp
 
     {{-- Category Strip --}}
-    <div class="bg-white shadow-sm mb-3">
+    <div class="bg-white shadow-sm mb-3 flipkart-category-strip-container">
         <div class="container-fluid px-2 px-md-4">
             <div
                 class="d-flex align-items-end justify-content-start justify-content-lg-center gap-3 gap-md-5 overflow-auto py-3 px-2 hide-scrollbar flipkart-category-strip">
@@ -362,7 +362,7 @@
         .hide-scrollbar::-webkit-scrollbar-thumb:hover {
             background-color: rgba(0, 0, 0, 0.3);
         }
-        
+
         @media (max-width: 768px) {
             .hide-scrollbar::-webkit-scrollbar {
                 display: none;
@@ -513,6 +513,56 @@
 
         .wishlist-btn-top.active i {
             color: #dc3545;
+        }
+
+        /* --- Dark Mode Overrides --- */
+        [data-bs-theme="dark"] .flipkart-category-strip-container {
+            background-color: #1e1e1e !important;
+            border-bottom: 1px solid #333;
+        }
+
+        [data-bs-theme="dark"] .flipkart-category-strip .category-icon-wrapper {
+            background: #2a2a2a;
+        }
+
+        [data-bs-theme="dark"] .flipkart-category-strip .category-name {
+            color: #d1d5db;
+        }
+
+        [data-bs-theme="dark"] .product-image-wrapper {
+            background: #2a2a2a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        [data-bs-theme="dark"] .product-card:hover .product-image-wrapper {
+            background: #333;
+        }
+
+        [data-bs-theme="dark"] .product-card {
+            background: #1e1e1e !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        [data-bs-theme="dark"] .product-card:hover {
+            border-color: #4b5563 !important;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        [data-bs-theme="dark"] .product-card .text-dark {
+            color: #f8fafc !important;
+        }
+
+        [data-bs-theme="dark"] .wishlist-btn-top {
+            background: #333;
+        }
+
+        [data-bs-theme="dark"] .wishlist-btn-top i:not(.text-danger) {
+            color: #888;
+        }
+
+        [data-bs-theme="dark"] .wishlist-btn-top:hover {
+            background: #444;
+            border-color: #555;
         }
     </style>
 
