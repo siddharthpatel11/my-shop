@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Intervention\Image\Laravel\Facades\Image;
+use App\Models\CustomerAddress;
+use App\Models\Order;
 
 class CustomerAuthController extends Controller
 {
@@ -69,6 +71,10 @@ class CustomerAuthController extends Controller
                 'email' => ['Invalid credentials'],
             ]);
         }
+
+         // IP address store
+        $customer->ip_address = $request->ip();
+        $customer->save();
 
         //  SINGLE SESSION (remove old tokens)
         // $customer->tokens()->delete();
@@ -193,10 +199,48 @@ class CustomerAuthController extends Controller
      */
     public function profile(Request $request)
     {
-        return response()->json([
+        $customer = $request->user();//->load('addresses');
+         // optional active check
+        if ($customer->status !== 'active') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer is not active'
+            ], 403);
+        }
+
+        // customer addresses
+        $addresses = CustomerAddress::where('customer_id', $customer->id)->get();
+
+        // Order filter (key-value based)
+        $type = $request->input('type');
+        $status = $request->input('order_status');
+
+        $orders = [];
+
+        if (in_array($type, ['order','orders'])) {
+
+            $query = Order::with('items')
+                ->where('customer_id', $customer->id);
+
+            if (!empty($status)) {
+                $query->where('order_status', $status);
+            }
+
+            $orders = $query->get();
+        }
+
+        $response = [
             'success' => true,
-            'customer' => new CustomerResource($request->user()),
-        ]);
+            'customer' => new CustomerResource($customer),
+            'ip_address' => $customer->ip_address,
+            'addresses' => $addresses,
+        ];
+
+        if (in_array($type, ['order','orders'])) {
+            $response['orders'] = $orders;
+        }
+
+        return response()->json($response);
     }
 
     /**

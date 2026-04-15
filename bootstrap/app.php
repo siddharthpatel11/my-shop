@@ -14,14 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    //     web: __DIR__ . '/../routes/web.php',
-    //     commands: __DIR__ . '/../routes/console.php',
-    //     health: '/up',
-    //     then: function () {
-    //         \Illuminate\Support\Facades\Route::middleware('web')
-    //             ->group(base_path('routes/frontend.php'));
-    //     }
-    // )
+
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
@@ -35,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
+            'customer.auth' => \App\Http\Middleware\CustomerAuth::class,
             'customer.2fa' => \App\Http\Middleware\Customer2FAMiddleware::class,
             'prevent-back' => \App\Http\Middleware\PreventBackHistory::class,
             '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,

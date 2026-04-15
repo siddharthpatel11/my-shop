@@ -19,6 +19,17 @@ class CustomerAuth
             return redirect()->route('customer.login')
                 ->with('success', 'Please login to continue');
         }
+         // Logged-in customer
+        $customer = auth()->guard('customer')->user();
+
+        // IP capture
+        $ip = $request->header('X-Forwarded-For') ?? $request->ip();
+
+        //  Update only if changed (optimization)
+        if ($customer->ip_address !== $ip) {
+            $customer->ip_address = $ip;
+            $customer->save();
+        }
         return $next($request);
     }
 }

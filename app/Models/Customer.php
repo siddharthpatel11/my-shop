@@ -36,6 +36,7 @@ class Customer extends Authenticatable
         'google2fa_enabled',
         'theme_mode',
         'current_session_id',
+        'ip_address',
     ];
 
     protected $hidden = [

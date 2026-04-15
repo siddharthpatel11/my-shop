@@ -60,4 +60,5 @@ class CustomerAddress extends Model
 
         return implode(', ', $parts);
     }
+    
 }

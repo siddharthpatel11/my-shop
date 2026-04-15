@@ -91,7 +91,8 @@ Route::prefix('v1')->group(function () {
 
             // Auth
             Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
-            Route::get('profile', [CustomerAuthController::class, 'profile'])->name('profile');
+            // Route::get('profile', [CustomerAuthController::class, 'profile'])->name('profile');
+            Route::match(['GET', 'POST'],'profile', [CustomerAuthController::class, 'profile'])->name('profile');
             Route::post('profile/update', [CustomerAuthController::class, 'updateProfile'])->name('profile.update');
             Route::post('profile/remove-avatar', [CustomerAuthController::class, 'removeAvatar'])->name('profile.remove-avatar');
 

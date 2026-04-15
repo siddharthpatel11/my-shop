@@ -89,7 +89,11 @@ class CustomerAuthController extends Controller
             $singleSessionToken = \Illuminate\Support\Str::random(40);
             session()->put('customer_single_session_token', $singleSessionToken);
 
+            // IP capture (IMPORTANT)
+            $ip = $request->header('X-Forwarded-For') ?? $request->ip();
+
             $customer->session_id = $singleSessionToken;
+            $customer->ip_address = $ip;
             $customer->save();
 
             // ✅ Store login data in session
@@ -98,6 +102,7 @@ class CustomerAuthController extends Controller
                 'customer_name'  => $customer->name,
                 'customer_email' => $customer->email,
                 'login_time'     => now(),
+                'ip_address'     => $ip,
             ]);
             return redirect()->intended(route('frontend.products.index'))
                 ->with('success', 'Welcome back, ' . $customer->name . '!');

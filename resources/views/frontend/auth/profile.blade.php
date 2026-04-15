@@ -64,6 +64,12 @@
                                 <p class="text-muted small mb-3">
                                     <i class="fas fa-envelope me-2"></i>{{ $customer->email }}
                                 </p>
+                                @if ($customer->ip_address)
+                                    <p class="text-muted small mb-3">
+                                        <i class="fas fa-globe me-2 text-primary"></i>
+                                        IP: {{ $customer->ip_address }}
+                                    </p>
+                                @endif
                                 <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
                                     <i class="fas fa-check-circle me-1"></i>
                                     {{ ucfirst($customer->status) }}
