@@ -214,6 +214,8 @@ class CustomerAuthController extends Controller
         // Order filter (key-value based)
         $type = $request->input('type');
         $status = $request->input('order_status');
+        $paymentStatus = $request->input('payment_status');  
+        $paymentMethod = $request->input('payment_method'); 
 
         $orders = [];
 
@@ -222,11 +224,37 @@ class CustomerAuthController extends Controller
             $query = Order::with('items')
                 ->where('customer_id', $customer->id);
 
+            // order status filter
             if (!empty($status)) {
                 $query->where('order_status', $status);
             }
 
-            $orders = $query->get();
+            // payment status filter
+            if (!empty($paymentStatus)) {
+                $query->where('payment_status', $paymentStatus);
+            }
+
+            // payment method filter
+            if (!empty($paymentMethod)) {
+                $query->where('payment_method', $paymentMethod);
+            }
+
+            if (!empty($status)) {
+                $query->where('order_status', $status);
+            }
+
+             // format response (clean output)
+            $orders = $query->get()->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'order_status' => $order->order_status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                    'total_amount' => $order->total_amount ?? null,
+                    'created_at' => $order->created_at,
+                    'items' => $order->items
+                ];
+            });
         }
 
         $response = [
