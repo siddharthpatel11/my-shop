@@ -407,9 +407,17 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item" href="{{ route('dashboard') }}">
+                                <a class="dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                                    href="{{ route('dashboard') }}">
                                     <i class="fas fa-tachometer-alt"></i>
-                                    Dashboard
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}"
+                                    href="{{ route('profile.edit') }}">
+                                    <i class="fas fa-id-card"></i>
+                                    <span>Profile</span>
                                 </a>
                             </li>
                             <li>

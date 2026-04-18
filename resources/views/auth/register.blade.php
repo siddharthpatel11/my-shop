@@ -1,4 +1,9 @@
 <x-guest-layout>
+    <div class="mb-8">
+        <h2 class="auth-heading">Create Account</h2>
+        <p class="auth-subheading">Join the Admin Portal to manage your workspace.</p>
+    </div>
+
     <form method="POST" action="{{ route('register') }}">
         @csrf
 

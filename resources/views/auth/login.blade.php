@@ -1,4 +1,9 @@
 <x-guest-layout>
+    <div class="mb-8">
+        <h2 class="auth-heading">Welcome Back</h2>
+        <p class="auth-subheading">Sign in to your admin account to continue.</p>
+    </div>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
